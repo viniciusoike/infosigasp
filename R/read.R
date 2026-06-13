@@ -33,6 +33,13 @@
 #' archive (2015-2021 and 2022 onward); they are read and row-bound
 #' transparently.
 #'
+#' The imported data follow the source as closely as possible and are not
+#' otherwise cleaned. A small fraction of rows in the source contain
+#' data-quality issues (for example, an unescaped `;` inside a street name, or
+#' mis-encoded `latitude`/`longitude` values); coordinates in particular should
+#' be sanity-checked before mapping. Any value that cannot be parsed to its
+#' declared column type is set to `NA` and recorded by [readr::problems()].
+#'
 #' Empty fields are read as `NA`. Note that many categorical columns instead
 #' use the literal value `"NAO DISPONIVEL"` ("not available") to flag missing
 #' information; these are preserved as-is so the imported data matches the
@@ -116,6 +123,9 @@ read_infosiga <- function(dataset = c("sinistros", "pessoas", "veiculos"),
       delim = ";",
       col_types = spec,
       locale = locale,
+      # Empty fields are the source's missing-value marker. Anything that
+      # still fails to parse (a handful of malformed source rows) becomes NA
+      # and is surfaced through readr::problems().
       na = "",
       progress = FALSE,
       show_col_types = FALSE
