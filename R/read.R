@@ -41,7 +41,8 @@
 #' By default (`clean = TRUE`) the result is then processed by
 #' [clean_infosiga()]: ordinal columns (`dia_da_semana`, `turno`,
 #' `gravidade_lesao`, the age bands) become **ordered factors**, the
-#' `"NAO DISPONIVEL"` ("not available") marker becomes `NA`, and
+#' `"NAO DISPONIVEL"` ("not available") marker becomes `NA`, the `ano_mes_*`
+#' year-month strings are parsed to first-of-month `Date`s, and
 #' `latitude`/`longitude` values outside the bounding box of Sao Paulo state
 #' are dropped to `NA`. Pass `clean = FALSE` to
 #' obtain the raw data exactly as published, with every text column kept as a

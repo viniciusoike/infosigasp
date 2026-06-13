@@ -15,3 +15,5 @@
 ^CITATION\.cff$
 ^Rplots\.pdf$
 ^man/figures/logo\.R$
+^\.positai$
+^\.claude$

@@ -6,9 +6,11 @@
   source encoding, decimal marks and date formats.
 * `read_infosiga()` returns a processed dataset by default (`clean = TRUE`):
   ordinal columns (`dia_da_semana`, `turno`, `gravidade_lesao`, age bands)
-  become ordered factors, `"NAO DISPONIVEL"` becomes `NA`, and impossible
-  coordinates are dropped. Use `clean = FALSE` for the raw data as published,
-  or `clean_infosiga()` to process a raw import afterwards.
+  become ordered factors, `"NAO DISPONIVEL"` becomes `NA`, the `ano_mes_*`
+  year-month columns are parsed to first-of-month `Date`s, and coordinates
+  outside the São Paulo state bounding box are dropped. Use `clean = FALSE` for
+  the raw data as published, or `clean_infosiga()` to process a raw import
+  afterwards.
 * `infosiga_download()` pre-fetches the source archive into a local cache.
 * `infosiga_cache_dir()`, `infosiga_cache_list()` and `infosiga_cache_clear()`
   manage the on-disk cache.

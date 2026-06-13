@@ -42,6 +42,8 @@ starts on Sunday).
 \item \code{faixa_etaria_demografica}, \code{faixa_etaria_legal} (in \code{pessoas}):
 age bands in increasing order.
 }
+\item Year-month columns (\code{ano_mes_sinistro}, \code{ano_mes_obito}), published
+as \code{"YYYY/MM"} strings, are parsed to first-of-month \code{Date} values.
 \item In \code{sinistros}, \code{latitude}/\code{longitude} are validated as a pair
 against the bounding box of the state of Sao Paulo. Points outside the
 box -- mis-encoded values and \verb{(0, 0)} placeholders -- have both

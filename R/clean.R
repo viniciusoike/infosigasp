@@ -25,6 +25,12 @@
   )
 )
 
+# Parse the source "YYYY/MM" year-month strings into first-of-month Dates.
+# Empty strings and other non-matching values become NA.
+.parse_ano_mes <- function(x) {
+  as.Date(paste0(x, "/01"), format = "%Y/%m/%d")
+}
+
 # Bounding box of the state of Sao Paulo, with a small margin so genuine
 # near-border crashes are kept. The state spans roughly latitude -25.4..-19.8
 # and longitude -53.1..-44.2; coordinates outside this box (mis-encoded values
@@ -65,6 +71,8 @@
 #'       \item `faixa_etaria_demografica`, `faixa_etaria_legal` (in `pessoas`):
 #'         age bands in increasing order.
 #'     }
+#'   \item Year-month columns (`ano_mes_sinistro`, `ano_mes_obito`), published
+#'     as `"YYYY/MM"` strings, are parsed to first-of-month `Date` values.
 #'   \item In `sinistros`, `latitude`/`longitude` are validated as a pair
 #'     against the bounding box of the state of Sao Paulo. Points outside the
 #'     box -- mis-encoded values and `(0, 0)` placeholders -- have both
@@ -108,7 +116,14 @@ clean_infosiga <- function(data, dataset = c("sinistros", "pessoas", "veiculos")
     }
   }
 
-  # 3. Coordinates are validated as a pair against the Sao Paulo bounding box.
+  # 3. Year-month columns ("YYYY/MM") become first-of-month Dates, matching
+  #    the Date class already used for the full-date columns.
+  ano_mes_cols <- grep("^ano_mes_", names(data), value = TRUE)
+  for (col in ano_mes_cols) {
+    data[[col]] <- .parse_ano_mes(data[[col]])
+  }
+
+  # 4. Coordinates are validated as a pair against the Sao Paulo bounding box.
   #    A point is kept only if both latitude and longitude are present and
   #    inside the box; otherwise both are set to NA. This drops mis-encoded
   #    values and "null island" (0, 0) placeholders.

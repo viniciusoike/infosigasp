@@ -41,6 +41,25 @@ test_that("clean = FALSE returns raw character columns", {
   raw <- read_infosiga("sinistros", clean = FALSE, quiet = TRUE)
   expect_type(raw$dia_da_semana, "character")
   expect_type(raw$turno, "character")
+  expect_type(raw$ano_mes_sinistro, "character")
+})
+
+test_that("ano_mes_* strings become first-of-month Dates when cleaning", {
+  raw <- tibble::tibble(
+    ano_mes_sinistro = c("2022/01", "2023/12", "", NA),
+    ano_mes_obito    = c("2022/03", NA, "2024/07", "")
+  )
+  cleaned <- clean_infosiga(raw, "pessoas")
+  expect_s3_class(cleaned$ano_mes_sinistro, "Date")
+  expect_s3_class(cleaned$ano_mes_obito, "Date")
+  expect_equal(
+    cleaned$ano_mes_sinistro,
+    as.Date(c("2022-01-01", "2023-12-01", NA, NA))
+  )
+  expect_equal(
+    cleaned$ano_mes_obito,
+    as.Date(c("2022-03-01", NA, "2024-07-01", NA))
+  )
 })
 
 test_that("coordinates outside the Sao Paulo bounding box are dropped", {

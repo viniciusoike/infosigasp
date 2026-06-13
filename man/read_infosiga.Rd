@@ -62,7 +62,8 @@ transparently.
 By default (\code{clean = TRUE}) the result is then processed by
 \code{\link[=clean_infosiga]{clean_infosiga()}}: ordinal columns (\code{dia_da_semana}, \code{turno},
 \code{gravidade_lesao}, the age bands) become \strong{ordered factors}, the
-\code{"NAO DISPONIVEL"} ("not available") marker becomes \code{NA}, and
+\code{"NAO DISPONIVEL"} ("not available") marker becomes \code{NA}, the \verb{ano_mes_*}
+year-month strings are parsed to first-of-month \code{Date}s, and
 \code{latitude}/\code{longitude} values outside the bounding box of Sao Paulo state
 are dropped to \code{NA}. Pass \code{clean = FALSE} to
 obtain the raw data exactly as published, with every text column kept as a
