@@ -1,0 +1,17 @@
+^.*\.Rproj$
+^\.Rproj\.user$
+^LICENSE\.md$
+^README\.Rmd$
+^README\.html$
+^\.github$
+^_pkgdown\.yml$
+^pkgdown$
+^docs$
+^data-raw$
+^\.DS_Store$
+^cran-comments\.md$
+^CRAN-SUBMISSION$
+^\.lintr$
+^CITATION\.cff$
+^Rplots\.pdf$
+^man/figures/logo\.R$

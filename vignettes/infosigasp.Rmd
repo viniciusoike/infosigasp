@@ -1,0 +1,171 @@
+---
+title: "Getting started with infosigasp"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Getting started with infosigasp}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+# Network access and a ~120 MB download are required for the live examples, so
+# code that hits the network is shown but not evaluated when the vignette is
+# built. Set this to TRUE to run them locally.
+run_live <- FALSE
+```
+
+## Overview
+
+[INFOSIGA-SP](https://infosiga.detran.sp.gov.br/) is the São Paulo State
+Traffic Accident Information and Management System, maintained by DETRAN-SP.
+It publishes, as open data, detailed records of every traffic crash in the
+state of São Paulo from 2015 onward.
+
+The `infosigasp` package wraps the download and import of those records. It
+takes care of the things that make the raw files awkward to read directly:
+
+- the files are encoded in **Latin-1** (ISO-8859-1), not UTF-8;
+- fields are separated by **semicolons** (`;`);
+- decimal numbers (such as coordinates) use a **comma** decimal mark;
+- dates are formatted **`DD/MM/YYYY`**;
+- each dataset is split across **two files** (2015--2021 and 2022 onward).
+
+```{r setup}
+library(infosigasp)
+```
+
+## The three datasets
+
+INFOSIGA-SP organises its data into three linked tables:
+
+```{r datasets}
+infosiga_datasets()
+```
+
+- **`sinistros`** — crash *events*. One row per recorded event, with the
+  date, time, location (including latitude/longitude), road attributes and a
+  breakdown of how many vehicles and victims were involved, by type and
+  severity.
+- **`pessoas`** — *people* (victims). One row per person involved, with
+  demographic attributes, injury severity and, for fatalities, the date and
+  place of death.
+- **`veiculos`** — *vehicles*. One row per vehicle involved, with make/model,
+  manufacturing and model years, colour and type.
+
+All three share the `id_sinistro` key, so they can be joined together;
+`pessoas` and `veiculos` additionally share `id_veiculo`.
+
+## Reading data
+
+The main entry point is `read_infosiga()`. The first call downloads the
+source archive (about 120 MB) into a per-user cache; subsequent calls read
+from that cache, so you only pay the download cost once.
+
+```{r read, eval = run_live}
+sinistros <- read_infosiga("sinistros")
+sinistros
+```
+
+You can restrict the import to specific years with the `year` argument, which
+filters on the year of the crash (`ano_sinistro`):
+
+```{r read-year, eval = run_live}
+recent <- read_infosiga("sinistros", year = 2022:2025)
+```
+
+### A peek at the structure without downloading
+
+The package ships a small sample of each dataset so you can inspect the
+columns without any network access:
+
+```{r sample}
+sample_path <- system.file("extdata", "sinistros_sample.csv", package = "infosigasp")
+sample <- readr::read_delim(
+  sample_path,
+  delim = ";",
+  show_col_types = FALSE
+)
+dim(sample)
+names(sample)
+```
+
+## A short analysis
+
+Once imported, the data are ordinary tibbles, so any tidyverse (or base R)
+workflow applies. For example, counting traffic fatalities per year from the
+victims dataset:
+
+```{r fatalities, eval = run_live}
+library(dplyr)
+
+deaths_by_year <- read_infosiga("pessoas") |>
+  filter(gravidade_lesao == "FATAL") |>
+  count(ano_obito, name = "deaths") |>
+  arrange(ano_obito)
+
+deaths_by_year
+```
+
+Or fatalities broken down by the type of victim (driver, passenger,
+pedestrian):
+
+```{r by-victim, eval = run_live}
+read_infosiga("pessoas") |>
+  filter(gravidade_lesao == "FATAL") |>
+  count(tipo_de_vitima, sort = TRUE)
+```
+
+Because `sinistros` carries latitude and longitude as numeric columns, crash
+locations can be mapped directly or aggregated by municipality
+(`municipio` / `cod_ibge`).
+
+## Managing the cache
+
+The download lives in an operating-system specific cache directory:
+
+```{r cache}
+infosiga_cache_dir()
+infosiga_cache_list()
+```
+
+The archive is refreshed monthly by DETRAN-SP. To pull the latest version,
+force a re-download:
+
+```{r refresh, eval = run_live}
+infosiga_download(overwrite = TRUE)
+```
+
+To reclaim disk space, clear the cache:
+
+```{r clear, eval = run_live}
+infosiga_cache_clear()
+```
+
+You can point the cache somewhere else for a session (or permanently via your
+`.Rprofile`) with the `infosigasp.cache_dir` option:
+
+```{r cache-opt, eval = FALSE}
+options(infosigasp.cache_dir = "~/data/infosiga")
+```
+
+## The official data dictionary
+
+INFOSIGA-SP distributes a field-by-field data dictionary (PDF, in
+Portuguese). `infosiga_dictionary()` downloads it and returns the paths to the
+extracted files:
+
+```{r dictionary, eval = run_live}
+pdfs <- infosiga_dictionary()
+basename(pdfs)
+```
+
+## Citing the data
+
+Data are published by DETRAN-SP under a Creative Commons Attribution 4.0
+licence. When you publish results based on these data, please cite
+INFOSIGA-SP / DETRAN-SP as the source:
+<https://infosiga.detran.sp.gov.br/>.

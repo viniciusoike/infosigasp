@@ -1,0 +1,45 @@
+Package: infosigasp
+Type: Package
+Title: Download and Import Traffic Crash Data from INFOSIGA-SP
+Version: 0.1.0
+Authors@R: c(
+    person(
+      "Vinicius", "Oike",
+      email = "viniciusoike@gmail.com",
+      role = c("aut", "cre", "cph")
+    )
+  )
+Description: Provides a programmatic interface to the open data published by
+    the Sao Paulo State Traffic Accident Information and Management System
+    ('INFOSIGA-SP'), maintained by the Sao Paulo State Department of Motor
+    Vehicles ('DETRAN-SP'). Functions download and import tidy data frames
+    of traffic crash events ('sinistros'), victims ('pessoas') and vehicles
+    ('veiculos') from 2015 onward, handling the source encoding, decimal
+    marks, date formats and on-disk caching. See
+    <https://infosiga.detran.sp.gov.br/> for the original data portal.
+License: MIT + file LICENSE
+Encoding: UTF-8
+Language: en-US
+Depends:
+    R (>= 4.1.0)
+Imports:
+    cli,
+    readr (>= 2.0.0),
+    tibble,
+    tools,
+    utils
+Suggests:
+    dplyr,
+    ggplot2,
+    knitr,
+    rmarkdown,
+    testthat (>= 3.0.0),
+    withr
+Config/testthat/edition: 3
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.3
+URL: https://github.com/viniciusoike/infosigasp,
+    https://viniciusoike.github.io/infosigasp/
+BugReports: https://github.com/viniciusoike/infosigasp/issues
+VignetteBuilder: knitr
+LazyData: false

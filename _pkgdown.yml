@@ -1,0 +1,34 @@
+url: https://viniciusoike.github.io/infosigasp/
+
+template:
+  bootstrap: 5
+  bslib:
+    primary: "#1f6feb"
+
+home:
+  title: Download and import traffic crash data from INFOSIGA-SP
+  description: >
+    A clean R interface to the São Paulo State traffic crash open data
+    published by DETRAN-SP.
+
+reference:
+- title: Import data
+  desc: Download and read the INFOSIGA-SP datasets.
+  contents:
+  - read_infosiga
+  - infosiga_datasets
+- title: Downloads and cache
+  desc: Fetch the source archive and manage the local cache.
+  contents:
+  - infosiga_download
+  - infosiga_cache
+  - infosiga_dictionary
+- title: Package
+  contents:
+  - infosigasp-package
+
+articles:
+- title: Articles
+  navbar: ~
+  contents:
+  - infosigasp

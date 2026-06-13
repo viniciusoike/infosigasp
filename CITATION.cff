@@ -1,0 +1,19 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below. When using the data, also cite INFOSIGA-SP / DETRAN-SP as the source."
+title: "infosigasp: Download and Import Traffic Crash Data from INFOSIGA-SP"
+abstract: "An R interface to the open traffic crash data published by INFOSIGA-SP (DETRAN-SP), the São Paulo State Traffic Accident Information and Management System."
+type: software
+authors:
+  - family-names: Oike
+    given-names: Vinicius
+    email: viniciusoike@gmail.com
+version: 0.1.0
+license: MIT
+repository-code: "https://github.com/viniciusoike/infosigasp"
+url: "https://viniciusoike.github.io/infosigasp/"
+keywords:
+  - r
+  - traffic-safety
+  - open-data
+  - sao-paulo
+  - road-crashes
