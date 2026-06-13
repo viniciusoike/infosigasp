@@ -66,6 +66,31 @@ vitimas <- read_infosiga("pessoas", year = 2022:2025)
 veiculos <- read_infosiga("veiculos")
 ```
 
+### Processed by default, raw on demand
+
+By default `read_infosiga()` returns a **processed** dataset. Dates are
+parsed to `Date`, the `"NAO DISPONIVEL"` (“not available”) marker
+becomes `NA`, impossible coordinates are dropped, and the ordinal
+columns become **ordered factors** so they sort and plot in their
+natural order rather than alphabetically:
+
+``` r
+levels(sinistros$dia_da_semana)
+#> [1] "Domingo"       "Segunda-feira" "Terça-feira"   "Quarta-feira"
+#> [5] "Quinta-feira"  "Sexta-feira"   "Sábado"
+
+levels(vitimas$gravidade_lesao)
+#> [1] "LEVE"  "GRAVE" "FATAL"
+```
+
+Pass `clean = FALSE` to get the data exactly as published (every text
+column as a character vector, markers preserved). You can also process a
+raw import later with `clean_infosiga()`.
+
+``` r
+raw <- read_infosiga("sinistros", clean = FALSE)
+```
+
 ### Managing the cache
 
 ``` r

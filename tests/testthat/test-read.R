@@ -21,7 +21,7 @@ test_that("read_infosiga imports each dataset with the expected structure", {
 
 test_that("latin1 source text is decoded to UTF-8", {
   local_infosiga_fixture()
-  sin <- read_infosiga("sinistros", quiet = TRUE)
+  sin <- read_infosiga("sinistros", clean = FALSE, quiet = TRUE)
   # 'dia_da_semana' contains accented weekday names (e.g. Sabado, terca).
   expect_true(all(validUTF8(stats::na.omit(sin$dia_da_semana))))
 })

@@ -6,6 +6,7 @@
 \usage{
 read_infosiga(
   dataset = c("sinistros", "pessoas", "veiculos"),
+  clean = TRUE,
   year = NULL,
   download_if_missing = TRUE,
   quiet = FALSE,
@@ -19,6 +20,12 @@ read_infosiga(
 \item{\code{"pessoas"}}{Victims / people involved (one row per person).}
 \item{\code{"veiculos"}}{Vehicles involved (one row per vehicle).}
 }}
+
+\item{clean}{Logical. If \code{TRUE} (default), return a processed dataset:
+ordinal columns become ordered factors, the \code{"NAO DISPONIVEL"} marker
+becomes \code{NA}, and impossible coordinates are dropped (see
+\code{\link[=clean_infosiga]{clean_infosiga()}} for the full list of steps). If \code{FALSE}, return the raw
+data exactly as published, with all text columns as character vectors.}
 
 \item{year}{Optional integer vector used to filter rows by year of the
 crash (\code{ano_sinistro}). If \code{NULL} (default), all available years are
@@ -52,26 +59,32 @@ coordinates. Each dataset is distributed across two period files inside the
 archive (2015-2021 and 2022 onward); they are read and row-bound
 transparently.
 
-The imported data follow the source as closely as possible and are not
-otherwise cleaned. A small fraction of rows in the source contain
-data-quality issues (for example, an unescaped \verb{;} inside a street name, or
-mis-encoded \code{latitude}/\code{longitude} values); coordinates in particular should
-be sanity-checked before mapping. Any value that cannot be parsed to its
-declared column type is set to \code{NA} and recorded by \code{\link[readr:problems]{readr::problems()}}.
+By default (\code{clean = TRUE}) the result is then processed by
+\code{\link[=clean_infosiga]{clean_infosiga()}}: ordinal columns (\code{dia_da_semana}, \code{turno},
+\code{gravidade_lesao}, the age bands) become \strong{ordered factors}, the
+\code{"NAO DISPONIVEL"} ("not available") marker becomes \code{NA}, and impossible
+\code{latitude}/\code{longitude} values are dropped to \code{NA}. Pass \code{clean = FALSE} to
+obtain the raw data exactly as published, with every text column kept as a
+character vector and \code{"NAO DISPONIVEL"} preserved verbatim.
 
-Empty fields are read as \code{NA}. Note that many categorical columns instead
-use the literal value \code{"NAO DISPONIVEL"} ("not available") to flag missing
-information; these are preserved as-is so the imported data matches the
-source. The crash-type flag columns (\verb{tp_sinistro_*}) hold \code{"S"} when the
+A small fraction of rows in the source contain data-quality issues (for
+example, an unescaped \verb{;} inside a street name, or mis-encoded coordinates).
+Any value that cannot be parsed to its declared column type is set to \code{NA}
+and recorded by \code{\link[readr:problems]{readr::problems()}}. In both modes, empty fields are read as
+\code{NA}, and the crash-type flag columns (\verb{tp_sinistro_*}) hold \code{"S"} when the
 flag applies and \code{NA} otherwise.
 }
 \examples{
 \dontrun{
-# Import all crash events (downloads the archive on first use)
+# Import all crash events, processed (downloads the archive on first use)
 sinistros <- read_infosiga("sinistros")
+levels(sinistros$dia_da_semana)
 
 # Only victims from 2022 and 2023
 vitimas <- read_infosiga("pessoas", year = 2022:2023)
+
+# The raw data, exactly as published
+raw <- read_infosiga("sinistros", clean = FALSE)
 }
 
 # A bundled sample (no download required) illustrates the structure:

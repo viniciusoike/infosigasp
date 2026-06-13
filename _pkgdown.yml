@@ -16,6 +16,7 @@ reference:
   desc: Download and read the INFOSIGA-SP datasets.
   contents:
   - read_infosiga
+  - clean_infosiga
   - infosiga_datasets
 - title: Downloads and cache
   desc: Fetch the source archive and manage the local cache.

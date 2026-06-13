@@ -10,6 +10,11 @@
 #'     \item{`"pessoas"`}{Victims / people involved (one row per person).}
 #'     \item{`"veiculos"`}{Vehicles involved (one row per vehicle).}
 #'   }
+#' @param clean Logical. If `TRUE` (default), return a processed dataset:
+#'   ordinal columns become ordered factors, the `"NAO DISPONIVEL"` marker
+#'   becomes `NA`, and impossible coordinates are dropped (see
+#'   [clean_infosiga()] for the full list of steps). If `FALSE`, return the raw
+#'   data exactly as published, with all text columns as character vectors.
 #' @param year Optional integer vector used to filter rows by year of the
 #'   crash (`ano_sinistro`). If `NULL` (default), all available years are
 #'   returned. For example, `year = 2020:2023`.
@@ -33,17 +38,19 @@
 #' archive (2015-2021 and 2022 onward); they are read and row-bound
 #' transparently.
 #'
-#' The imported data follow the source as closely as possible and are not
-#' otherwise cleaned. A small fraction of rows in the source contain
-#' data-quality issues (for example, an unescaped `;` inside a street name, or
-#' mis-encoded `latitude`/`longitude` values); coordinates in particular should
-#' be sanity-checked before mapping. Any value that cannot be parsed to its
-#' declared column type is set to `NA` and recorded by [readr::problems()].
+#' By default (`clean = TRUE`) the result is then processed by
+#' [clean_infosiga()]: ordinal columns (`dia_da_semana`, `turno`,
+#' `gravidade_lesao`, the age bands) become **ordered factors**, the
+#' `"NAO DISPONIVEL"` ("not available") marker becomes `NA`, and impossible
+#' `latitude`/`longitude` values are dropped to `NA`. Pass `clean = FALSE` to
+#' obtain the raw data exactly as published, with every text column kept as a
+#' character vector and `"NAO DISPONIVEL"` preserved verbatim.
 #'
-#' Empty fields are read as `NA`. Note that many categorical columns instead
-#' use the literal value `"NAO DISPONIVEL"` ("not available") to flag missing
-#' information; these are preserved as-is so the imported data matches the
-#' source. The crash-type flag columns (`tp_sinistro_*`) hold `"S"` when the
+#' A small fraction of rows in the source contain data-quality issues (for
+#' example, an unescaped `;` inside a street name, or mis-encoded coordinates).
+#' Any value that cannot be parsed to its declared column type is set to `NA`
+#' and recorded by [readr::problems()]. In both modes, empty fields are read as
+#' `NA`, and the crash-type flag columns (`tp_sinistro_*`) hold `"S"` when the
 #' flag applies and `NA` otherwise.
 #'
 #' @seealso [infosiga_download()], [infosiga_cache_dir()],
@@ -51,11 +58,15 @@
 #'
 #' @examples
 #' \dontrun{
-#' # Import all crash events (downloads the archive on first use)
+#' # Import all crash events, processed (downloads the archive on first use)
 #' sinistros <- read_infosiga("sinistros")
+#' levels(sinistros$dia_da_semana)
 #'
 #' # Only victims from 2022 and 2023
 #' vitimas <- read_infosiga("pessoas", year = 2022:2023)
+#'
+#' # The raw data, exactly as published
+#' raw <- read_infosiga("sinistros", clean = FALSE)
 #' }
 #'
 #' # A bundled sample (no download required) illustrates the structure:
@@ -67,6 +78,7 @@
 #'
 #' @export
 read_infosiga <- function(dataset = c("sinistros", "pessoas", "veiculos"),
+                          clean = TRUE,
                           year = NULL,
                           download_if_missing = TRUE,
                           quiet = FALSE,
@@ -140,9 +152,14 @@ read_infosiga <- function(dataset = c("sinistros", "pessoas", "veiculos"),
 
   out <- tibble::as_tibble(out)
 
+  if (isTRUE(clean)) {
+    out <- clean_infosiga(out, dataset)
+  }
+
   if (!quiet) {
+    mode <- if (isTRUE(clean)) "processed" else "raw"
     cli::cli_alert_success(
-      "Imported {nrow(out)} row{?s} and {ncol(out)} columns of {.val {dataset}}."
+      "Imported {nrow(out)} row{?s} and {ncol(out)} columns of {mode} {.val {dataset}}."
     )
   }
   out
