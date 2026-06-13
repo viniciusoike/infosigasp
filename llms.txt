@@ -1,0 +1,142 @@
+# infosigasp
+
+`infosigasp` provides a clean, programmatic interface to the open data
+published by **INFOSIGA-SP**, the São Paulo State Traffic Accident
+Information and Management System maintained by **DETRAN-SP** (the São
+Paulo State Department of Motor Vehicles).
+
+The package downloads the official data archive, handles its quirks
+(Latin-1 encoding, semicolon separators, comma decimal marks,
+`DD/MM/YYYY` dates) and returns tidy tibbles ready for analysis. It
+covers every traffic crash recorded in the state of São Paulo from
+**2015 onward**.
+
+## Installation
+
+You can install the development version from GitHub with:
+
+``` r
+
+# install.packages("pak")
+pak::pak("viniciusoike/infosigasp")
+```
+
+## Datasets
+
+INFOSIGA-SP publishes three linked datasets:
+
+``` r
+
+library(infosigasp)
+infosiga_datasets()
+#> # A tibble: 3 x 4
+#>   dataset   description                                              grain keys 
+#>   <chr>     <chr>                                                    <chr> <chr>
+#> 1 sinistros Traffic crash events recorded in the state of Sao Paulo. one ~ id_s~
+#> 2 pessoas   People (victims) involved in traffic crashes.            one ~ id_p~
+#> 3 veiculos  Vehicles involved in traffic crashes.                    one ~ id_v~
+```
+
+The datasets can be joined through `id_sinistro` (and `id_veiculo`,
+where present).
+
+## Usage
+
+The first call downloads the source archive (~120 MB) into a local
+cache; later calls read straight from disk.
+
+``` r
+
+library(infosigasp)
+
+# Crash events (one row per event)
+sinistros <- read_infosiga("sinistros")
+
+# Victims, restricted to recent years
+vitimas <- read_infosiga("pessoas", year = 2022:2025)
+
+# Vehicles involved
+veiculos <- read_infosiga("veiculos")
+```
+
+### Managing the cache
+
+``` r
+
+infosiga_cache_dir()      # where files are stored
+infosiga_cache_list()     # what is currently cached
+infosiga_download(overwrite = TRUE)  # force a refresh after a monthly update
+infosiga_cache_clear()    # delete cached files
+```
+
+### Data dictionary
+
+The official field-by-field documentation (PDF, in Portuguese) can be
+fetched with:
+
+``` r
+
+infosiga_dictionary()
+```
+
+## Example
+
+A small fatality summary by year, using the victims dataset:
+
+``` r
+
+library(dplyr)
+
+read_infosiga("pessoas") |>
+  filter(gravidade_lesao == "FATAL") |>
+  count(ano_obito, name = "deaths") |>
+  arrange(ano_obito)
+```
+
+## Data source and licence
+
+Data are published by DETRAN-SP under a [Creative Commons Attribution
+4.0](https://creativecommons.org/licenses/by/4.0/) licence at
+<https://infosiga.detran.sp.gov.br/>. When using the data, please cite
+INFOSIGA-SP / DETRAN-SP as the source.
+
+This package is released under the MIT licence and is **not** affiliated
+with or endorsed by DETRAN-SP or the Government of the State of São
+Paulo.
+
+# Package index
+
+## Import data
+
+Download and read the INFOSIGA-SP datasets.
+
+- [`read_infosiga()`](https://viniciusoike.github.io/infosigasp/reference/read_infosiga.md)
+  : Import an INFOSIGA-SP dataset
+- [`infosiga_datasets()`](https://viniciusoike.github.io/infosigasp/reference/infosiga_datasets.md)
+  : List the available INFOSIGA-SP datasets
+
+## Downloads and cache
+
+Fetch the source archive and manage the local cache.
+
+- [`infosiga_download()`](https://viniciusoike.github.io/infosigasp/reference/infosiga_download.md)
+  : Download the INFOSIGA-SP source archive
+- [`infosiga_cache_dir()`](https://viniciusoike.github.io/infosigasp/reference/infosiga_cache.md)
+  [`infosiga_cache_list()`](https://viniciusoike.github.io/infosigasp/reference/infosiga_cache.md)
+  [`infosiga_cache_clear()`](https://viniciusoike.github.io/infosigasp/reference/infosiga_cache.md)
+  : Manage the infosigasp on-disk cache
+- [`infosiga_dictionary()`](https://viniciusoike.github.io/infosigasp/reference/infosiga_dictionary.md)
+  : Download the INFOSIGA-SP data dictionary
+
+## Package
+
+- [`infosigasp`](https://viniciusoike.github.io/infosigasp/reference/infosigasp-package.md)
+  [`infosigasp-package`](https://viniciusoike.github.io/infosigasp/reference/infosigasp-package.md)
+  : infosigasp: Download and Import Traffic Crash Data from INFOSIGA-SP
+
+# Articles
+
+### Articles
+
+- [Getting started with
+  infosigasp](https://viniciusoike.github.io/infosigasp/articles/infosigasp.md):
