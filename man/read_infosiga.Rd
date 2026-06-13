@@ -62,8 +62,9 @@ transparently.
 By default (\code{clean = TRUE}) the result is then processed by
 \code{\link[=clean_infosiga]{clean_infosiga()}}: ordinal columns (\code{dia_da_semana}, \code{turno},
 \code{gravidade_lesao}, the age bands) become \strong{ordered factors}, the
-\code{"NAO DISPONIVEL"} ("not available") marker becomes \code{NA}, and impossible
-\code{latitude}/\code{longitude} values are dropped to \code{NA}. Pass \code{clean = FALSE} to
+\code{"NAO DISPONIVEL"} ("not available") marker becomes \code{NA}, and
+\code{latitude}/\code{longitude} values outside the bounding box of Sao Paulo state
+are dropped to \code{NA}. Pass \code{clean = FALSE} to
 obtain the raw data exactly as published, with every text column kept as a
 character vector and \code{"NAO DISPONIVEL"} preserved verbatim.
 

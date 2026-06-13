@@ -43,14 +43,24 @@ test_that("clean = FALSE returns raw character columns", {
   expect_type(raw$turno, "character")
 })
 
-test_that("impossible coordinates are dropped when cleaning", {
+test_that("coordinates outside the Sao Paulo bounding box are dropped", {
   raw <- tibble::tibble(
-    latitude = c(-23.5, -234526, NA),
-    longitude = c(-46.6, 236392064, -46.6)
+    latitude  = c(-23.5,    -234526,    0,  -23.5,  10.0),
+    longitude = c(-46.6, 236392064,     0,    0.0, 10.0),
+    descricao = c("valid SP", "corrupt", "null island",
+                  "half-valid", "outside SP")
   )
   cleaned <- clean_infosiga(raw, "sinistros")
-  expect_equal(cleaned$latitude, c(-23.5, NA, NA))
-  expect_equal(cleaned$longitude, c(-46.6, NA, -46.6))
+  # Only the genuine Sao Paulo point survives; everything else -> NA in pairs.
+  expect_equal(cleaned$latitude,  c(-23.5, NA, NA, NA, NA))
+  expect_equal(cleaned$longitude, c(-46.6, NA, NA, NA, NA))
+})
+
+test_that("a valid coordinate paired with a bad one is dropped pairwise", {
+  raw <- tibble::tibble(latitude = -23.5, longitude = 999)
+  cleaned <- clean_infosiga(raw, "sinistros")
+  expect_true(is.na(cleaned$latitude))
+  expect_true(is.na(cleaned$longitude))
 })
 
 test_that("clean_infosiga is idempotent on already-clean data", {

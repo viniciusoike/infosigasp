@@ -25,6 +25,12 @@
   )
 )
 
+# Bounding box of the state of Sao Paulo, with a small margin so genuine
+# near-border crashes are kept. The state spans roughly latitude -25.4..-19.8
+# and longitude -53.1..-44.2; coordinates outside this box (mis-encoded values
+# and "null island" 0,0 placeholders) are treated as errors.
+.sp_bbox <- list(lat = c(-25.6, -19.5), lon = c(-53.3, -44.0))
+
 #' Clean and process an INFOSIGA-SP dataset
 #'
 #' Applies the standard processing that [read_infosiga()] performs by default
@@ -59,9 +65,10 @@
 #'       \item `faixa_etaria_demografica`, `faixa_etaria_legal` (in `pessoas`):
 #'         age bands in increasing order.
 #'     }
-#'   \item In `sinistros`, `latitude` and `longitude` values that fall outside
-#'     the valid geographic range (a small number of mis-encoded source
-#'     records) are set to `NA`.
+#'   \item In `sinistros`, `latitude`/`longitude` are validated as a pair
+#'     against the bounding box of the state of Sao Paulo. Points outside the
+#'     box -- mis-encoded values and `(0, 0)` placeholders -- have both
+#'     coordinates set to `NA` (about 7% of records).
 #' }
 #'
 #' Nominal text columns (such as `municipio`, `tipo_via` or `sexo`) are left as
@@ -101,14 +108,18 @@ clean_infosiga <- function(data, dataset = c("sinistros", "pessoas", "veiculos")
     }
   }
 
-  # 3. Coordinates outside the valid geographic range are data errors.
-  if ("latitude" %in% names(data)) {
-    bad <- !is.na(data$latitude) & abs(data$latitude) > 90
-    data$latitude[bad] <- NA_real_
-  }
-  if ("longitude" %in% names(data)) {
-    bad <- !is.na(data$longitude) & abs(data$longitude) > 180
-    data$longitude[bad] <- NA_real_
+  # 3. Coordinates are validated as a pair against the Sao Paulo bounding box.
+  #    A point is kept only if both latitude and longitude are present and
+  #    inside the box; otherwise both are set to NA. This drops mis-encoded
+  #    values and "null island" (0, 0) placeholders.
+  if (all(c("latitude", "longitude") %in% names(data))) {
+    lat <- data$latitude
+    lon <- data$longitude
+    valid <- !is.na(lat) & !is.na(lon) &
+      lat >= .sp_bbox$lat[1] & lat <= .sp_bbox$lat[2] &
+      lon >= .sp_bbox$lon[1] & lon <= .sp_bbox$lon[2]
+    data$latitude[!valid] <- NA_real_
+    data$longitude[!valid] <- NA_real_
   }
 
   tibble::as_tibble(data)
