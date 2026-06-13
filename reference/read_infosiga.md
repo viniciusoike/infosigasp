@@ -88,7 +88,8 @@ By default (`clean = TRUE`) the result is then processed by
 [`clean_infosiga()`](https://viniciusoike.github.io/infosigasp/reference/clean_infosiga.md):
 ordinal columns (`dia_da_semana`, `turno`, `gravidade_lesao`, the age
 bands) become **ordered factors**, the `"NAO DISPONIVEL"` ("not
-available") marker becomes `NA`, and `latitude`/`longitude` values
+available") marker becomes `NA`, the `ano_mes_*` year-month strings are
+parsed to first-of-month `Date`s, and `latitude`/`longitude` values
 outside the bounding box of Sao Paulo state are dropped to `NA`. Pass
 `clean = FALSE` to obtain the raw data exactly as published, with every
 text column kept as a character vector and `"NAO DISPONIVEL"` preserved

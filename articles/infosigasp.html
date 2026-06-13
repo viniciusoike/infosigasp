@@ -141,8 +141,10 @@ once.</p>
 <strong>processed</strong> dataset (<code>clean = TRUE</code>). The
 processing is light and lossless in spirit:</p>
 <ul>
-<li>dates are parsed to <code>Date</code> and times to <code>hms</code>
-(this happens in both modes);</li>
+<li>full dates are parsed to <code>Date</code> and times to
+<code>hms</code> (in both modes), and the <code>ano_mes_*</code>
+year-month columns (published as <code>"YYYY/MM"</code>) become
+first-of-month <code>Date</code> values;</li>
 <li>the <code>"NAO DISPONIVEL"</code> (“not available”) marker is
 replaced by <code>NA</code>;</li>
 <li>ordinal columns become <strong>ordered factors</strong>, so they

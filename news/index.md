@@ -10,9 +10,10 @@
 - [`read_infosiga()`](https://viniciusoike.github.io/infosigasp/reference/read_infosiga.md)
   returns a processed dataset by default (`clean = TRUE`): ordinal
   columns (`dia_da_semana`, `turno`, `gravidade_lesao`, age bands)
-  become ordered factors, `"NAO DISPONIVEL"` becomes `NA`, and
-  impossible coordinates are dropped. Use `clean = FALSE` for the raw
-  data as published, or
+  become ordered factors, `"NAO DISPONIVEL"` becomes `NA`, the
+  `ano_mes_*` year-month columns are parsed to first-of-month `Date`s,
+  and coordinates outside the São Paulo state bounding box are dropped.
+  Use `clean = FALSE` for the raw data as published, or
   [`clean_infosiga()`](https://viniciusoike.github.io/infosigasp/reference/clean_infosiga.md)
   to process a raw import afterwards.
 - [`infosiga_download()`](https://viniciusoike.github.io/infosigasp/reference/infosiga_download.md)

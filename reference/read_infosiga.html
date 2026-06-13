@@ -120,7 +120,8 @@ transparently.</p>
 <p>By default (<code>clean = TRUE</code>) the result is then processed by
 <code><a href="clean_infosiga.html">clean_infosiga()</a></code>: ordinal columns (<code>dia_da_semana</code>, <code>turno</code>,
 <code>gravidade_lesao</code>, the age bands) become <strong>ordered factors</strong>, the
-<code>"NAO DISPONIVEL"</code> ("not available") marker becomes <code>NA</code>, and
+<code>"NAO DISPONIVEL"</code> ("not available") marker becomes <code>NA</code>, the <code>ano_mes_*</code>
+year-month strings are parsed to first-of-month <code>Date</code>s, and
 <code>latitude</code>/<code>longitude</code> values outside the bounding box of Sao Paulo state
 are dropped to <code>NA</code>. Pass <code>clean = FALSE</code> to
 obtain the raw data exactly as published, with every text column kept as a

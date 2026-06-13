@@ -80,8 +80,9 @@ By default
 returns a **processed** dataset (`clean = TRUE`). The processing is
 light and lossless in spirit:
 
-- dates are parsed to `Date` and times to `hms` (this happens in both
-  modes);
+- full dates are parsed to `Date` and times to `hms` (in both modes),
+  and the `ano_mes_*` year-month columns (published as `"YYYY/MM"`)
+  become first-of-month `Date` values;
 - the `"NAO DISPONIVEL"` (“not available”) marker is replaced by `NA`;
 - ordinal columns become **ordered factors**, so they sort and plot in
   their natural order instead of alphabetically:

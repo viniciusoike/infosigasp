@@ -83,6 +83,8 @@ starts on Sunday).</p></li>
 <li><p><code>faixa_etaria_demografica</code>, <code>faixa_etaria_legal</code> (in <code>pessoas</code>):
 age bands in increasing order.</p></li>
 </ul></li>
+<li><p>Year-month columns (<code>ano_mes_sinistro</code>, <code>ano_mes_obito</code>), published
+as <code>"YYYY/MM"</code> strings, are parsed to first-of-month <code>Date</code> values.</p></li>
 <li><p>In <code>sinistros</code>, <code>latitude</code>/<code>longitude</code> are validated as a pair
 against the bounding box of the state of Sao Paulo. Points outside the
 box – mis-encoded values and <code>(0, 0)</code> placeholders – have both

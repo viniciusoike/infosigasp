@@ -63,11 +63,12 @@ veiculos <- read_infosiga("veiculos")
 
 By default
 [`read_infosiga()`](https://viniciusoike.github.io/infosigasp/reference/read_infosiga.md)
-returns a **processed** dataset. Dates are parsed to `Date`, the
-`"NAO DISPONIVEL"` (“not available”) marker becomes `NA`, impossible
-coordinates are dropped, and the ordinal columns become **ordered
-factors** so they sort and plot in their natural order rather than
-alphabetically:
+returns a **processed** dataset. Dates are parsed to `Date` (including
+the `ano_mes_*` year-month columns, as first-of-month dates), the
+`"NAO DISPONIVEL"` (“not available”) marker becomes `NA`, coordinates
+outside São Paulo state are dropped, and the ordinal columns become
+**ordered factors** so they sort and plot in their natural order rather
+than alphabetically:
 
 ``` r
 
