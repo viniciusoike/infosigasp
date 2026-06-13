@@ -104,9 +104,24 @@
 <span><span class="co"># Vehicles involved</span></span>
 <span><span class="va">veiculos</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/read_infosiga.html">read_infosiga</a></span><span class="op">(</span><span class="st">"veiculos"</span><span class="op">)</span></span></code></pre></div>
 <div class="section level3">
+<h3 id="processed-by-default-raw-on-demand">Processed by default, raw on demand<a class="anchor" aria-label="anchor" href="#processed-by-default-raw-on-demand"></a>
+</h3>
+<p>By default <code><a href="reference/read_infosiga.html">read_infosiga()</a></code> returns a <strong>processed</strong> dataset. Dates are parsed to <code>Date</code>, the <code>"NAO DISPONIVEL"</code> (“not available”) marker becomes <code>NA</code>, impossible coordinates are dropped, and the ordinal columns become <strong>ordered factors</strong> so they sort and plot in their natural order rather than alphabetically:</p>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/levels.html" class="external-link">levels</a></span><span class="op">(</span><span class="va">sinistros</span><span class="op">$</span><span class="va">dia_da_semana</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] "Domingo"       "Segunda-feira" "Terça-feira"   "Quarta-feira"</span></span>
+<span><span class="co">#&gt; [5] "Quinta-feira"  "Sexta-feira"   "Sábado"</span></span>
+<span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/levels.html" class="external-link">levels</a></span><span class="op">(</span><span class="va">vitimas</span><span class="op">$</span><span class="va">gravidade_lesao</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] "LEVE"  "GRAVE" "FATAL"</span></span></code></pre></div>
+<p>Pass <code>clean = FALSE</code> to get the data exactly as published (every text column as a character vector, markers preserved). You can also process a raw import later with <code><a href="reference/clean_infosiga.html">clean_infosiga()</a></code>.</p>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">raw</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/read_infosiga.html">read_infosiga</a></span><span class="op">(</span><span class="st">"sinistros"</span>, clean <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
+</div>
+<div class="section level3">
 <h3 id="managing-the-cache">Managing the cache<a class="anchor" aria-label="anchor" href="#managing-the-cache"></a>
 </h3>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="reference/infosiga_cache.html">infosiga_cache_dir</a></span><span class="op">(</span><span class="op">)</span>      <span class="co"># where files are stored</span></span>
 <span><span class="fu"><a href="reference/infosiga_cache.html">infosiga_cache_list</a></span><span class="op">(</span><span class="op">)</span>     <span class="co"># what is currently cached</span></span>
 <span><span class="fu"><a href="reference/infosiga_download.html">infosiga_download</a></span><span class="op">(</span>overwrite <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>  <span class="co"># force a refresh after a monthly update</span></span>
@@ -116,7 +131,7 @@
 <h3 id="data-dictionary">Data dictionary<a class="anchor" aria-label="anchor" href="#data-dictionary"></a>
 </h3>
 <p>The official field-by-field documentation (PDF, in Portuguese) can be fetched with:</p>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="reference/infosiga_dictionary.html">infosiga_dictionary</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 </div>
 </div>
@@ -124,7 +139,7 @@
 <h2 id="example">Example<a class="anchor" aria-label="anchor" href="#example"></a>
 </h2>
 <p>A small fatality summary by year, using the victims dataset:</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://dplyr.tidyverse.org" class="external-link">dplyr</a></span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="reference/read_infosiga.html">read_infosiga</a></span><span class="op">(</span><span class="st">"pessoas"</span><span class="op">)</span> <span class="op">|&gt;</span></span>

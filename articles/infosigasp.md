@@ -73,6 +73,59 @@ which filters on the year of the crash (`ano_sinistro`):
 recent <- read_infosiga("sinistros", year = 2022:2025)
 ```
 
+### Processed vs. raw data
+
+By default
+[`read_infosiga()`](https://viniciusoike.github.io/infosigasp/reference/read_infosiga.md)
+returns a **processed** dataset (`clean = TRUE`). The processing is
+light and lossless in spirit:
+
+- dates are parsed to `Date` and times to `hms` (this happens in both
+  modes);
+- the `"NAO DISPONIVEL"` (“not available”) marker is replaced by `NA`;
+- ordinal columns become **ordered factors**, so they sort and plot in
+  their natural order instead of alphabetically:
+  - `dia_da_semana`: `Domingo` \< … \< `Sábado` (the Brazilian week
+    starts on Sunday);
+  - `turno`: `MADRUGADA` \< `MANHA` \< `TARDE` \< `NOITE`;
+  - `gravidade_lesao` (victims): `LEVE` \< `GRAVE` \< `FATAL`;
+  - `faixa_etaria_demografica` / `faixa_etaria_legal`: age bands in
+    order;
+- `latitude`/`longitude` values outside the valid geographic range (a
+  few mis-encoded source records) are set to `NA`.
+
+``` r
+
+sinistros <- read_infosiga("sinistros")
+levels(sinistros$dia_da_semana)
+```
+
+Because `dia_da_semana` is an ordered factor, a weekday tabulation comes
+out in calendar order rather than alphabetically:
+
+``` r
+
+table(sinistros$dia_da_semana)
+```
+
+If you would rather have the data exactly as published — every text
+column as a character vector, with `"NAO DISPONIVEL"` preserved — pass
+`clean = FALSE`:
+
+``` r
+
+raw <- read_infosiga("sinistros", clean = FALSE)
+```
+
+You can also apply the same processing to a raw import after the fact
+with
+[`clean_infosiga()`](https://viniciusoike.github.io/infosigasp/reference/clean_infosiga.md):
+
+``` r
+
+processed <- clean_infosiga(raw, "sinistros")
+```
+
 ### A peek at the structure without downloading
 
 The package ships a small sample of each dataset so you can inspect the

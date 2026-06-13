@@ -6,6 +6,8 @@ Download and read the INFOSIGA-SP datasets.
 
 - [`read_infosiga()`](https://viniciusoike.github.io/infosigasp/reference/read_infosiga.md)
   : Import an INFOSIGA-SP dataset
+- [`clean_infosiga()`](https://viniciusoike.github.io/infosigasp/reference/clean_infosiga.md)
+  : Clean and process an INFOSIGA-SP dataset
 - [`infosiga_datasets()`](https://viniciusoike.github.io/infosigasp/reference/infosiga_datasets.md)
   : List the available INFOSIGA-SP datasets
 

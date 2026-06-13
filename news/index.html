@@ -38,6 +38,8 @@
 <li>
 <code><a href="../reference/read_infosiga.html">read_infosiga()</a></code> downloads (with caching) and imports the three INFOSIGA-SP datasets (<code>sinistros</code>, <code>pessoas</code>, <code>veiculos</code>) as tidy tibbles, handling the source encoding, decimal marks and date formats.</li>
 <li>
+<code><a href="../reference/read_infosiga.html">read_infosiga()</a></code> returns a processed dataset by default (<code>clean = TRUE</code>): ordinal columns (<code>dia_da_semana</code>, <code>turno</code>, <code>gravidade_lesao</code>, age bands) become ordered factors, <code>"NAO DISPONIVEL"</code> becomes <code>NA</code>, and impossible coordinates are dropped. Use <code>clean = FALSE</code> for the raw data as published, or <code><a href="../reference/clean_infosiga.html">clean_infosiga()</a></code> to process a raw import afterwards.</li>
+<li>
 <code><a href="../reference/infosiga_download.html">infosiga_download()</a></code> pre-fetches the source archive into a local cache.</li>
 <li>
 <code><a href="../reference/infosiga_cache.html">infosiga_cache_dir()</a></code>, <code><a href="../reference/infosiga_cache.html">infosiga_cache_list()</a></code> and <code><a href="../reference/infosiga_cache.html">infosiga_cache_clear()</a></code> manage the on-disk cache.</li>

@@ -47,6 +47,7 @@ triggers a download and subsequent calls read from disk.</p>
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">read_infosiga</span><span class="op">(</span></span>
 <span>  dataset <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"sinistros"</span>, <span class="st">"pessoas"</span>, <span class="st">"veiculos"</span><span class="op">)</span>,</span>
+<span>  clean <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  year <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  download_if_missing <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  quiet <span class="op">=</span> <span class="cn">FALSE</span>,</span>
@@ -70,6 +71,14 @@ triggers a download and subsequent calls read from disk.</p>
 
 
 </dl></dd>
+
+
+<dt id="arg-clean">clean<a class="anchor" aria-label="anchor" href="#arg-clean"></a></dt>
+<dd><p>Logical. If <code>TRUE</code> (default), return a processed dataset:
+ordinal columns become ordered factors, the <code>"NAO DISPONIVEL"</code> marker
+becomes <code>NA</code>, and impossible coordinates are dropped (see
+<code><a href="clean_infosiga.html">clean_infosiga()</a></code> for the full list of steps). If <code>FALSE</code>, return the raw
+data exactly as published, with all text columns as character vectors.</p></dd>
 
 
 <dt id="arg-year">year<a class="anchor" aria-label="anchor" href="#arg-year"></a></dt>
@@ -108,16 +117,18 @@ handles all of these and returns UTF-8 text, <code>Date</code> columns and numer
 coordinates. Each dataset is distributed across two period files inside the
 archive (2015-2021 and 2022 onward); they are read and row-bound
 transparently.</p>
-<p>The imported data follow the source as closely as possible and are not
-otherwise cleaned. A small fraction of rows in the source contain
-data-quality issues (for example, an unescaped <code>;</code> inside a street name, or
-mis-encoded <code>latitude</code>/<code>longitude</code> values); coordinates in particular should
-be sanity-checked before mapping. Any value that cannot be parsed to its
-declared column type is set to <code>NA</code> and recorded by <code><a href="https://readr.tidyverse.org/reference/problems.html" class="external-link">readr::problems()</a></code>.</p>
-<p>Empty fields are read as <code>NA</code>. Note that many categorical columns instead
-use the literal value <code>"NAO DISPONIVEL"</code> ("not available") to flag missing
-information; these are preserved as-is so the imported data matches the
-source. The crash-type flag columns (<code>tp_sinistro_*</code>) hold <code>"S"</code> when the
+<p>By default (<code>clean = TRUE</code>) the result is then processed by
+<code><a href="clean_infosiga.html">clean_infosiga()</a></code>: ordinal columns (<code>dia_da_semana</code>, <code>turno</code>,
+<code>gravidade_lesao</code>, the age bands) become <strong>ordered factors</strong>, the
+<code>"NAO DISPONIVEL"</code> ("not available") marker becomes <code>NA</code>, and impossible
+<code>latitude</code>/<code>longitude</code> values are dropped to <code>NA</code>. Pass <code>clean = FALSE</code> to
+obtain the raw data exactly as published, with every text column kept as a
+character vector and <code>"NAO DISPONIVEL"</code> preserved verbatim.</p>
+<p>A small fraction of rows in the source contain data-quality issues (for
+example, an unescaped <code>;</code> inside a street name, or mis-encoded coordinates).
+Any value that cannot be parsed to its declared column type is set to <code>NA</code>
+and recorded by <code><a href="https://readr.tidyverse.org/reference/problems.html" class="external-link">readr::problems()</a></code>. In both modes, empty fields are read as
+<code>NA</code>, and the crash-type flag columns (<code>tp_sinistro_*</code>) hold <code>"S"</code> when the
 flag applies and <code>NA</code> otherwise.</p>
     </div>
     <div class="section level2">
@@ -129,11 +140,15 @@ flag applies and <code>NA</code> otherwise.</p>
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>
-<span class="r-in"><span><span class="co"># Import all crash events (downloads the archive on first use)</span></span></span>
+<span class="r-in"><span><span class="co"># Import all crash events, processed (downloads the archive on first use)</span></span></span>
 <span class="r-in"><span><span class="va">sinistros</span> <span class="op">&lt;-</span> <span class="fu">read_infosiga</span><span class="op">(</span><span class="st">"sinistros"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/levels.html" class="external-link">levels</a></span><span class="op">(</span><span class="va">sinistros</span><span class="op">$</span><span class="va">dia_da_semana</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Only victims from 2022 and 2023</span></span></span>
 <span class="r-in"><span><span class="va">vitimas</span> <span class="op">&lt;-</span> <span class="fu">read_infosiga</span><span class="op">(</span><span class="st">"pessoas"</span>, year <span class="op">=</span> <span class="fl">2022</span><span class="op">:</span><span class="fl">2023</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># The raw data, exactly as published</span></span></span>
+<span class="r-in"><span><span class="va">raw</span> <span class="op">&lt;-</span> <span class="fu">read_infosiga</span><span class="op">(</span><span class="st">"sinistros"</span>, clean <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># A bundled sample (no download required) illustrates the structure:</span></span></span>

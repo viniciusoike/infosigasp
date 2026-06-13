@@ -135,11 +135,61 @@ once.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">recent</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/read_infosiga.html">read_infosiga</a></span><span class="op">(</span><span class="st">"sinistros"</span>, year <span class="op">=</span> <span class="fl">2022</span><span class="op">:</span><span class="fl">2025</span><span class="op">)</span></span></code></pre></div>
 <div class="section level3">
+<h3 id="processed-vs--raw-data">Processed vs. raw data<a class="anchor" aria-label="anchor" href="#processed-vs--raw-data"></a>
+</h3>
+<p>By default <code><a href="../reference/read_infosiga.html">read_infosiga()</a></code> returns a
+<strong>processed</strong> dataset (<code>clean = TRUE</code>). The
+processing is light and lossless in spirit:</p>
+<ul>
+<li>dates are parsed to <code>Date</code> and times to <code>hms</code>
+(this happens in both modes);</li>
+<li>the <code>"NAO DISPONIVEL"</code> (“not available”) marker is
+replaced by <code>NA</code>;</li>
+<li>ordinal columns become <strong>ordered factors</strong>, so they
+sort and plot in their natural order instead of alphabetically:
+<ul>
+<li>
+<code>dia_da_semana</code>: <code>Domingo</code> &lt; … &lt;
+<code>Sábado</code> (the Brazilian week starts on Sunday);</li>
+<li>
+<code>turno</code>: <code>MADRUGADA</code> &lt; <code>MANHA</code>
+&lt; <code>TARDE</code> &lt; <code>NOITE</code>;</li>
+<li>
+<code>gravidade_lesao</code> (victims): <code>LEVE</code> &lt;
+<code>GRAVE</code> &lt; <code>FATAL</code>;</li>
+<li>
+<code>faixa_etaria_demografica</code> /
+<code>faixa_etaria_legal</code>: age bands in order;</li>
+</ul>
+</li>
+<li>
+<code>latitude</code>/<code>longitude</code> values outside the
+valid geographic range (a few mis-encoded source records) are set to
+<code>NA</code>.</li>
+</ul>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">sinistros</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/read_infosiga.html">read_infosiga</a></span><span class="op">(</span><span class="st">"sinistros"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/levels.html" class="external-link">levels</a></span><span class="op">(</span><span class="va">sinistros</span><span class="op">$</span><span class="va">dia_da_semana</span><span class="op">)</span></span></code></pre></div>
+<p>Because <code>dia_da_semana</code> is an ordered factor, a weekday
+tabulation comes out in calendar order rather than alphabetically:</p>
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/table.html" class="external-link">table</a></span><span class="op">(</span><span class="va">sinistros</span><span class="op">$</span><span class="va">dia_da_semana</span><span class="op">)</span></span></code></pre></div>
+<p>If you would rather have the data exactly as published — every text
+column as a character vector, with <code>"NAO DISPONIVEL"</code>
+preserved — pass <code>clean = FALSE</code>:</p>
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">raw</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/read_infosiga.html">read_infosiga</a></span><span class="op">(</span><span class="st">"sinistros"</span>, clean <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
+<p>You can also apply the same processing to a raw import after the fact
+with <code><a href="../reference/clean_infosiga.html">clean_infosiga()</a></code>:</p>
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">processed</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/clean_infosiga.html">clean_infosiga</a></span><span class="op">(</span><span class="va">raw</span>, <span class="st">"sinistros"</span><span class="op">)</span></span></code></pre></div>
+</div>
+<div class="section level3">
 <h3 id="a-peek-at-the-structure-without-downloading">A peek at the structure without downloading<a class="anchor" aria-label="anchor" href="#a-peek-at-the-structure-without-downloading"></a>
 </h3>
 <p>The package ships a small sample of each dataset so you can inspect
 the columns without any network access:</p>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">sample_path</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>, <span class="st">"sinistros_sample.csv"</span>, package <span class="op">=</span> <span class="st">"infosigasp"</span><span class="op">)</span></span>
 <span><span class="va">sample</span> <span class="op">&lt;-</span> <span class="fu">readr</span><span class="fu">::</span><span class="fu"><a href="https://readr.tidyverse.org/reference/read_delim.html" class="external-link">read_delim</a></span><span class="op">(</span></span>
 <span>  <span class="va">sample_path</span>,</span>
@@ -181,7 +231,7 @@ the columns without any network access:</p>
 <p>Once imported, the data are ordinary tibbles, so any tidyverse (or
 base R) workflow applies. For example, counting traffic fatalities per
 year from the victims dataset:</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://dplyr.tidyverse.org" class="external-link">dplyr</a></span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">deaths_by_year</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/read_infosiga.html">read_infosiga</a></span><span class="op">(</span><span class="st">"pessoas"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
@@ -192,7 +242,7 @@ year from the victims dataset:</p>
 <span><span class="va">deaths_by_year</span></span></code></pre></div>
 <p>Or fatalities broken down by the type of victim (driver, passenger,
 pedestrian):</p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/read_infosiga.html">read_infosiga</a></span><span class="op">(</span><span class="st">"pessoas"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">gravidade_lesao</span> <span class="op">==</span> <span class="st">"FATAL"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/count.html" class="external-link">count</a></span><span class="op">(</span><span class="va">tipo_de_vitima</span>, sort <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
@@ -205,22 +255,22 @@ municipality (<code>municipio</code> / <code>cod_ibge</code>).</p>
 </h2>
 <p>The download lives in an operating-system specific cache
 directory:</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/infosiga_cache.html">infosiga_cache_dir</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] "/home/runner/.cache/R/infosigasp"</span></span>
 <span><span class="fu"><a href="../reference/infosiga_cache.html">infosiga_cache_list</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="co">#&gt; character(0)</span></span></code></pre></div>
 <p>The archive is refreshed monthly by DETRAN-SP. To pull the latest
 version, force a re-download:</p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/infosiga_download.html">infosiga_download</a></span><span class="op">(</span>overwrite <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
 <p>To reclaim disk space, clear the cache:</p>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/infosiga_cache.html">infosiga_cache_clear</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 <p>You can point the cache somewhere else for a session (or permanently
 via your <code>.Rprofile</code>) with the
 <code>infosigasp.cache_dir</code> option:</p>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">options</a></span><span class="op">(</span>infosigasp.cache_dir <span class="op">=</span> <span class="st">"~/data/infosiga"</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
@@ -229,7 +279,7 @@ via your <code>.Rprofile</code>) with the
 <p>INFOSIGA-SP distributes a field-by-field data dictionary (PDF, in
 Portuguese). <code><a href="../reference/infosiga_dictionary.html">infosiga_dictionary()</a></code> downloads it and returns
 the paths to the extracted files:</p>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">pdfs</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/infosiga_dictionary.html">infosiga_dictionary</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/basename.html" class="external-link">basename</a></span><span class="op">(</span><span class="va">pdfs</span><span class="op">)</span></span></code></pre></div>
 </div>
