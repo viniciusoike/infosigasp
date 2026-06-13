@@ -55,9 +55,10 @@ The following steps are applied:
     - `faixa_etaria_demografica`, `faixa_etaria_legal` (in `pessoas`):
       age bands in increasing order.
 
-3.  In `sinistros`, `latitude` and `longitude` values that fall outside
-    the valid geographic range (a small number of mis-encoded source
-    records) are set to `NA`.
+3.  In `sinistros`, `latitude`/`longitude` are validated as a pair
+    against the bounding box of the state of Sao Paulo. Points outside
+    the box – mis-encoded values and `(0, 0)` placeholders – have both
+    coordinates set to `NA` (about 7% of records).
 
 Nominal text columns (such as `municipio`, `tipo_via` or `sexo`) are
 left as character vectors.

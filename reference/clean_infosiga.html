@@ -83,9 +83,10 @@ starts on Sunday).</p></li>
 <li><p><code>faixa_etaria_demografica</code>, <code>faixa_etaria_legal</code> (in <code>pessoas</code>):
 age bands in increasing order.</p></li>
 </ul></li>
-<li><p>In <code>sinistros</code>, <code>latitude</code> and <code>longitude</code> values that fall outside
-the valid geographic range (a small number of mis-encoded source
-records) are set to <code>NA</code>.</p></li>
+<li><p>In <code>sinistros</code>, <code>latitude</code>/<code>longitude</code> are validated as a pair
+against the bounding box of the state of Sao Paulo. Points outside the
+box – mis-encoded values and <code>(0, 0)</code> placeholders – have both
+coordinates set to <code>NA</code> (about 7% of records).</p></li>
 </ol><p>Nominal text columns (such as <code>municipio</code>, <code>tipo_via</code> or <code>sexo</code>) are left as
 character vectors.</p>
     </div>
