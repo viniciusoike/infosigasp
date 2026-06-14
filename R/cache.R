@@ -13,8 +13,10 @@
 #' through your `.Rprofile`.
 #'
 #' @return
-#' * `infosiga_cache_dir()` returns the cache directory path (a string),
-#'   creating it if necessary.
+#' * `infosiga_cache_dir()` returns the cache directory path (a string). It is
+#'   a pure accessor with no side effects: the directory itself is created
+#'   lazily the first time data is written (e.g. by [infosiga_download()]), so
+#'   the reported path may not yet exist.
 #' * `infosiga_cache_list()` returns a character vector of cached file paths
 #'   (possibly empty).
 #' * `infosiga_cache_clear()` invisibly returns the paths it removed.
@@ -32,10 +34,19 @@ NULL
 #' @rdname infosiga_cache
 #' @export
 infosiga_cache_dir <- function() {
-  dir <- getOption(
+  getOption(
     "infosigasp.cache_dir",
     tools::R_user_dir("infosigasp", which = "cache")
   )
+}
+
+# Return the cache directory, creating it if necessary. Kept separate from the
+# public accessor so that merely *querying* the cache location never touches
+# the filesystem -- this keeps examples, vignettes and reverse-dependency
+# checks from writing into the user's home space (CRAN policy). Only call this
+# from code paths that are about to write.
+.infosiga_ensure_cache_dir <- function() {
+  dir <- infosiga_cache_dir()
   if (!dir.exists(dir)) {
     dir.create(dir, recursive = TRUE, showWarnings = FALSE)
   }

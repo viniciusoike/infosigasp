@@ -20,8 +20,10 @@ delete without prompting (e.g. in scripts).}
 }
 \value{
 \itemize{
-\item \code{infosiga_cache_dir()} returns the cache directory path (a string),
-creating it if necessary.
+\item \code{infosiga_cache_dir()} returns the cache directory path (a string). It is
+a pure accessor with no side effects: the directory itself is created
+lazily the first time data is written (e.g. by \code{\link[=infosiga_download]{infosiga_download()}}), so
+the reported path may not yet exist.
 \item \code{infosiga_cache_list()} returns a character vector of cached file paths
 (possibly empty).
 \item \code{infosiga_cache_clear()} invisibly returns the paths it removed.

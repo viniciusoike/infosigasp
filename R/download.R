@@ -37,8 +37,7 @@
 infosiga_download <- function(overwrite = FALSE,
                               quiet = FALSE,
                               timeout = 3600) {
-  dir <- infosiga_cache_dir()
-  dest <- file.path(dir, .infosiga_zip_name)
+  dest <- file.path(infosiga_cache_dir(), .infosiga_zip_name)
 
   if (file.exists(dest) && !overwrite) {
     if (!quiet) {
@@ -78,7 +77,9 @@ infosiga_download <- function(overwrite = FALSE,
   }
 
   # Move into place atomically only after a successful, non-empty download so a
-  # failed refresh never corrupts an existing cached archive.
+  # failed refresh never corrupts an existing cached archive. The cache
+  # directory is created lazily here, at the first actual write.
+  .infosiga_ensure_cache_dir()
   file.copy(tmp, dest, overwrite = TRUE)
 
   if (!quiet) {
