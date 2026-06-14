@@ -7,7 +7,7 @@
 ## Citation
 
 Source:
-[`DESCRIPTION`](https://github.com/viniciusoike/infosigasp/blob/main/DESCRIPTION)
+[`DESCRIPTION`](https://github.com/viniciusoike/infosigasp/blob/data-2026-06/DESCRIPTION)
 
 Oike V (2026). *infosigasp: Download and Import Traffic Crash Data from
 INFOSIGA-SP*. R package version 0.1.0,
