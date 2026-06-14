@@ -23,17 +23,27 @@ Applies the standard processing that \code{\link[=read_infosiga]{read_infosiga()
 \code{clean = FALSE} (the raw version) and want to process it afterwards.
 }
 \details{
-The processing is deliberately light and lossless in spirit: it standardises
-missing values and assigns meaningful order to the ordinal columns, without
-renaming columns, recoding categories or dropping rows.
+The processing is deliberately light: it standardises missing values, fixes
+source formatting artefacts and assigns meaningful types to columns whose
+published representation is inconvenient (ordinal text, binary flags,
+year-month strings). It never renames columns, recodes category labels or
+drops rows, so the result stays a faithful, analysis-ready view of the
+source.
 
-The following steps are applied:
+The following steps are applied, in order. Every step is idempotent, so
+\code{clean_infosiga()} can be called again on an already-processed dataset
+without changing it.
 
 \enumerate{
-\item The literal \code{"NAO DISPONIVEL"} ("not available") marker is replaced
-by \code{NA} in every text column.
-\item Ordinal columns are converted to \strong{ordered factors} with their
-natural order:
+\item \strong{Whitespace.} Leading and trailing whitespace is trimmed from every
+text column. Some source fields are space-padded to a fixed width (for
+example \code{nacionalidade} is published as \code{"BRASILEIRA          "}); without
+trimming, comparisons, grouping and joins on those columns silently fail.
+\item \strong{Missing values.} The literal \code{"NAO DISPONIVEL"} ("not available")
+marker is replaced by \code{NA} in every text column. Trimming happens first
+so that space-padded markers are also caught.
+\item \strong{Ordered factors.} Ordinal columns are converted to \strong{ordered
+factors} with their natural order:
 \itemize{
 \item \code{dia_da_semana}: \code{Domingo} < ... < \code{Sabado} (the Brazilian week
 starts on Sunday).
@@ -42,16 +52,35 @@ starts on Sunday).
 \item \code{faixa_etaria_demografica}, \code{faixa_etaria_legal} (in \code{pessoas}):
 age bands in increasing order.
 }
-\item Year-month columns (\code{ano_mes_sinistro}, \code{ano_mes_obito}), published
-as \code{"YYYY/MM"} strings, are parsed to first-of-month \code{Date} values.
-\item In \code{sinistros}, \code{latitude}/\code{longitude} are validated as a pair
-against the bounding box of the state of Sao Paulo. Points outside the
-box -- mis-encoded values and \verb{(0, 0)} placeholders -- have both
-coordinates set to \code{NA} (about 7\% of records).
+\item \strong{Year-month dates.} Year-month columns (\code{ano_mes_sinistro},
+\code{ano_mes_obito}), published as \code{"YYYY/MM"} strings, are parsed to
+first-of-month \code{Date} values, matching the \code{Date} class already used for
+the full-date columns.
+\item \strong{Crash-type flags} (\code{sinistros}). The binary \verb{tp_sinistro_*}
+columns -- which mark whether a crash involved a given event type and are
+published as \code{"S"} (yes) or empty (no) -- become \strong{logical} (\code{TRUE} /
+\code{FALSE}). The categorical \code{tp_sinistro_primario} (the primary crash type,
+e.g. \code{"COLISAO"}) is \emph{not} a flag and is left as text.
+\item \strong{Days to death} (\code{pessoas}). \code{tempo_sinistro_obito}, the number of
+days between the crash and the victim's death (published as a numeric
+string), becomes \strong{integer}.
+\item \strong{Street numbers} (\code{sinistros}). \code{numero_logradouro} is kept as text
+(house numbers may contain letters), but a spurious trailing \code{".0"} from
+the source export (\code{"193.0"}) is stripped to \code{"193"}.
+\item \strong{Coordinates} (\code{sinistros}). \code{latitude}/\code{longitude} are validated as
+a pair against the bounding box of the state of Sao Paulo. Points outside
+the box -- mis-encoded values and \verb{(0, 0)} "null island" placeholders --
+have both coordinates set to \code{NA}. This affects roughly 7\% of records;
+no rows are dropped. Use \code{clean = FALSE} if you need the raw coordinates.
 }
 
 Nominal text columns (such as \code{municipio}, \code{tipo_via} or \code{sexo}) are left as
-character vectors.
+character vectors. Numeric columns that are already well typed -- notably
+\code{idade} (the victim's age, in \code{pessoas}) -- are passed through unchanged and
+are \emph{not} range-checked: missing ages are \code{NA}, and ages of \code{0} (infants)
+are kept. In the current upstream data \code{idade} ranges from 0 to about 102,
+but the package does not enforce any bound, so validate it yourself if your
+analysis is sensitive to outliers.
 }
 \examples{
 # Process the bundled raw sample

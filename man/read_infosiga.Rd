@@ -22,10 +22,11 @@ read_infosiga(
 }}
 
 \item{clean}{Logical. If \code{TRUE} (default), return a processed dataset:
-ordinal columns become ordered factors, the \code{"NAO DISPONIVEL"} marker
-becomes \code{NA}, and impossible coordinates are dropped (see
-\code{\link[=clean_infosiga]{clean_infosiga()}} for the full list of steps). If \code{FALSE}, return the raw
-data exactly as published, with all text columns as character vectors.}
+text is trimmed, the \code{"NAO DISPONIVEL"} marker becomes \code{NA}, ordinal
+columns become ordered factors, crash-type flags become logical, and
+impossible coordinates are dropped (see \code{\link[=clean_infosiga]{clean_infosiga()}} for the full
+list of steps). If \code{FALSE}, return the raw data exactly as published, with
+all text columns as character vectors.}
 
 \item{year}{Optional integer vector used to filter rows by year of the
 crash (\code{ano_sinistro}). If \code{NULL} (default), all available years are
@@ -60,21 +61,25 @@ archive (2015-2021 and 2022 onward); they are read and row-bound
 transparently.
 
 By default (\code{clean = TRUE}) the result is then processed by
-\code{\link[=clean_infosiga]{clean_infosiga()}}: ordinal columns (\code{dia_da_semana}, \code{turno},
-\code{gravidade_lesao}, the age bands) become \strong{ordered factors}, the
-\code{"NAO DISPONIVEL"} ("not available") marker becomes \code{NA}, the \verb{ano_mes_*}
-year-month strings are parsed to first-of-month \code{Date}s, and
+\code{\link[=clean_infosiga]{clean_infosiga()}}: text columns are whitespace-trimmed, the
+\code{"NAO DISPONIVEL"} ("not available") marker becomes \code{NA}, ordinal columns
+(\code{dia_da_semana}, \code{turno}, \code{gravidade_lesao}, the age bands) become
+\strong{ordered factors}, the \verb{ano_mes_*} year-month strings are parsed to
+first-of-month \code{Date}s, the binary \verb{tp_sinistro_*} crash-type flags become
+\strong{logical}, \code{tempo_sinistro_obito} becomes \strong{integer}, and
 \code{latitude}/\code{longitude} values outside the bounding box of Sao Paulo state
-are dropped to \code{NA}. Pass \code{clean = FALSE} to
-obtain the raw data exactly as published, with every text column kept as a
-character vector and \code{"NAO DISPONIVEL"} preserved verbatim.
+are dropped to \code{NA}. See \code{\link[=clean_infosiga]{clean_infosiga()}} for the complete, ordered list.
+Pass \code{clean = FALSE} to obtain the raw data exactly as published -- every
+text column kept as a character vector, with \code{"NAO DISPONIVEL"} and the
+source's fixed-width whitespace padding preserved verbatim.
 
 A small fraction of rows in the source contain data-quality issues (for
 example, an unescaped \verb{;} inside a street name, or mis-encoded coordinates).
 Any value that cannot be parsed to its declared column type is set to \code{NA}
-and recorded by \code{\link[readr:problems]{readr::problems()}}. In both modes, empty fields are read as
-\code{NA}, and the crash-type flag columns (\verb{tp_sinistro_*}) hold \code{"S"} when the
-flag applies and \code{NA} otherwise.
+and recorded by \code{\link[readr:problems]{readr::problems()}}. Empty fields are read as \code{NA} in both
+modes. In the raw data (\code{clean = FALSE}) the crash-type flag columns
+(\verb{tp_sinistro_*}) hold \code{"S"} when the flag applies and \code{NA} otherwise; with
+\code{clean = TRUE} they are converted to logical.
 }
 \examples{
 \dontrun{

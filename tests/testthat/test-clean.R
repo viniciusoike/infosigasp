@@ -42,6 +42,55 @@ test_that("clean = FALSE returns raw character columns", {
   expect_type(raw$dia_da_semana, "character")
   expect_type(raw$turno, "character")
   expect_type(raw$ano_mes_sinistro, "character")
+  expect_type(raw$tp_sinistro_atropelamento, "character")
+})
+
+test_that("clean trims whitespace and catches space-padded markers", {
+  raw <- tibble::tibble(
+    nacionalidade  = c("BRASILEIRA          ", "  HAITIANA", NA),
+    tipo_de_vitima = c("NAO DISPONIVEL   ", "PEDESTRE", "  NAO DISPONIVEL")
+  )
+  cleaned <- clean_infosiga(raw, "pessoas")
+  expect_identical(cleaned$nacionalidade, c("BRASILEIRA", "HAITIANA", NA))
+  # A space-padded marker must still map to NA.
+  expect_identical(cleaned$tipo_de_vitima, c(NA, "PEDESTRE", NA))
+})
+
+test_that("clean converts tp_sinistro_* flags to logical, keeping primario", {
+  local_infosiga_fixture()
+  sin <- read_infosiga("sinistros", quiet = TRUE)
+  expect_type(sin$tp_sinistro_atropelamento, "logical")
+  expect_type(sin$tp_sinistro_nao_disponivel, "logical")
+  expect_false(anyNA(sin$tp_sinistro_atropelamento))
+  # The primary-type column is categorical, not a flag.
+  expect_type(sin$tp_sinistro_primario, "character")
+
+  raw <- tibble::tibble(
+    tp_sinistro_primario     = c("COLISAO", "CHOQUE"),
+    tp_sinistro_atropelamento = c("S", NA),
+    tp_sinistro_choque        = c(NA, "S")
+  )
+  cleaned <- clean_infosiga(raw, "sinistros")
+  expect_identical(cleaned$tp_sinistro_atropelamento, c(TRUE, FALSE))
+  expect_identical(cleaned$tp_sinistro_choque, c(FALSE, TRUE))
+  expect_identical(cleaned$tp_sinistro_primario, c("COLISAO", "CHOQUE"))
+})
+
+test_that("clean converts tempo_sinistro_obito to integer", {
+  local_infosiga_fixture()
+  peo <- read_infosiga("pessoas", quiet = TRUE)
+  expect_type(peo$tempo_sinistro_obito, "integer")
+})
+
+test_that("clean strips the trailing '.0' artefact from house numbers", {
+  raw <- tibble::tibble(
+    numero_logradouro = c("193.0", "35.0", "123A", NA, "SN")
+  )
+  cleaned <- clean_infosiga(raw, "sinistros")
+  expect_identical(
+    cleaned$numero_logradouro,
+    c("193", "35", "123A", NA, "SN")
+  )
 })
 
 test_that("ano_mes_* strings become first-of-month Dates when cleaning", {
@@ -84,8 +133,9 @@ test_that("a valid coordinate paired with a bad one is dropped pairwise", {
 
 test_that("clean_infosiga is idempotent on already-clean data", {
   local_infosiga_fixture()
-  once <- read_infosiga("pessoas", quiet = TRUE)
-  twice <- clean_infosiga(once, "pessoas")
-  expect_identical(levels(once$gravidade_lesao), levels(twice$gravidade_lesao))
-  expect_identical(once$gravidade_lesao, twice$gravidade_lesao)
+  for (d in c("sinistros", "pessoas", "veiculos")) {
+    once <- read_infosiga(d, quiet = TRUE)
+    twice <- clean_infosiga(once, d)
+    expect_identical(once, twice, info = d)
+  }
 })
