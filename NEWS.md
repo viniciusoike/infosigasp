@@ -1,6 +1,8 @@
 # infosigasp 0.1.0
 
 * Initial release.
+* New package hex logo: the major road network of the São Paulo Metropolitan
+  Region in the INFOSIGA-SP dark blue (`data-raw/logo.R`).
 * `read_infosiga()` downloads (with caching) and imports the three INFOSIGA-SP
   datasets (`sinistros`, `pessoas`, `veiculos`) as tidy tibbles, handling the
   source encoding, decimal marks and date formats.
