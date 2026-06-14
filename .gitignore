@@ -10,3 +10,5 @@ inst/doc
 *.tar.gz
 *.Rcheck/
 .positai
+.Rprofile
+Rplots.pdf
