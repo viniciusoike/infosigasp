@@ -16,7 +16,14 @@
   coordinates outside the São Paulo state bounding box are dropped. Use
   `clean = FALSE` for the raw data as published, or `clean_infosiga()` to
   process a raw import afterwards.
-* `infosiga_download()` pre-fetches the source archive into a local cache.
+* `infosiga_download()` pre-fetches the source archive into a local cache. It
+  tries the official DETRAN-SP endpoint first and falls back to a GitHub-release
+  mirror if it is unavailable; additional mirrors can be supplied via the
+  `infosigasp.zip_url` option (a character vector tried in order).
+* `read_infosiga()` and `infosiga_download()` warn when a cached archive is
+  reused that is older than the `infosigasp.stale_days` option (30 days by
+  default; set to `Inf` to disable), since DETRAN-SP refreshes the data monthly
+  under the same file name.
 * `infosiga_cache_dir()`, `infosiga_cache_list()` and `infosiga_cache_clear()`
   manage the on-disk cache.
 * `infosiga_datasets()` lists the available datasets and their keys.

@@ -108,6 +108,10 @@ read_infosiga <- function(dataset = c("sinistros", "pessoas", "veiculos"),
       ))
     }
     zip_path <- infosiga_download(quiet = quiet, ...)
+  } else {
+    # Reusing an existing cache: warn if the archive looks out of date. A fresh
+    # download (the branch above) is never stale, so this only runs on a hit.
+    .infosiga_check_staleness(zip_path)
   }
 
   members <- .archive_members(zip_path, dataset)

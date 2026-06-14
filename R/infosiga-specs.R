@@ -1,10 +1,17 @@
 # Internal metadata: source URLs, dataset definitions and column specs ------
 
-# Base URL of the DETRAN-SP download endpoint.
+# Download URL(s) for the source archive. May be a character vector: the
+# entries are tried in order until one succeeds, so additional mirrors can be
+# supplied via the `infosigasp.zip_url` option. The default is the official
+# DETRAN-SP endpoint, followed by a GitHub-release mirror that serves a
+# point-in-time snapshot when the official portal is unavailable.
 .infosiga_zip_url <- function() {
   getOption(
     "infosigasp.zip_url",
-    "https://infosiga.detran.sp.gov.br/rest/painel/download/file/dados_infosiga.zip"
+    c(
+      "https://infosiga.detran.sp.gov.br/rest/painel/download/file/dados_infosiga.zip",
+      "https://github.com/viniciusoike/infosigasp/releases/download/data-2026-06/dados_infosiga.zip"
+    )
   )
 }
 
