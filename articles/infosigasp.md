@@ -77,23 +77,42 @@ recent <- read_infosiga("sinistros", year = 2022:2025)
 
 By default
 [`read_infosiga()`](https://viniciusoike.github.io/infosigasp/reference/read_infosiga.md)
-returns a **processed** dataset (`clean = TRUE`). The processing is
-light and lossless in spirit:
+returns a **processed** dataset (`clean = TRUE`). The processing never
+renames columns, recodes category labels or drops rows – it only fixes
+types and source artefacts so the data is ready for analysis. The full,
+ordered list of steps lives in
+[`?clean_infosiga`](https://viniciusoike.github.io/infosigasp/reference/clean_infosiga.md);
+in brief:
 
-- full dates are parsed to `Date` and times to `hms` (in both modes),
-  and the `ano_mes_*` year-month columns (published as `"YYYY/MM"`)
-  become first-of-month `Date` values;
-- the `"NAO DISPONIVEL"` (“not available”) marker is replaced by `NA`;
-- ordinal columns become **ordered factors**, so they sort and plot in
-  their natural order instead of alphabetically:
+- **Dates and times.** Full dates are parsed to `Date` and times to
+  `hms` (in both modes), and the `ano_mes_*` year-month columns
+  (published as `"YYYY/MM"`) become first-of-month `Date` values.
+- **Whitespace.** Leading/trailing whitespace is trimmed from text
+  columns. The source pads some fields to a fixed width (`nacionalidade`
+  ships as `"BRASILEIRA "`); untrimmed, those values break grouping and
+  joins.
+- **Missing values.** The `"NAO DISPONIVEL"` (“not available”) marker is
+  replaced by `NA` (trimming runs first, so space-padded markers are
+  caught).
+- **Ordered factors.** Ordinal columns sort and plot in their natural
+  order instead of alphabetically:
   - `dia_da_semana`: `Domingo` \< … \< `Sábado` (the Brazilian week
     starts on Sunday);
   - `turno`: `MADRUGADA` \< `MANHA` \< `TARDE` \< `NOITE`;
   - `gravidade_lesao` (victims): `LEVE` \< `GRAVE` \< `FATAL`;
   - `faixa_etaria_demografica` / `faixa_etaria_legal`: age bands in
-    order;
-- `latitude`/`longitude` values outside the valid geographic range (a
-  few mis-encoded source records) are set to `NA`.
+    order.
+- **Crash-type flags.** The binary `tp_sinistro_*` columns (`"S"` /
+  empty) become **logical**, so you can
+  [`sum()`](https://rdrr.io/r/base/sum.html) or filter them directly.
+  The categorical `tp_sinistro_primario` is left as text.
+- **Numeric strings.** `tempo_sinistro_obito` (days from crash to death)
+  becomes **integer**, and the spurious trailing `".0"` the export
+  appends to `numero_logradouro` (`"193.0"`) is stripped.
+- **Coordinates.** `latitude`/`longitude` outside the São Paulo state
+  bounding box – mis-encoded values and `(0, 0)` placeholders, about 7%
+  of records – are set to `NA` as a pair. No rows are dropped; pass
+  `clean = FALSE` for the raw coordinates.
 
 ``` r
 
@@ -110,8 +129,8 @@ table(sinistros$dia_da_semana)
 ```
 
 If you would rather have the data exactly as published — every text
-column as a character vector, with `"NAO DISPONIVEL"` preserved — pass
-`clean = FALSE`:
+column as a character vector, with `"NAO DISPONIVEL"` and the source’s
+whitespace padding preserved verbatim — pass `clean = FALSE`:
 
 ``` r
 

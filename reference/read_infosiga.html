@@ -75,10 +75,11 @@ triggers a download and subsequent calls read from disk.</p>
 
 <dt id="arg-clean">clean<a class="anchor" aria-label="anchor" href="#arg-clean"></a></dt>
 <dd><p>Logical. If <code>TRUE</code> (default), return a processed dataset:
-ordinal columns become ordered factors, the <code>"NAO DISPONIVEL"</code> marker
-becomes <code>NA</code>, and impossible coordinates are dropped (see
-<code><a href="clean_infosiga.html">clean_infosiga()</a></code> for the full list of steps). If <code>FALSE</code>, return the raw
-data exactly as published, with all text columns as character vectors.</p></dd>
+text is trimmed, the <code>"NAO DISPONIVEL"</code> marker becomes <code>NA</code>, ordinal
+columns become ordered factors, crash-type flags become logical, and
+impossible coordinates are dropped (see <code><a href="clean_infosiga.html">clean_infosiga()</a></code> for the full
+list of steps). If <code>FALSE</code>, return the raw data exactly as published, with
+all text columns as character vectors.</p></dd>
 
 
 <dt id="arg-year">year<a class="anchor" aria-label="anchor" href="#arg-year"></a></dt>
@@ -118,20 +119,24 @@ coordinates. Each dataset is distributed across two period files inside the
 archive (2015-2021 and 2022 onward); they are read and row-bound
 transparently.</p>
 <p>By default (<code>clean = TRUE</code>) the result is then processed by
-<code><a href="clean_infosiga.html">clean_infosiga()</a></code>: ordinal columns (<code>dia_da_semana</code>, <code>turno</code>,
-<code>gravidade_lesao</code>, the age bands) become <strong>ordered factors</strong>, the
-<code>"NAO DISPONIVEL"</code> ("not available") marker becomes <code>NA</code>, the <code>ano_mes_*</code>
-year-month strings are parsed to first-of-month <code>Date</code>s, and
+<code><a href="clean_infosiga.html">clean_infosiga()</a></code>: text columns are whitespace-trimmed, the
+<code>"NAO DISPONIVEL"</code> ("not available") marker becomes <code>NA</code>, ordinal columns
+(<code>dia_da_semana</code>, <code>turno</code>, <code>gravidade_lesao</code>, the age bands) become
+<strong>ordered factors</strong>, the <code>ano_mes_*</code> year-month strings are parsed to
+first-of-month <code>Date</code>s, the binary <code>tp_sinistro_*</code> crash-type flags become
+<strong>logical</strong>, <code>tempo_sinistro_obito</code> becomes <strong>integer</strong>, and
 <code>latitude</code>/<code>longitude</code> values outside the bounding box of Sao Paulo state
-are dropped to <code>NA</code>. Pass <code>clean = FALSE</code> to
-obtain the raw data exactly as published, with every text column kept as a
-character vector and <code>"NAO DISPONIVEL"</code> preserved verbatim.</p>
+are dropped to <code>NA</code>. See <code><a href="clean_infosiga.html">clean_infosiga()</a></code> for the complete, ordered list.
+Pass <code>clean = FALSE</code> to obtain the raw data exactly as published – every
+text column kept as a character vector, with <code>"NAO DISPONIVEL"</code> and the
+source's fixed-width whitespace padding preserved verbatim.</p>
 <p>A small fraction of rows in the source contain data-quality issues (for
 example, an unescaped <code>;</code> inside a street name, or mis-encoded coordinates).
 Any value that cannot be parsed to its declared column type is set to <code>NA</code>
-and recorded by <code><a href="https://readr.tidyverse.org/reference/problems.html" class="external-link">readr::problems()</a></code>. In both modes, empty fields are read as
-<code>NA</code>, and the crash-type flag columns (<code>tp_sinistro_*</code>) hold <code>"S"</code> when the
-flag applies and <code>NA</code> otherwise.</p>
+and recorded by <code><a href="https://readr.tidyverse.org/reference/problems.html" class="external-link">readr::problems()</a></code>. Empty fields are read as <code>NA</code> in both
+modes. In the raw data (<code>clean = FALSE</code>) the crash-type flag columns
+(<code>tp_sinistro_*</code>) hold <code>"S"</code> when the flag applies and <code>NA</code> otherwise; with
+<code>clean = TRUE</code> they are converted to logical.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

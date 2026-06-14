@@ -68,8 +68,10 @@ delete without prompting (e.g. in scripts).</p></dd>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
 
-<ul><li><p><code>infosiga_cache_dir()</code> returns the cache directory path (a string),
-creating it if necessary.</p></li>
+<ul><li><p><code>infosiga_cache_dir()</code> returns the cache directory path (a string). It is
+a pure accessor with no side effects: the directory itself is created
+lazily the first time data is written (e.g. by <code><a href="infosiga_download.html">infosiga_download()</a></code>), so
+the reported path may not yet exist.</p></li>
 <li><p><code>infosiga_cache_list()</code> returns a character vector of cached file paths
 (possibly empty).</p></li>
 <li><p><code>infosiga_cache_clear()</code> invisibly returns the paths it removed.</p></li>

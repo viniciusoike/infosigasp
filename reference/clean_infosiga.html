@@ -69,28 +69,57 @@ processing described in <em>Details</em> applied.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>The processing is deliberately light and lossless in spirit: it standardises
-missing values and assigns meaningful order to the ordinal columns, without
-renaming columns, recoding categories or dropping rows.</p>
-<p>The following steps are applied:</p>
-<ol><li><p>The literal <code>"NAO DISPONIVEL"</code> ("not available") marker is replaced
-by <code>NA</code> in every text column.</p></li>
-<li><p>Ordinal columns are converted to <strong>ordered factors</strong> with their
-natural order:</p><ul><li><p><code>dia_da_semana</code>: <code>Domingo</code> &lt; ... &lt; <code>Sabado</code> (the Brazilian week
+    <p>The processing is deliberately light: it standardises missing values, fixes
+source formatting artefacts and assigns meaningful types to columns whose
+published representation is inconvenient (ordinal text, binary flags,
+year-month strings). It never renames columns, recodes category labels or
+drops rows, so the result stays a faithful, analysis-ready view of the
+source.</p>
+<p>The following steps are applied, in order. Every step is idempotent, so
+<code>clean_infosiga()</code> can be called again on an already-processed dataset
+without changing it.</p>
+<ol><li><p><strong>Whitespace.</strong> Leading and trailing whitespace is trimmed from every
+text column. Some source fields are space-padded to a fixed width (for
+example <code>nacionalidade</code> is published as <code>"BRASILEIRA          "</code>); without
+trimming, comparisons, grouping and joins on those columns silently fail.</p></li>
+<li><p><strong>Missing values.</strong> The literal <code>"NAO DISPONIVEL"</code> ("not available")
+marker is replaced by <code>NA</code> in every text column. Trimming happens first
+so that space-padded markers are also caught.</p></li>
+<li><p><strong>Ordered factors.</strong> Ordinal columns are converted to <strong>ordered
+factors</strong> with their natural order:</p><ul><li><p><code>dia_da_semana</code>: <code>Domingo</code> &lt; ... &lt; <code>Sabado</code> (the Brazilian week
 starts on Sunday).</p></li>
 <li><p><code>turno</code>: <code>MADRUGADA</code> &lt; <code>MANHA</code> &lt; <code>TARDE</code> &lt; <code>NOITE</code>.</p></li>
 <li><p><code>gravidade_lesao</code> (in <code>pessoas</code>): <code>LEVE</code> &lt; <code>GRAVE</code> &lt; <code>FATAL</code>.</p></li>
 <li><p><code>faixa_etaria_demografica</code>, <code>faixa_etaria_legal</code> (in <code>pessoas</code>):
 age bands in increasing order.</p></li>
 </ul></li>
-<li><p>Year-month columns (<code>ano_mes_sinistro</code>, <code>ano_mes_obito</code>), published
-as <code>"YYYY/MM"</code> strings, are parsed to first-of-month <code>Date</code> values.</p></li>
-<li><p>In <code>sinistros</code>, <code>latitude</code>/<code>longitude</code> are validated as a pair
-against the bounding box of the state of Sao Paulo. Points outside the
-box – mis-encoded values and <code>(0, 0)</code> placeholders – have both
-coordinates set to <code>NA</code> (about 7% of records).</p></li>
+<li><p><strong>Year-month dates.</strong> Year-month columns (<code>ano_mes_sinistro</code>,
+<code>ano_mes_obito</code>), published as <code>"YYYY/MM"</code> strings, are parsed to
+first-of-month <code>Date</code> values, matching the <code>Date</code> class already used for
+the full-date columns.</p></li>
+<li><p><strong>Crash-type flags</strong> (<code>sinistros</code>). The binary <code>tp_sinistro_*</code>
+columns – which mark whether a crash involved a given event type and are
+published as <code>"S"</code> (yes) or empty (no) – become <strong>logical</strong> (<code>TRUE</code> /
+<code>FALSE</code>). The categorical <code>tp_sinistro_primario</code> (the primary crash type,
+e.g. <code>"COLISAO"</code>) is <em>not</em> a flag and is left as text.</p></li>
+<li><p><strong>Days to death</strong> (<code>pessoas</code>). <code>tempo_sinistro_obito</code>, the number of
+days between the crash and the victim's death (published as a numeric
+string), becomes <strong>integer</strong>.</p></li>
+<li><p><strong>Street numbers</strong> (<code>sinistros</code>). <code>numero_logradouro</code> is kept as text
+(house numbers may contain letters), but a spurious trailing <code>".0"</code> from
+the source export (<code>"193.0"</code>) is stripped to <code>"193"</code>.</p></li>
+<li><p><strong>Coordinates</strong> (<code>sinistros</code>). <code>latitude</code>/<code>longitude</code> are validated as
+a pair against the bounding box of the state of Sao Paulo. Points outside
+the box – mis-encoded values and <code>(0, 0)</code> "null island" placeholders –
+have both coordinates set to <code>NA</code>. This affects roughly 7% of records;
+no rows are dropped. Use <code>clean = FALSE</code> if you need the raw coordinates.</p></li>
 </ol><p>Nominal text columns (such as <code>municipio</code>, <code>tipo_via</code> or <code>sexo</code>) are left as
-character vectors.</p>
+character vectors. Numeric columns that are already well typed – notably
+<code>idade</code> (the victim's age, in <code>pessoas</code>) – are passed through unchanged and
+are <em>not</em> range-checked: missing ages are <code>NA</code>, and ages of <code>0</code> (infants)
+are kept. In the current upstream data <code>idade</code> ranges from 0 to about 102,
+but the package does not enforce any bound, so validate it yourself if your
+analysis is sensitive to outliers.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

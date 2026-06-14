@@ -35,10 +35,11 @@
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.1.0" id="infosigasp-010">infosigasp 0.1.0<a class="anchor" aria-label="anchor" href="#infosigasp-010"></a></h2>
 <ul><li>Initial release.</li>
+<li>New package hex logo: the major road network of the São Paulo Metropolitan Region in the INFOSIGA-SP dark blue (<code>data-raw/logo.R</code>).</li>
 <li>
 <code><a href="../reference/read_infosiga.html">read_infosiga()</a></code> downloads (with caching) and imports the three INFOSIGA-SP datasets (<code>sinistros</code>, <code>pessoas</code>, <code>veiculos</code>) as tidy tibbles, handling the source encoding, decimal marks and date formats.</li>
 <li>
-<code><a href="../reference/read_infosiga.html">read_infosiga()</a></code> returns a processed dataset by default (<code>clean = TRUE</code>): ordinal columns (<code>dia_da_semana</code>, <code>turno</code>, <code>gravidade_lesao</code>, age bands) become ordered factors, <code>"NAO DISPONIVEL"</code> becomes <code>NA</code>, the <code>ano_mes_*</code> year-month columns are parsed to first-of-month <code>Date</code>s, and coordinates outside the São Paulo state bounding box are dropped. Use <code>clean = FALSE</code> for the raw data as published, or <code><a href="../reference/clean_infosiga.html">clean_infosiga()</a></code> to process a raw import afterwards.</li>
+<code><a href="../reference/read_infosiga.html">read_infosiga()</a></code> returns a processed dataset by default (<code>clean = TRUE</code>): text columns are whitespace-trimmed (the source pads some fields to a fixed width), <code>"NAO DISPONIVEL"</code> becomes <code>NA</code>, ordinal columns (<code>dia_da_semana</code>, <code>turno</code>, <code>gravidade_lesao</code>, age bands) become ordered factors, the <code>ano_mes_*</code> year-month columns are parsed to first-of-month <code>Date</code>s, the binary <code>tp_sinistro_*</code> crash-type flags become logical, <code>tempo_sinistro_obito</code> becomes integer, the spurious <code>".0"</code> on <code>numero_logradouro</code> is stripped, and coordinates outside the São Paulo state bounding box are dropped. Use <code>clean = FALSE</code> for the raw data as published, or <code><a href="../reference/clean_infosiga.html">clean_infosiga()</a></code> to process a raw import afterwards.</li>
 <li>
 <code><a href="../reference/infosiga_download.html">infosiga_download()</a></code> pre-fetches the source archive into a local cache.</li>
 <li>

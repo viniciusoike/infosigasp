@@ -37,9 +37,10 @@ read_infosiga(
 
 - clean:
 
-  Logical. If `TRUE` (default), return a processed dataset: ordinal
-  columns become ordered factors, the `"NAO DISPONIVEL"` marker becomes
-  `NA`, and impossible coordinates are dropped (see
+  Logical. If `TRUE` (default), return a processed dataset: text is
+  trimmed, the `"NAO DISPONIVEL"` marker becomes `NA`, ordinal columns
+  become ordered factors, crash-type flags become logical, and
+  impossible coordinates are dropped (see
   [`clean_infosiga()`](https://viniciusoike.github.io/infosigasp/reference/clean_infosiga.md)
   for the full list of steps). If `FALSE`, return the raw data exactly
   as published, with all text columns as character vectors.
@@ -86,23 +87,29 @@ read and row-bound transparently.
 
 By default (`clean = TRUE`) the result is then processed by
 [`clean_infosiga()`](https://viniciusoike.github.io/infosigasp/reference/clean_infosiga.md):
-ordinal columns (`dia_da_semana`, `turno`, `gravidade_lesao`, the age
-bands) become **ordered factors**, the `"NAO DISPONIVEL"` ("not
-available") marker becomes `NA`, the `ano_mes_*` year-month strings are
-parsed to first-of-month `Date`s, and `latitude`/`longitude` values
-outside the bounding box of Sao Paulo state are dropped to `NA`. Pass
-`clean = FALSE` to obtain the raw data exactly as published, with every
-text column kept as a character vector and `"NAO DISPONIVEL"` preserved
-verbatim.
+text columns are whitespace-trimmed, the `"NAO DISPONIVEL"` ("not
+available") marker becomes `NA`, ordinal columns (`dia_da_semana`,
+`turno`, `gravidade_lesao`, the age bands) become **ordered factors**,
+the `ano_mes_*` year-month strings are parsed to first-of-month `Date`s,
+the binary `tp_sinistro_*` crash-type flags become **logical**,
+`tempo_sinistro_obito` becomes **integer**, and `latitude`/`longitude`
+values outside the bounding box of Sao Paulo state are dropped to `NA`.
+See
+[`clean_infosiga()`](https://viniciusoike.github.io/infosigasp/reference/clean_infosiga.md)
+for the complete, ordered list. Pass `clean = FALSE` to obtain the raw
+data exactly as published – every text column kept as a character
+vector, with `"NAO DISPONIVEL"` and the source's fixed-width whitespace
+padding preserved verbatim.
 
 A small fraction of rows in the source contain data-quality issues (for
 example, an unescaped `;` inside a street name, or mis-encoded
 coordinates). Any value that cannot be parsed to its declared column
 type is set to `NA` and recorded by
 [`readr::problems()`](https://readr.tidyverse.org/reference/problems.html).
-In both modes, empty fields are read as `NA`, and the crash-type flag
-columns (`tp_sinistro_*`) hold `"S"` when the flag applies and `NA`
-otherwise.
+Empty fields are read as `NA` in both modes. In the raw data
+(`clean = FALSE`) the crash-type flag columns (`tp_sinistro_*`) hold
+`"S"` when the flag applies and `NA` otherwise; with `clean = TRUE` they
+are converted to logical.
 
 ## See also
 

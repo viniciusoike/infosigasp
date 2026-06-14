@@ -29,12 +29,12 @@ INFOSIGA-SP publishes three linked datasets:
 
 library(infosigasp)
 infosiga_datasets()
-#> # A tibble: 3 x 4
+#> # A tibble: 3 × 4
 #>   dataset   description                                              grain keys 
 #>   <chr>     <chr>                                                    <chr> <chr>
-#> 1 sinistros Traffic crash events recorded in the state of Sao Paulo. one ~ id_s~
-#> 2 pessoas   People (victims) involved in traffic crashes.            one ~ id_p~
-#> 3 veiculos  Vehicles involved in traffic crashes.                    one ~ id_v~
+#> 1 sinistros Traffic crash events recorded in the state of Sao Paulo. one … id_s…
+#> 2 pessoas   People (victims) involved in traffic crashes.            one … id_p…
+#> 3 veiculos  Vehicles involved in traffic crashes.                    one … id_v…
 ```
 
 The datasets can be joined through `id_sinistro` (and `id_veiculo`,
@@ -64,11 +64,14 @@ veiculos <- read_infosiga("veiculos")
 By default
 [`read_infosiga()`](https://viniciusoike.github.io/infosigasp/reference/read_infosiga.md)
 returns a **processed** dataset. Dates are parsed to `Date` (including
-the `ano_mes_*` year-month columns, as first-of-month dates), the
-`"NAO DISPONIVEL"` (“not available”) marker becomes `NA`, coordinates
-outside São Paulo state are dropped, and the ordinal columns become
-**ordered factors** so they sort and plot in their natural order rather
-than alphabetically:
+the `ano_mes_*` year-month columns, as first-of-month dates), text is
+whitespace-trimmed, the `"NAO DISPONIVEL"` (“not available”) marker
+becomes `NA`, the binary `tp_sinistro_*` crash-type flags become
+logical, coordinates outside São Paulo state are dropped, and the
+ordinal columns become **ordered factors** so they sort and plot in
+their natural order rather than alphabetically (see
+[`?clean_infosiga`](https://viniciusoike.github.io/infosigasp/reference/clean_infosiga.md)
+for the full list):
 
 ``` r
 

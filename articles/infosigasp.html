@@ -139,16 +139,30 @@ once.</p>
 </h3>
 <p>By default <code><a href="../reference/read_infosiga.html">read_infosiga()</a></code> returns a
 <strong>processed</strong> dataset (<code>clean = TRUE</code>). The
-processing is light and lossless in spirit:</p>
+processing never renames columns, recodes category labels or drops rows
+– it only fixes types and source artefacts so the data is ready for
+analysis. The full, ordered list of steps lives in
+<code><a href="../reference/clean_infosiga.html">?clean_infosiga</a></code>; in brief:</p>
 <ul>
-<li>full dates are parsed to <code>Date</code> and times to
-<code>hms</code> (in both modes), and the <code>ano_mes_*</code>
-year-month columns (published as <code>"YYYY/MM"</code>) become
-first-of-month <code>Date</code> values;</li>
-<li>the <code>"NAO DISPONIVEL"</code> (“not available”) marker is
-replaced by <code>NA</code>;</li>
-<li>ordinal columns become <strong>ordered factors</strong>, so they
-sort and plot in their natural order instead of alphabetically:
+<li>
+<strong>Dates and times.</strong> Full dates are parsed to
+<code>Date</code> and times to <code>hms</code> (in both modes), and the
+<code>ano_mes_*</code> year-month columns (published as
+<code>"YYYY/MM"</code>) become first-of-month <code>Date</code>
+values.</li>
+<li>
+<strong>Whitespace.</strong> Leading/trailing whitespace is trimmed
+from text columns. The source pads some fields to a fixed width
+(<code>nacionalidade</code> ships as
+<code>"BRASILEIRA          "</code>); untrimmed, those values break
+grouping and joins.</li>
+<li>
+<strong>Missing values.</strong> The <code>"NAO DISPONIVEL"</code>
+(“not available”) marker is replaced by <code>NA</code> (trimming runs
+first, so space-padded markers are caught).</li>
+<li>
+<strong>Ordered factors.</strong> Ordinal columns sort and plot in
+their natural order instead of alphabetically:
 <ul>
 <li>
 <code>dia_da_semana</code>: <code>Domingo</code> &lt; … &lt;
@@ -161,13 +175,26 @@ sort and plot in their natural order instead of alphabetically:
 <code>GRAVE</code> &lt; <code>FATAL</code>;</li>
 <li>
 <code>faixa_etaria_demografica</code> /
-<code>faixa_etaria_legal</code>: age bands in order;</li>
+<code>faixa_etaria_legal</code>: age bands in order.</li>
 </ul>
 </li>
 <li>
-<code>latitude</code>/<code>longitude</code> values outside the
-valid geographic range (a few mis-encoded source records) are set to
-<code>NA</code>.</li>
+<strong>Crash-type flags.</strong> The binary
+<code>tp_sinistro_*</code> columns (<code>"S"</code> / empty) become
+<strong>logical</strong>, so you can <code><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum()</a></code> or filter them
+directly. The categorical <code>tp_sinistro_primario</code> is left as
+text.</li>
+<li>
+<strong>Numeric strings.</strong> <code>tempo_sinistro_obito</code>
+(days from crash to death) becomes <strong>integer</strong>, and the
+spurious trailing <code>".0"</code> the export appends to
+<code>numero_logradouro</code> (<code>"193.0"</code>) is stripped.</li>
+<li>
+<strong>Coordinates.</strong>
+<code>latitude</code>/<code>longitude</code> outside the São Paulo state
+bounding box – mis-encoded values and <code>(0, 0)</code> placeholders,
+about 7% of records – are set to <code>NA</code> as a pair. No rows are
+dropped; pass <code>clean = FALSE</code> for the raw coordinates.</li>
 </ul>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">sinistros</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/read_infosiga.html">read_infosiga</a></span><span class="op">(</span><span class="st">"sinistros"</span><span class="op">)</span></span>
@@ -177,8 +204,9 @@ tabulation comes out in calendar order rather than alphabetically:</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/table.html" class="external-link">table</a></span><span class="op">(</span><span class="va">sinistros</span><span class="op">$</span><span class="va">dia_da_semana</span><span class="op">)</span></span></code></pre></div>
 <p>If you would rather have the data exactly as published — every text
-column as a character vector, with <code>"NAO DISPONIVEL"</code>
-preserved — pass <code>clean = FALSE</code>:</p>
+column as a character vector, with <code>"NAO DISPONIVEL"</code> and the
+source’s whitespace padding preserved verbatim — pass
+<code>clean = FALSE</code>:</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">raw</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/read_infosiga.html">read_infosiga</a></span><span class="op">(</span><span class="st">"sinistros"</span>, clean <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
 <p>You can also apply the same processing to a raw import after the fact

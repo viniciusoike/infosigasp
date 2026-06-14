@@ -80,12 +80,12 @@
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/viniciusoike/infosigasp" class="external-link">infosigasp</a></span><span class="op">)</span></span>
 <span><span class="fu"><a href="reference/infosiga_datasets.html">infosiga_datasets</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt; # A tibble: 3 x 4</span></span>
+<span><span class="co">#&gt; # A tibble: 3 × 4</span></span>
 <span><span class="co">#&gt;   dataset   description                                              grain keys </span></span>
 <span><span class="co">#&gt;   &lt;chr&gt;     &lt;chr&gt;                                                    &lt;chr&gt; &lt;chr&gt;</span></span>
-<span><span class="co">#&gt; 1 sinistros Traffic crash events recorded in the state of Sao Paulo. one ~ id_s~</span></span>
-<span><span class="co">#&gt; 2 pessoas   People (victims) involved in traffic crashes.            one ~ id_p~</span></span>
-<span><span class="co">#&gt; 3 veiculos  Vehicles involved in traffic crashes.                    one ~ id_v~</span></span></code></pre></div>
+<span><span class="co">#&gt; 1 sinistros Traffic crash events recorded in the state of Sao Paulo. one … id_s…</span></span>
+<span><span class="co">#&gt; 2 pessoas   People (victims) involved in traffic crashes.            one … id_p…</span></span>
+<span><span class="co">#&gt; 3 veiculos  Vehicles involved in traffic crashes.                    one … id_v…</span></span></code></pre></div>
 <p>The datasets can be joined through <code>id_sinistro</code> (and <code>id_veiculo</code>, where present).</p>
 </div>
 <div class="section level2">
@@ -106,7 +106,7 @@
 <div class="section level3">
 <h3 id="processed-by-default-raw-on-demand">Processed by default, raw on demand<a class="anchor" aria-label="anchor" href="#processed-by-default-raw-on-demand"></a>
 </h3>
-<p>By default <code><a href="reference/read_infosiga.html">read_infosiga()</a></code> returns a <strong>processed</strong> dataset. Dates are parsed to <code>Date</code> (including the <code>ano_mes_*</code> year-month columns, as first-of-month dates), the <code>"NAO DISPONIVEL"</code> (“not available”) marker becomes <code>NA</code>, coordinates outside São Paulo state are dropped, and the ordinal columns become <strong>ordered factors</strong> so they sort and plot in their natural order rather than alphabetically:</p>
+<p>By default <code><a href="reference/read_infosiga.html">read_infosiga()</a></code> returns a <strong>processed</strong> dataset. Dates are parsed to <code>Date</code> (including the <code>ano_mes_*</code> year-month columns, as first-of-month dates), text is whitespace-trimmed, the <code>"NAO DISPONIVEL"</code> (“not available”) marker becomes <code>NA</code>, the binary <code>tp_sinistro_*</code> crash-type flags become logical, coordinates outside São Paulo state are dropped, and the ordinal columns become <strong>ordered factors</strong> so they sort and plot in their natural order rather than alphabetically (see <code><a href="reference/clean_infosiga.html">?clean_infosiga</a></code> for the full list):</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/levels.html" class="external-link">levels</a></span><span class="op">(</span><span class="va">sinistros</span><span class="op">$</span><span class="va">dia_da_semana</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] "Domingo"       "Segunda-feira" "Terça-feira"   "Quarta-feira"</span></span>
