@@ -29,7 +29,7 @@
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Changelog</h1>
-      <small>Source: <a href="https://github.com/viniciusoike/infosigasp/blob/data-2026-06/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
+      <small>Source: <a href="https://github.com/viniciusoike/infosigasp/blob/main/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
     <div class="section level2">
@@ -41,7 +41,9 @@
 <li>
 <code><a href="../reference/read_infosiga.html">read_infosiga()</a></code> returns a processed dataset by default (<code>clean = TRUE</code>): text columns are whitespace-trimmed (the source pads some fields to a fixed width), <code>"NAO DISPONIVEL"</code> becomes <code>NA</code>, ordinal columns (<code>dia_da_semana</code>, <code>turno</code>, <code>gravidade_lesao</code>, age bands) become ordered factors, the <code>ano_mes_*</code> year-month columns are parsed to first-of-month <code>Date</code>s, the binary <code>tp_sinistro_*</code> crash-type flags become logical, <code>tempo_sinistro_obito</code> becomes integer, the spurious <code>".0"</code> on <code>numero_logradouro</code> is stripped, and coordinates outside the São Paulo state bounding box are dropped. Use <code>clean = FALSE</code> for the raw data as published, or <code><a href="../reference/clean_infosiga.html">clean_infosiga()</a></code> to process a raw import afterwards.</li>
 <li>
-<code><a href="../reference/infosiga_download.html">infosiga_download()</a></code> pre-fetches the source archive into a local cache.</li>
+<code><a href="../reference/infosiga_download.html">infosiga_download()</a></code> pre-fetches the source archive into a local cache. It tries the official DETRAN-SP endpoint first and falls back to a GitHub-release mirror if it is unavailable; additional mirrors can be supplied via the <code>infosigasp.zip_url</code> option (a character vector tried in order).</li>
+<li>
+<code><a href="../reference/read_infosiga.html">read_infosiga()</a></code> and <code><a href="../reference/infosiga_download.html">infosiga_download()</a></code> warn when a cached archive is reused that is older than the <code>infosigasp.stale_days</code> option (30 days by default; set to <code>Inf</code> to disable), since DETRAN-SP refreshes the data monthly under the same file name.</li>
 <li>
 <code><a href="../reference/infosiga_cache.html">infosiga_cache_dir()</a></code>, <code><a href="../reference/infosiga_cache.html">infosiga_cache_list()</a></code> and <code><a href="../reference/infosiga_cache.html">infosiga_cache_clear()</a></code> manage the on-disk cache.</li>
 <li>

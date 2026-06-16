@@ -42,7 +42,18 @@ The path to the cached archive, invisibly.
 
 The archive is updated monthly by DETRAN-SP and accumulates all records
 from 2015 onward. The download URL can be overridden with the
-`infosigasp.zip_url` option, which is mainly useful for testing.
+`infosigasp.zip_url` option, which may be a character vector of mirror
+URLs tried in order until one succeeds. The default is the official
+DETRAN-SP endpoint followed by a GitHub-release mirror that serves a
+point-in-time snapshot when the official portal is unavailable. Override
+the option to add your own mirror or for testing.
+
+Because DETRAN-SP overwrites the archive in place each month under the
+same file name, a cached copy can become stale silently. When a cached
+archive is reused that is older than the `infosigasp.stale_days` option
+(30 days by default; set to `Inf` to disable), a warning suggests
+refreshing it. The age is taken from the cached file's modification
+time.
 
 ## See also
 

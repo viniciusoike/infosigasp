@@ -37,7 +37,7 @@ offline) or to force a refresh."><meta property="og:image" content="https://vini
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Download the INFOSIGA-SP source archive</h1>
-      <small class="dont-index">Source: <a href="https://github.com/viniciusoike/infosigasp/blob/data-2026-06/R/download.R" class="external-link"><code>R/download.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/viniciusoike/infosigasp/blob/main/R/download.R" class="external-link"><code>R/download.R</code></a></small>
       <div class="d-none name"><code>infosiga_download.Rd</code></div>
     </div>
 
@@ -83,7 +83,16 @@ informative messages.</p></dd>
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>The archive is updated monthly by DETRAN-SP and accumulates all records
 from 2015 onward. The download URL can be overridden with the
-<code>infosigasp.zip_url</code> option, which is mainly useful for testing.</p>
+<code>infosigasp.zip_url</code> option, which may be a character vector of mirror URLs
+tried in order until one succeeds. The default is the official DETRAN-SP
+endpoint followed by a GitHub-release mirror that serves a point-in-time
+snapshot when the official portal is unavailable. Override the option to add
+your own mirror or for testing.</p>
+<p>Because DETRAN-SP overwrites the archive in place each month under the same
+file name, a cached copy can become stale silently. When a cached archive is
+reused that is older than the <code>infosigasp.stale_days</code> option (30 days by
+default; set to <code>Inf</code> to disable), a warning suggests refreshing it. The age
+is taken from the cached file's modification time.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

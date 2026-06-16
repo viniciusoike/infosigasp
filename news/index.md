@@ -23,7 +23,17 @@
   [`clean_infosiga()`](https://viniciusoike.github.io/infosigasp/reference/clean_infosiga.md)
   to process a raw import afterwards.
 - [`infosiga_download()`](https://viniciusoike.github.io/infosigasp/reference/infosiga_download.md)
-  pre-fetches the source archive into a local cache.
+  pre-fetches the source archive into a local cache. It tries the
+  official DETRAN-SP endpoint first and falls back to a GitHub-release
+  mirror if it is unavailable; additional mirrors can be supplied via
+  the `infosigasp.zip_url` option (a character vector tried in order).
+- [`read_infosiga()`](https://viniciusoike.github.io/infosigasp/reference/read_infosiga.md)
+  and
+  [`infosiga_download()`](https://viniciusoike.github.io/infosigasp/reference/infosiga_download.md)
+  warn when a cached archive is reused that is older than the
+  `infosigasp.stale_days` option (30 days by default; set to `Inf` to
+  disable), since DETRAN-SP refreshes the data monthly under the same
+  file name.
 - [`infosiga_cache_dir()`](https://viniciusoike.github.io/infosigasp/reference/infosiga_cache.md),
   [`infosiga_cache_list()`](https://viniciusoike.github.io/infosigasp/reference/infosiga_cache.md)
   and
