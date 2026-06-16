@@ -20,7 +20,17 @@
 #' @details
 #' The archive is updated monthly by DETRAN-SP and accumulates all records
 #' from 2015 onward. The download URL can be overridden with the
-#' `infosigasp.zip_url` option, which is mainly useful for testing.
+#' `infosigasp.zip_url` option, which may be a character vector of mirror URLs
+#' tried in order until one succeeds. The default is the official DETRAN-SP
+#' endpoint followed by a GitHub-release mirror that serves a point-in-time
+#' snapshot when the official portal is unavailable. Override the option to add
+#' your own mirror or for testing.
+#'
+#' Because DETRAN-SP overwrites the archive in place each month under the same
+#' file name, a cached copy can become stale silently. When a cached archive is
+#' reused that is older than the `infosigasp.stale_days` option (30 days by
+#' default; set to `Inf` to disable), a warning suggests refreshing it. The age
+#' is taken from the cached file's modification time.
 #'
 #' @seealso [read_infosiga()] to import the data, and [infosiga_cache_dir()]
 #'   to locate the cache.
@@ -45,12 +55,12 @@ infosiga_download <- function(overwrite = FALSE,
         "Using cached archive at {.path {dest}} (use {.code overwrite = TRUE} to refresh)."
       )
     }
+    .infosiga_check_staleness(dest)
     return(invisible(dest))
   }
 
-  url <- .infosiga_zip_url()
+  urls <- .infosiga_zip_url()
   if (!quiet) {
-    cli::cli_alert_info("Downloading INFOSIGA-SP archive from {.url {url}}")
     cli::cli_alert_info("This file is large (~120 MB) and may take a while.")
   }
 
@@ -61,19 +71,49 @@ infosiga_download <- function(overwrite = FALSE,
   tmp <- tempfile(fileext = ".zip")
   on.exit(unlink(tmp), add = TRUE)
 
-  result <- tryCatch(
-    utils::download.file(url, destfile = tmp, mode = "wb", quiet = quiet),
-    error = function(e) {
-      cli::cli_abort(c(
-        "Failed to download the INFOSIGA-SP archive.",
-        "x" = conditionMessage(e),
-        "i" = "Check your internet connection or try again later."
-      ))
+  # Try each source in turn, falling back to the next mirror on any failure
+  # (download error or empty file) until one yields a non-empty archive.
+  ok <- FALSE
+  for (i in seq_along(urls)) {
+    url <- urls[[i]]
+    if (!quiet) {
+      action <- if (i == 1L) {
+        "Downloading INFOSIGA-SP archive from"
+      } else {
+        "Previous source failed; trying mirror"
+      }
+      cli::cli_alert_info("{action} {.url {url}}")
     }
-  )
 
-  if (!file.exists(tmp) || file.size(tmp) == 0) {
-    cli::cli_abort("The download produced an empty file. Please try again.")
+    downloaded <- tryCatch(
+      {
+        utils::download.file(url, destfile = tmp, mode = "wb", quiet = quiet)
+        TRUE
+      },
+      error = function(e) {
+        if (!quiet) {
+          cli::cli_alert_warning(
+            "Source {.url {url}} failed: {conditionMessage(e)}"
+          )
+        }
+        FALSE
+      }
+    )
+
+    if (isTRUE(downloaded) && file.exists(tmp) && file.size(tmp) > 0) {
+      ok <- TRUE
+      break
+    }
+    # Discard any partial or empty file before trying the next source.
+    unlink(tmp)
+  }
+
+  if (!ok) {
+    cli::cli_abort(c(
+      "Failed to download the INFOSIGA-SP archive from {length(urls)} source{?s}.",
+      "i" = "Check your internet connection or try again later.",
+      "i" = "You can supply a mirror with {.code options(infosigasp.zip_url = ...)}."
+    ))
   }
 
   # Move into place atomically only after a successful, non-empty download so a
@@ -89,4 +129,33 @@ infosiga_download <- function(overwrite = FALSE,
     )
   }
   invisible(dest)
+}
+
+# Default age (in days) beyond which a cached archive is considered stale.
+.infosiga_stale_days <- 30L
+
+# Warn when a cached archive is reused that is older than the staleness
+# threshold. DETRAN-SP refreshes the data monthly under the same file name, so
+# the cached file's modification time is a good proxy for how old the data is.
+# Set `infosigasp.stale_days` to `Inf` (or a non-positive value) to disable.
+.infosiga_check_staleness <- function(path) {
+  if (!file.exists(path)) {
+    return(invisible(NULL))
+  }
+  threshold <- getOption("infosigasp.stale_days", .infosiga_stale_days)
+  if (!is.numeric(threshold) || !is.finite(threshold) || threshold <= 0) {
+    return(invisible(NULL))
+  }
+
+  age_days <- as.numeric(
+    difftime(Sys.time(), file.mtime(path), units = "days")
+  )
+  if (age_days > threshold) {
+    cli::cli_warn(c(
+      "!" = "The cached INFOSIGA-SP archive is {round(age_days)} days old.",
+      "i" = "DETRAN-SP updates the data monthly; refresh with \\
+             {.code infosiga_download(overwrite = TRUE)}."
+    ))
+  }
+  invisible(NULL)
 }
