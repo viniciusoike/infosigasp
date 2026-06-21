@@ -1,12 +1,13 @@
 Package: infosigasp
 Type: Package
-Title: Download and Import Traffic Crash Data from INFOSIGA-SP
+Title: Download and Import Traffic Crash Data from 'INFOSIGA-SP'
 Version: 0.1.0
 Authors@R: c(
     person(
       "Vinicius", "Oike",
       email = "viniciusoike@gmail.com",
-      role = c("aut", "cre", "cph")
+      role = c("aut", "cre", "cph"),
+      comment = c(ORCID = "0009-0005-8015-9189")
     )
   )
 Description: Provides a programmatic interface to the open data published by
