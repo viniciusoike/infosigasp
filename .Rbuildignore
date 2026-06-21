@@ -17,5 +17,6 @@
 ^man/figures/logo\.R$
 ^\.positai$
 ^\.claude$
+^CLAUDE\.md$
 ^doc$
 ^Meta$
