@@ -63,6 +63,13 @@ e.g. \code{"COLISAO"}) is \emph{not} a flag and stays text.
 and therefore becomes uniformly \code{FALSE}. That is an unpopulated upstream
 field, not evidence that no rear-end collisions occurred. A crash may
 also set several flags at once, so the flags do not partition the data.
+\item \strong{Count columns} (\code{sinistros}). The \verb{qtd_*} columns form two
+independent blocks: vehicle counts (\code{qtd_pedestre}, \code{qtd_automovel},
+...) and victim-severity counts (\verb{qtd_gravidade_*}). A blank entry inside
+a block that is otherwise filled in means \emph{zero} and becomes \code{0L}. When a
+record carries no breakdown at all, the whole block is blank; those
+blanks are genuinely "not recorded" and stay \code{NA}. The two blocks are
+handled separately because many records carry one but not the other.
 \item \strong{Days to death} (\code{pessoas}). \code{tempo_sinistro_obito}, the number of
 days between the crash and the victim's death (published as a numeric
 string), becomes \strong{integer}.
