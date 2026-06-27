@@ -66,7 +66,8 @@ By default (\code{clean = TRUE}) the result is then processed by
 (\code{dia_da_semana}, \code{turno}, \code{gravidade_lesao}, the age bands) become
 \strong{ordered factors}, the \verb{ano_mes_*} year-month strings are parsed to
 first-of-month \code{Date}s, the binary \verb{tp_sinistro_*} crash-type flags become
-\strong{logical}, \code{tempo_sinistro_obito} becomes \strong{integer}, and
+\strong{logical}, blank \verb{qtd_*} counts inside an otherwise-filled block become
+\code{0}, \code{tempo_sinistro_obito} becomes \strong{integer}, and
 \code{latitude}/\code{longitude} values outside the bounding box of Sao Paulo state
 are dropped to \code{NA}. See \code{\link[=clean_infosiga]{clean_infosiga()}} for the complete, ordered list.
 Pass \code{clean = FALSE} to obtain the raw data exactly as published -- every

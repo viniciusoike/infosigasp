@@ -61,6 +61,13 @@ columns -- which mark whether a crash involved a given event type and are
 published as \code{"S"} (yes) or empty (no) -- become \strong{logical} (\code{TRUE} /
 \code{FALSE}). The categorical \code{tp_sinistro_primario} (the primary crash type,
 e.g. \code{"COLISAO"}) is \emph{not} a flag and is left as text.
+\item \strong{Count columns} (\code{sinistros}). The \verb{qtd_*} columns form two
+independent blocks -- vehicle counts (\code{qtd_pedestre}, \code{qtd_automovel},
+...) and victim-severity counts (\verb{qtd_gravidade_*}). A blank entry inside
+a block that is otherwise filled in means \emph{zero} and becomes \code{0L}. When a
+record carries no breakdown at all, the whole block is blank; those
+blanks are genuinely "not recorded" and are left as \code{NA}. The two blocks
+are handled separately because many records carry one but not the other.
 \item \strong{Days to death} (\code{pessoas}). \code{tempo_sinistro_obito}, the number of
 days between the crash and the victim's death (published as a numeric
 string), becomes \strong{integer}.

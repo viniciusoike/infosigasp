@@ -45,7 +45,8 @@
 #' (`dia_da_semana`, `turno`, `gravidade_lesao`, the age bands) become
 #' **ordered factors**, the `ano_mes_*` year-month strings are parsed to
 #' first-of-month `Date`s, the binary `tp_sinistro_*` crash-type flags become
-#' **logical**, `tempo_sinistro_obito` becomes **integer**, and
+#' **logical**, blank `qtd_*` counts inside an otherwise-filled block become
+#' `0`, `tempo_sinistro_obito` becomes **integer**, and
 #' `latitude`/`longitude` values outside the bounding box of Sao Paulo state
 #' are dropped to `NA`. See [clean_infosiga()] for the complete, ordered list.
 #' Pass `clean = FALSE` to obtain the raw data exactly as published -- every
@@ -100,19 +101,18 @@ read_infosiga <- function(dataset = c("sinistros", "pessoas", "veiculos"),
   }
 
   zip_path <- file.path(infosiga_cache_dir(), .infosiga_zip_name)
-  if (!file.exists(zip_path)) {
-    if (!download_if_missing) {
-      cli::cli_abort(c(
-        "The INFOSIGA-SP archive is not cached.",
-        "i" = "Call {.run infosigasp::infosiga_download()} first, or set {.arg download_if_missing = TRUE}."
-      ))
-    }
-    zip_path <- infosiga_download(quiet = quiet, ...)
-  } else {
-    # Reusing an existing cache: warn if the archive looks out of date. A fresh
-    # download (the branch above) is never stale, so this only runs on a hit.
-    .infosiga_check_staleness(zip_path)
+  if (!file.exists(zip_path) && !download_if_missing) {
+    cli::cli_abort(c(
+      "The INFOSIGA-SP archive is not cached.",
+      "i" = "Call {.run infosigasp::infosiga_download()} first, or set {.arg download_if_missing = TRUE}."
+    ))
   }
+  # Delegate to infosiga_download(), which handles every case consistently: a
+  # cache hit (returned as-is, with a staleness check), an `overwrite = TRUE`
+  # refresh passed through `...`, and the actual download when the archive is
+  # missing. Routing through it here is what makes `...` (e.g. overwrite) take
+  # effect even when a cached archive already exists.
+  zip_path <- infosiga_download(quiet = quiet, ...)
 
   members <- .archive_members(zip_path, dataset)
   if (length(members) == 0) {

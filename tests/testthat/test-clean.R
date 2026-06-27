@@ -76,6 +76,38 @@ test_that("clean converts tp_sinistro_* flags to logical, keeping primario", {
   expect_identical(cleaned$tp_sinistro_primario, c("COLISAO", "CHOQUE"))
 })
 
+test_that("clean fills blank counts with 0 only within a populated block", {
+  raw <- tibble::tibble(
+    # Row 1: vehicle block populated, gravity block fully blank.
+    # Row 2: gravity block populated, vehicle block fully blank.
+    # Row 3: both blocks fully blank (no breakdown recorded).
+    qtd_automovel       = c(2L, NA, NA),
+    qtd_motocicleta     = c(NA, NA, NA),
+    qtd_gravidade_leve  = c(NA, 1L, NA),
+    qtd_gravidade_fatal = c(NA, NA, NA)
+  )
+  cleaned <- clean_infosiga(raw, "sinistros")
+
+  # Row 1: vehicle block has a value -> its blanks become 0; gravity block is
+  # entirely blank -> left NA (genuinely not recorded).
+  expect_identical(cleaned$qtd_automovel,       c(2L, NA, NA))
+  expect_identical(cleaned$qtd_motocicleta,     c(0L, NA, NA))
+  # Row 2: gravity block has a value -> its blanks become 0; vehicle block NA.
+  expect_identical(cleaned$qtd_gravidade_leve,  c(NA, 1L, NA))
+  expect_identical(cleaned$qtd_gravidade_fatal, c(NA, 0L, NA))
+})
+
+test_that("count-block filling is idempotent", {
+  raw <- tibble::tibble(
+    qtd_automovel      = c(2L, NA),
+    qtd_motocicleta    = c(NA, NA),
+    qtd_gravidade_leve = c(NA, NA)
+  )
+  once  <- clean_infosiga(raw, "sinistros")
+  twice <- clean_infosiga(once, "sinistros")
+  expect_identical(once, twice)
+})
+
 test_that("clean converts tempo_sinistro_obito to integer", {
   local_infosiga_fixture()
   peo <- read_infosiga("pessoas", quiet = TRUE)

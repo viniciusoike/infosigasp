@@ -31,6 +31,45 @@
   as.Date(paste0(x, "/01"), format = "%Y/%m/%d")
 }
 
+# The sinistros count columns form two independent blocks: a vehicle-count
+# block (how many of each vehicle type were involved) and a gravity-count
+# block (how many victims of each severity). Within a record a blank entry in
+# either block means "zero", but only when the rest of that block is filled in;
+# records that carry no breakdown at all leave the whole block blank, and there
+# the blanks are genuinely "not recorded" rather than zero. The two blocks are
+# kept separate because they are filled independently: roughly 47k records have
+# vehicle counts but no gravity breakdown, and ~6k the reverse.
+.infosiga_qtd_blocks <- list(
+  veiculos = c(
+    "qtd_pedestre", "qtd_bicicleta", "qtd_motocicleta", "qtd_automovel",
+    "qtd_onibus", "qtd_caminhao", "qtd_veic_outros", "qtd_veic_nao_disponivel"
+  ),
+  gravidade = c(
+    "qtd_gravidade_fatal", "qtd_gravidade_grave", "qtd_gravidade_leve",
+    "qtd_gravidade_ileso", "qtd_gravidade_nao_disponivel"
+  )
+)
+
+# Within one count block, fill NA -> 0L on the rows that carry at least one
+# value in that block, leaving rows whose entire block is blank as NA. This is
+# idempotent: a second pass finds no NAs to fill on the populated rows and skips
+# the all-NA rows. `cols` is restricted to those present in `data`.
+.infosiga_fill_count_block <- function(data, cols) {
+  cols <- intersect(cols, names(data))
+  if (length(cols) == 0) return(data)
+  block <- data[cols]
+  has_value <- rowSums(!is.na(block)) > 0
+  for (col in cols) {
+    v <- data[[col]]
+    fill <- has_value & is.na(v)
+    if (any(fill)) {
+      v[fill] <- 0L
+      data[[col]] <- v
+    }
+  }
+  data
+}
+
 # Bounding box of the state of Sao Paulo, with a small margin so genuine
 # near-border crashes are kept. The state spans roughly latitude -25.4..-19.8
 # and longitude -53.1..-44.2; coordinates outside this box (mis-encoded values
@@ -90,6 +129,13 @@
 #'     published as `"S"` (yes) or empty (no) -- become **logical** (`TRUE` /
 #'     `FALSE`). The categorical `tp_sinistro_primario` (the primary crash type,
 #'     e.g. `"COLISAO"`) is *not* a flag and is left as text.
+#'   \item **Count columns** (`sinistros`). The `qtd_*` columns form two
+#'     independent blocks -- vehicle counts (`qtd_pedestre`, `qtd_automovel`,
+#'     ...) and victim-severity counts (`qtd_gravidade_*`). A blank entry inside
+#'     a block that is otherwise filled in means *zero* and becomes `0L`. When a
+#'     record carries no breakdown at all, the whole block is blank; those
+#'     blanks are genuinely "not recorded" and are left as `NA`. The two blocks
+#'     are handled separately because many records carry one but not the other.
 #'   \item **Days to death** (`pessoas`). `tempo_sinistro_obito`, the number of
 #'     days between the crash and the victim's death (published as a numeric
 #'     string), becomes **integer**.
@@ -167,7 +213,15 @@ clean_infosiga <- function(data, dataset = c("sinistros", "pessoas", "veiculos")
     if (is.character(v)) data[[col]] <- !is.na(v) & v == "S"
   }
 
-  # 5. tempo_sinistro_obito (days from crash to death) becomes integer.
+  # 5. Count columns (sinistros). A blank entry inside a populated count block
+  #    means zero, so NA -> 0L on rows that carry any count in that block; rows
+  #    with the whole block blank record no breakdown and are left NA. The two
+  #    blocks (vehicle counts, gravity counts) are filled independently.
+  for (cols in .infosiga_qtd_blocks) {
+    data <- .infosiga_fill_count_block(data, cols)
+  }
+
+  # 6. tempo_sinistro_obito (days from crash to death) becomes integer.
   if ("tempo_sinistro_obito" %in% names(data) &&
     is.character(data$tempo_sinistro_obito)) {
     data$tempo_sinistro_obito <- suppressWarnings(
@@ -175,7 +229,7 @@ clean_infosiga <- function(data, dataset = c("sinistros", "pessoas", "veiculos")
     )
   }
 
-  # 6. Strip the spurious trailing ".0" the source export appends to house
+  # 7. Strip the spurious trailing ".0" the source export appends to house
   #    numbers ("193.0" -> "193"); the column stays character because numbers
   #    may contain letters.
   if ("numero_logradouro" %in% names(data) &&
@@ -183,7 +237,7 @@ clean_infosiga <- function(data, dataset = c("sinistros", "pessoas", "veiculos")
     data$numero_logradouro <- sub("\\.0$", "", data$numero_logradouro)
   }
 
-  # 7. Coordinates are validated as a pair against the Sao Paulo bounding box.
+  # 8. Coordinates are validated as a pair against the Sao Paulo bounding box.
   #    A point is kept only if both latitude and longitude are present and
   #    inside the box; otherwise both are set to NA. This drops mis-encoded
   #    values and "null island" (0, 0) placeholders.
