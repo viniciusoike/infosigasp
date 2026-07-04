@@ -72,7 +72,8 @@ infosiga_download <- function(overwrite = FALSE,
   on.exit(unlink(tmp), add = TRUE)
 
   # Try each source in turn, falling back to the next mirror on any failure
-  # (download error or empty file) until one yields a non-empty archive.
+  # (download error, or a response that is not a valid ZIP archive) until one
+  # yields a usable archive.
   ok <- FALSE
   for (i in seq_along(urls)) {
     url <- urls[[i]]
@@ -100,11 +101,20 @@ infosiga_download <- function(overwrite = FALSE,
       }
     )
 
-    if (isTRUE(downloaded) && file.exists(tmp) && file.size(tmp) > 0) {
+    # An unreachable mirror or an error page (e.g. an HTML "503" served with a
+    # 200 status) downloads as a non-empty file that is not a ZIP. Validate the
+    # archive's magic bytes so such responses fall through to the next mirror
+    # instead of poisoning the cache.
+    if (isTRUE(downloaded) && .infosiga_is_zip(tmp)) {
       ok <- TRUE
       break
     }
-    # Discard any partial or empty file before trying the next source.
+    if (isTRUE(downloaded) && !quiet) {
+      cli::cli_alert_warning(
+        "Source {.url {url}} did not return a valid ZIP archive."
+      )
+    }
+    # Discard any partial, empty or non-ZIP file before trying the next source.
     unlink(tmp)
   }
 
@@ -158,4 +168,18 @@ infosiga_download <- function(overwrite = FALSE,
     ))
   }
   invisible(NULL)
+}
+
+# Cheap integrity check: does the file start with the ZIP local-file-header
+# magic bytes "PK\3\4"? This catches the common failure of a portal returning
+# an HTML error page (or a truncated/empty file) with a 200 status, without
+# the cost of decompressing the ~120 MB archive.
+.infosiga_is_zip <- function(path) {
+  if (!file.exists(path) || file.size(path) < 4L) {
+    return(FALSE)
+  }
+  con <- file(path, "rb")
+  on.exit(close(con), add = TRUE)
+  magic <- readBin(con, "raw", n = 4L)
+  identical(magic, as.raw(c(0x50, 0x4b, 0x03, 0x04)))
 }
