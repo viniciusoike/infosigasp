@@ -14,8 +14,10 @@ knitr::opts_chunk$set(
 )
 # Network access and a ~120 MB download are required for the live examples, so
 # code that hits the network is shown but not evaluated when the vignette is
-# built. Set this to TRUE to run them locally.
-run_live <- FALSE
+# built. Set options(infosigasp.run_live = TRUE) to run them locally. The
+# chunk option must be an expression that also evaluates during R CMD build's
+# tangle step (where code chunks never run), hence getOption() rather than a
+# variable defined here.
 ```
 
 ## Overview
@@ -65,7 +67,7 @@ The main entry point is `read_infosiga()`. The first call downloads the
 source archive (about 120 MB) into a per-user cache; subsequent calls read
 from that cache, so you only pay the download cost once.
 
-```{r read, eval = run_live}
+```{r read, eval = isTRUE(getOption("infosigasp.run_live"))}
 sinistros <- read_infosiga("sinistros")
 sinistros
 ```
@@ -73,7 +75,7 @@ sinistros
 You can restrict the import to specific years with the `year` argument, which
 filters on the year of the crash (`ano_sinistro`):
 
-```{r read-year, eval = run_live}
+```{r read-year, eval = isTRUE(getOption("infosigasp.run_live"))}
 recent <- read_infosiga("sinistros", year = 2022:2025)
 ```
 
@@ -110,7 +112,7 @@ full, ordered list of steps lives in `?clean_infosiga`; in brief:
   are set to `NA` as a pair. No rows are dropped; pass `clean = FALSE` for the
   raw coordinates.
 
-```{r clean, eval = run_live}
+```{r clean, eval = isTRUE(getOption("infosigasp.run_live"))}
 sinistros <- read_infosiga("sinistros")
 levels(sinistros$dia_da_semana)
 ```
@@ -118,7 +120,7 @@ levels(sinistros$dia_da_semana)
 Because `dia_da_semana` is an ordered factor, a weekday tabulation comes out in
 calendar order rather than alphabetically:
 
-```{r wday, eval = run_live}
+```{r wday, eval = isTRUE(getOption("infosigasp.run_live"))}
 table(sinistros$dia_da_semana)
 ```
 
@@ -126,14 +128,14 @@ If you would rather have the data exactly as published — every text column as 
 character vector, with `"NAO DISPONIVEL"` and the source's whitespace padding
 preserved verbatim — pass `clean = FALSE`:
 
-```{r raw, eval = run_live}
+```{r raw, eval = isTRUE(getOption("infosigasp.run_live"))}
 raw <- read_infosiga("sinistros", clean = FALSE)
 ```
 
 You can also apply the same processing to a raw import after the fact with
 `clean_infosiga()`:
 
-```{r clean-fn, eval = run_live}
+```{r clean-fn, eval = isTRUE(getOption("infosigasp.run_live"))}
 processed <- clean_infosiga(raw, "sinistros")
 ```
 
@@ -159,7 +161,7 @@ Once imported, the data are ordinary tibbles, so any tidyverse (or base R)
 workflow applies. For example, counting traffic fatalities per year from the
 victims dataset:
 
-```{r fatalities, eval = run_live}
+```{r fatalities, eval = isTRUE(getOption("infosigasp.run_live"))}
 library(dplyr)
 
 deaths_by_year <- read_infosiga("pessoas") |>
@@ -173,7 +175,7 @@ deaths_by_year
 Or fatalities broken down by the type of victim (driver, passenger,
 pedestrian):
 
-```{r by-victim, eval = run_live}
+```{r by-victim, eval = isTRUE(getOption("infosigasp.run_live"))}
 read_infosiga("pessoas") |>
   filter(gravidade_lesao == "FATAL") |>
   count(tipo_de_vitima, sort = TRUE)
@@ -195,13 +197,13 @@ infosiga_cache_list()
 The archive is refreshed monthly by DETRAN-SP. To pull the latest version,
 force a re-download:
 
-```{r refresh, eval = run_live}
+```{r refresh, eval = isTRUE(getOption("infosigasp.run_live"))}
 infosiga_download(overwrite = TRUE)
 ```
 
 To reclaim disk space, clear the cache:
 
-```{r clear, eval = run_live}
+```{r clear, eval = isTRUE(getOption("infosigasp.run_live"))}
 infosiga_cache_clear()
 ```
 
@@ -218,7 +220,7 @@ INFOSIGA-SP distributes a field-by-field data dictionary (PDF, in
 Portuguese). `infosiga_dictionary()` downloads it and returns the paths to the
 extracted files:
 
-```{r dictionary, eval = run_live}
+```{r dictionary, eval = isTRUE(getOption("infosigasp.run_live"))}
 pdfs <- infosiga_dictionary()
 basename(pdfs)
 ```

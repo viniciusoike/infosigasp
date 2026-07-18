@@ -24,7 +24,13 @@ covers every traffic crash recorded in the state of São Paulo from
 
 ## Installation
 
-You can install the development version from GitHub with:
+Install the released version from CRAN with:
+
+``` r
+install.packages("infosigasp")
+```
+
+Or install the development version from GitHub with:
 
 ``` r
 # install.packages("pak")
@@ -38,12 +44,12 @@ INFOSIGA-SP publishes three linked datasets:
 ``` r
 library(infosigasp)
 infosiga_datasets()
-#> # A tibble: 3 × 4
+#> # A tibble: 3 x 4
 #>   dataset   description                                              grain keys 
 #>   <chr>     <chr>                                                    <chr> <chr>
-#> 1 sinistros Traffic crash events recorded in the state of Sao Paulo. one … id_s…
-#> 2 pessoas   People (victims) involved in traffic crashes.            one … id_p…
-#> 3 veiculos  Vehicles involved in traffic crashes.                    one … id_v…
+#> 1 sinistros Traffic crash events recorded in the state of Sao Paulo. one ~ id_s~
+#> 2 pessoas   People (victims) involved in traffic crashes.            one ~ id_p~
+#> 3 veiculos  Vehicles involved in traffic crashes.                    one ~ id_v~
 ```
 
 The datasets can be joined through `id_sinistro` (and `id_veiculo`,

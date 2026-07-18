@@ -33,7 +33,13 @@ recorded in the state of São Paulo from **2015 onward**.
 
 ## Installation
 
-You can install the development version from GitHub with:
+Install the released version from CRAN with:
+
+``` r
+install.packages("infosigasp")
+```
+
+Or install the development version from GitHub with:
 
 ``` r
 # install.packages("pak")
