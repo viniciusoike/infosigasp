@@ -33,3 +33,4 @@ articles:
   navbar: ~
   contents:
   - infosigasp
+  - articles/data-dictionary
