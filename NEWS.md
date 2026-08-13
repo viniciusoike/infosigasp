@@ -30,8 +30,15 @@ Initial release.
   (30 days by default; set to `Inf` to disable), since DETRAN-SP refreshes the
   data monthly under the same file name. The age is that of the CSVs inside the
   archive rather than of the downloaded file, and the warning names the date
-  they carry. It describes the local copy only: the package never asks
-  DETRAN-SP whether a newer release exists.
+  they carry. It describes the local copy only; use `infosiga_check_update()`
+  to compare it against a remote source.
+* Added `infosiga_check_update()`, which reports whether the archive published
+  on the package mirror is newer than the cached copy. It reads a small
+  manifest describing the mirrored archive rather than the archive itself. A
+  weekly GitHub Actions job re-fetches the official archive and republishes the
+  mirror whenever its contents change, so the mirror can trail DETRAN-SP by up
+  to a week. `infosigasp.manifest_url` accepts a vector of mirrors tried in
+  order, matching `infosigasp.zip_url`.
 * Added `infosiga_cache_dir()`, `infosiga_cache_list()` and
   `infosiga_cache_clear()` to manage the on-disk cache.
 * Added `infosiga_datasets()`, which lists the available datasets and their

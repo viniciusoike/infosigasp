@@ -1,20 +1,37 @@
-# Monthly refresh of the INFOSIGA-SP data mirror.
+# Weekly refresh of the INFOSIGA-SP data mirror.
 #
-# DETRAN-SP overwrites dados_infosiga.zip in place each month. This workflow
-# snapshots the current archive to a GitHub release tagged `data-YYYY-MM`, so
-# the package's fallback mirror (see .infosiga_zip_url() in R/infosiga-specs.R)
-# always has a recent point-in-time copy to fall back to when the official
-# portal is unavailable.
+# DETRAN-SP overwrites dados_infosiga.zip in place each month and serves it
+# without Last-Modified, ETag or Content-Length, so the only way to tell a new
+# release from the previous one is to fetch the archive and hash it. This
+# workflow does that weekly and publishes a snapshot only when the hash
+# changes, to the rolling `data-current` tag read by .infosiga_zip_url() plus a
+# dated `data-YYYY-MM` tag kept as an archive.
+#
+# Each snapshot ships a manifest.dcf describing the archive, which
+# infosiga_check_update() reads to compare a user's cached copy against the
+# mirror without downloading it.
 on:
   schedule:
-    # 06:00 UTC on the 5th of each month, a few days after the monthly update.
-    - cron: "0 6 5 * *"
+    # Mondays at 06:00 UTC. DETRAN-SP publishes monthly, on no fixed day, so a
+    # weekly probe picks up a new release within a week whenever it lands.
+    - cron: "0 6 * * 1"
   workflow_dispatch:
+    inputs:
+      force:
+        description: "Publish even when the archive is unchanged"
+        type: boolean
+        default: false
 
 name: refresh-data-mirror.yaml
 
 permissions:
   contents: write
+
+env:
+  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  GH_REPO: ${{ github.repository }}
+  ARCHIVE_URL: https://infosiga.detran.sp.gov.br/rest/painel/download/file/dados_infosiga.zip
+  ROLLING_TAG: data-current
 
 jobs:
   refresh:
@@ -27,29 +44,95 @@ jobs:
         run: |
           curl --fail --location --retry 3 --retry-delay 30 \
             --connect-timeout 60 --max-time 3600 \
-            -o dados_infosiga.zip \
-            "https://infosiga.detran.sp.gov.br/rest/painel/download/file/dados_infosiga.zip"
+            -o dados_infosiga.zip "$ARCHIVE_URL"
 
+      # The portal answers some requests with an HTML page (or a redirect to
+      # its gov.br login) under a 200 status, and a truncated transfer also
+      # looks like a file. Both must fail here rather than reach the mirror.
       - name: Verify the archive is a non-empty, valid zip
         run: |
           test -s dados_infosiga.zip
           unzip -t dados_infosiga.zip > /dev/null
           echo "size=$(du -h dados_infosiga.zip | cut -f1)"
 
-      - name: Compute the release tag
-        id: tag
-        run: echo "tag=data-$(date -u +%Y-%m)" >> "$GITHUB_OUTPUT"
-
-      - name: Publish (or update) the monthly release
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Compare against the published snapshot
+        id: compare
         run: |
-          tag="${{ steps.tag.outputs.tag }}"
-          title="INFOSIGA-SP data snapshot $(date -u +%Y-%m)"
-          notes="Point-in-time mirror of dados_infosiga.zip fetched from DETRAN-SP on $(date -u +%Y-%m-%d). Used as a fallback source by the infosigasp R package."
-          if gh release view "$tag" >/dev/null 2>&1; then
-            gh release upload "$tag" dados_infosiga.zip --clobber
-          else
-            gh release create "$tag" dados_infosiga.zip \
-              --title "$title" --notes "$notes"
+          sha="$(sha256sum dados_infosiga.zip | cut -d' ' -f1)"
+          md5="$(md5sum dados_infosiga.zip | cut -d' ' -f1)"
+          echo "sha=$sha" >> "$GITHUB_OUTPUT"
+          echo "md5=$md5" >> "$GITHUB_OUTPUT"
+
+          previous=""
+          if gh release download "$ROLLING_TAG" --pattern manifest.dcf \
+               --output previous.dcf 2>/dev/null; then
+            previous="$(awk '/^Sha256:/ {print $2}' previous.dcf)"
           fi
+
+          if [ "$sha" = "$previous" ] && [ "${{ inputs.force }}" != "true" ]; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "Archive unchanged ($sha); nothing to publish." \
+              >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      # Read the member timestamps from the ZIP central directory. These date
+      # the data itself, which is what a cached copy is compared against.
+      - name: Build the manifest
+        if: steps.compare.outputs.changed == 'true'
+        env:
+          SHA256: ${{ steps.compare.outputs.sha }}
+          MD5: ${{ steps.compare.outputs.md5 }}
+        run: |
+          python3 - <<'PY' > manifest.dcf
+          import datetime
+          import os
+          import zipfile
+
+          path = "dados_infosiga.zip"
+          with zipfile.ZipFile(path) as archive:
+              entries = [i for i in archive.infolist() if not i.is_dir()]
+          members = sorted(i.filename for i in entries)
+          newest = max(i.date_time for i in entries)
+
+          fields = [
+              ("Archive", os.path.basename(path)),
+              ("Size", str(os.path.getsize(path))),
+              ("Md5", os.environ["MD5"]),
+              ("Sha256", os.environ["SHA256"]),
+              ("DataDate", "%04d-%02d-%02d %02d:%02d" % newest[:5]),
+              ("Published", datetime.datetime.now(datetime.timezone.utc)
+                                    .strftime("%Y-%m-%dT%H:%M:%SZ")),
+              ("Source", os.environ["ARCHIVE_URL"]),
+          ]
+          for key, value in fields:
+              print(f"{key}: {value}")
+          print("Members: " + ",\n ".join(members))
+          PY
+          cat manifest.dcf >> "$GITHUB_STEP_SUMMARY"
+
+      # `--latest=false` keeps these data snapshots from taking over the
+      # repository's "Latest release" badge, which belongs to package versions.
+      - name: Publish the snapshot
+        if: steps.compare.outputs.changed == 'true'
+        run: |
+          month="data-$(date -u +%Y-%m)"
+          stamp="$(date -u +%Y-%m-%d)"
+          notes="Point-in-time mirror of dados_infosiga.zip fetched from DETRAN-SP on ${stamp}. Used as a fallback source by the infosigasp R package; manifest.dcf describes the archive."
+
+          for tag in "$ROLLING_TAG" "$month"; do
+            if [ "$tag" = "$ROLLING_TAG" ]; then
+              title="INFOSIGA-SP data snapshot (current)"
+            else
+              title="INFOSIGA-SP data snapshot $(date -u +%Y-%m)"
+            fi
+
+            if gh release view "$tag" >/dev/null 2>&1; then
+              gh release upload "$tag" dados_infosiga.zip manifest.dcf --clobber
+              gh release edit "$tag" --notes "$notes"
+            else
+              gh release create "$tag" dados_infosiga.zip manifest.dcf \
+                --title "$title" --notes "$notes" --latest=false
+            fi
+          done

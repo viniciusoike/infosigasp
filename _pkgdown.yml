@@ -29,6 +29,7 @@ reference:
   desc: Fetch the source archive and manage the local cache.
   contents:
   - infosiga_download
+  - infosiga_check_update
   - infosiga_cache
   - infosiga_dictionary
 - title: Package

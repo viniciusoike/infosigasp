@@ -326,8 +326,16 @@ infosiga_cache_dir()
 infosiga_cache_list()
 ```
 
-DETRAN-SP refreshes the archive monthly. Force a re-download to pull the latest
-version.
+DETRAN-SP refreshes the archive monthly. `infosiga_check_update()` compares
+your cached copy against the mirror the package publishes, which a weekly job
+re-fetches from DETRAN-SP, so it answers whether a newer archive exists without
+downloading one.
+
+```{r check-update, eval = isTRUE(getOption("infosigasp.run_live"))}
+infosiga_check_update()
+```
+
+Force a re-download to pull the latest version.
 
 ```{r refresh, eval = isTRUE(getOption("infosigasp.run_live"))}
 infosiga_download(overwrite = TRUE)

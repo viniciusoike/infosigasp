@@ -4,13 +4,33 @@
 # entries are tried in order until one succeeds, so additional mirrors can be
 # supplied via the `infosigasp.zip_url` option. The default is the official
 # DETRAN-SP endpoint, followed by a GitHub-release mirror that serves a
-# point-in-time snapshot when the official portal is unavailable.
+# point-in-time snapshot when the official portal is unavailable. The mirror
+# lives under a rolling tag that the refresh workflow re-uploads whenever
+# DETRAN-SP publishes new data, so this URL never has to be edited.
 .infosiga_zip_url <- function() {
   getOption(
     "infosigasp.zip_url",
     c(
       "https://infosiga.detran.sp.gov.br/rest/painel/download/file/dados_infosiga.zip",
-      "https://github.com/viniciusoike/infosigasp/releases/download/data-2026-06/dados_infosiga.zip"
+      paste0(
+        "https://github.com/viniciusoike/infosigasp/releases/download/",
+        "data-current/dados_infosiga.zip"
+      )
+    )
+  )
+}
+
+# URL(s) of the mirror manifest, a small DCF file published next to the
+# mirrored archive describing it (size, checksums, the date its CSVs carry).
+# infosiga_check_update() reads it to compare the cached archive against the
+# mirror without downloading ~120 MB. Entries are tried in order, like
+# `infosigasp.zip_url`.
+.infosiga_manifest_url <- function() {
+  getOption(
+    "infosigasp.manifest_url",
+    paste0(
+      "https://github.com/viniciusoike/infosigasp/releases/download/",
+      "data-current/manifest.dcf"
     )
   )
 }
