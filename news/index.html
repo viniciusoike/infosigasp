@@ -17,6 +17,10 @@
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto"><li class="nav-item"><a class="nav-link" href="../articles/infosigasp.html">Get started</a></li>
 <li class="nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
+<li class="nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/data-dictionary.html">Data dictionary</a></li>
+  </ul></li>
 <li class="active nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json"></form></li>
@@ -34,22 +38,18 @@
 
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.1.0" id="infosigasp-010">infosigasp 0.1.0<a class="anchor" aria-label="anchor" href="#infosigasp-010"></a></h2>
-<ul><li>Initial release.</li>
-<li>New package hex logo: the major road network of the São Paulo Metropolitan Region in the INFOSIGA-SP dark blue (<code>data-raw/logo.R</code>).</li>
-<li>
-<code><a href="../reference/read_infosiga.html">read_infosiga()</a></code> downloads (with caching) and imports the three INFOSIGA-SP datasets (<code>sinistros</code>, <code>pessoas</code>, <code>veiculos</code>) as tidy tibbles, handling the source encoding, decimal marks and date formats.</li>
-<li>
-<code><a href="../reference/read_infosiga.html">read_infosiga()</a></code> returns a processed dataset by default (<code>clean = TRUE</code>): text columns are whitespace-trimmed (the source pads some fields to a fixed width), <code>"NAO DISPONIVEL"</code> becomes <code>NA</code>, ordinal columns (<code>dia_da_semana</code>, <code>turno</code>, <code>gravidade_lesao</code>, age bands) become ordered factors, the <code>ano_mes_*</code> year-month columns are parsed to first-of-month <code>Date</code>s, the binary <code>tp_sinistro_*</code> crash-type flags become logical, <code>tempo_sinistro_obito</code> becomes integer, the spurious <code>".0"</code> on <code>numero_logradouro</code> is stripped, and coordinates outside the São Paulo state bounding box are dropped. Use <code>clean = FALSE</code> for the raw data as published, or <code><a href="../reference/clean_infosiga.html">clean_infosiga()</a></code> to process a raw import afterwards.</li>
-<li>
-<code><a href="../reference/infosiga_download.html">infosiga_download()</a></code> pre-fetches the source archive into a local cache. It tries the official DETRAN-SP endpoint first and falls back to a GitHub-release mirror if it is unavailable; additional mirrors can be supplied via the <code>infosigasp.zip_url</code> option (a character vector tried in order).</li>
-<li>
-<code><a href="../reference/read_infosiga.html">read_infosiga()</a></code> and <code><a href="../reference/infosiga_download.html">infosiga_download()</a></code> warn when a cached archive is reused that is older than the <code>infosigasp.stale_days</code> option (30 days by default; set to <code>Inf</code> to disable), since DETRAN-SP refreshes the data monthly under the same file name.</li>
-<li>
-<code><a href="../reference/infosiga_cache.html">infosiga_cache_dir()</a></code>, <code><a href="../reference/infosiga_cache.html">infosiga_cache_list()</a></code> and <code><a href="../reference/infosiga_cache.html">infosiga_cache_clear()</a></code> manage the on-disk cache.</li>
-<li>
-<code><a href="../reference/infosiga_datasets.html">infosiga_datasets()</a></code> lists the available datasets and their keys.</li>
-<li>
-<code><a href="../reference/infosiga_dictionary.html">infosiga_dictionary()</a></code> downloads the official data dictionary.</li>
+<p>Initial release.</p>
+<ul><li>Added <code><a href="../reference/read_infosiga.html">read_infosiga()</a></code>, which downloads (with caching) and imports the three INFOSIGA-SP datasets (<code>sinistros</code>, <code>pessoas</code>, <code>veiculos</code>) as tibbles, handling the source encoding, decimal marks and date formats.</li>
+<li>Added <code><a href="../reference/clean_infosiga.html">clean_infosiga()</a></code>, applied by default, which trims text, maps <code>"NAO DISPONIVEL"</code> to <code>NA</code>, makes the ordinal columns ordered factors, parses the <code>ano_mes_*</code> columns to first-of-month <code>Date</code>s, turns the <code>tp_sinistro_*</code> crash-type flags logical, casts <code>tempo_sinistro_obito</code> to integer, strips the spurious <code>".0"</code> on <code>numero_logradouro</code>, and voids coordinates outside the São Paulo state bounding box.</li>
+<li>Added <code>clean = FALSE</code> to <code><a href="../reference/read_infosiga.html">read_infosiga()</a></code> for the raw data as published.</li>
+<li>Added <code><a href="../reference/tidy_infosiga_labels.html">tidy_infosiga_labels()</a></code>, an opt-in second pass that rewrites category labels for analysts who do not need the published categories verbatim: IBGE spellings for <code>municipio</code> and <code>regiao_administrativa</code>, merged <code>cor_veiculo</code> spellings, Title Cased <code>profissao</code>, and route codes split out of <code>conservacao</code> into a new <code>conservacao_codigo</code> column.</li>
+<li>Added the <code>infosiga_municipios</code> dataset, pairing the official IBGE name and the INFOSIGA-SP spelling of each São Paulo municipality, keyed by <code>cod_ibge</code>.</li>
+<li>Added <code><a href="../reference/infosiga_download.html">infosiga_download()</a></code> to pre-fetch the source archive, falling back to a GitHub-release mirror when the DETRAN-SP endpoint is unavailable; further mirrors go in the <code>infosigasp.zip_url</code> option.</li>
+<li>Added a warning when <code><a href="../reference/read_infosiga.html">read_infosiga()</a></code> or <code><a href="../reference/infosiga_download.html">infosiga_download()</a></code> reuses a cached archive older than the <code>infosigasp.stale_days</code> option (30 days by default; set to <code>Inf</code> to disable), since DETRAN-SP refreshes the data monthly under the same file name.</li>
+<li>Added <code><a href="../reference/infosiga_cache.html">infosiga_cache_dir()</a></code>, <code><a href="../reference/infosiga_cache.html">infosiga_cache_list()</a></code> and <code><a href="../reference/infosiga_cache.html">infosiga_cache_clear()</a></code> to manage the on-disk cache.</li>
+<li>Added <code><a href="../reference/infosiga_datasets.html">infosiga_datasets()</a></code>, which lists the available datasets and their keys, and <code><a href="../reference/infosiga_dictionary.html">infosiga_dictionary()</a></code>, which downloads the official data dictionary.</li>
+<li>Documented the coverage caveats of the source data in <code><a href="../reference/read_infosiga.html">?read_infosiga</a></code> and the getting-started vignette, chief among them that 2015–2018 covers fatal crashes only, so an unrestricted per-year count jumps roughly 20-fold in 2019.</li>
+<li>Added a package hex logo drawn from the major road network of the São Paulo Metropolitan Region in the INFOSIGA-SP dark blue (<code>data-raw/logo.R</code>).</li>
 </ul></div>
   </main></div>
 
@@ -59,7 +59,7 @@
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
 </div>
 
     </footer></div>

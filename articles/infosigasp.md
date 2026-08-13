@@ -8,8 +8,7 @@ DETRAN-SP. It publishes, as open data, detailed records of every traffic
 crash in the state of São Paulo from 2015 onward.
 
 The `infosigasp` package wraps the download and import of those records.
-It takes care of the things that make the raw files awkward to read
-directly:
+It handles what makes the raw files awkward to read directly.
 
 - the files are encoded in **Latin-1** (ISO-8859-1), not UTF-8;
 - fields are separated by **semicolons** (`;`);
@@ -25,7 +24,7 @@ library(infosigasp)
 
 ## The three datasets
 
-INFOSIGA-SP organises its data into three linked tables:
+INFOSIGA-SP organises its data into three linked tables.
 
 ``` r
 
@@ -65,8 +64,8 @@ sinistros <- read_infosiga("sinistros")
 sinistros
 ```
 
-You can restrict the import to specific years with the `year` argument,
-which filters on the year of the crash (`ano_sinistro`):
+The `year` argument restricts the import to specific years, filtering on
+the year of the crash (`ano_sinistro`).
 
 ``` r
 
@@ -78,24 +77,23 @@ recent <- read_infosiga("sinistros", year = 2022:2025)
 By default
 [`read_infosiga()`](https://viniciusoike.github.io/infosigasp/reference/read_infosiga.md)
 returns a **processed** dataset (`clean = TRUE`). The processing never
-renames columns, recodes category labels or drops rows – it only fixes
-types and source artefacts so the data is ready for analysis. The full,
-ordered list of steps lives in
+renames columns, recodes category labels or drops rows. It only fixes
+types and source artefacts. The full, ordered list of steps lives in
 [`?clean_infosiga`](https://viniciusoike.github.io/infosigasp/reference/clean_infosiga.md);
-in brief:
+the main ones are below.
 
 - **Dates and times.** Full dates are parsed to `Date` and times to
   `hms` (in both modes), and the `ano_mes_*` year-month columns
   (published as `"YYYY/MM"`) become first-of-month `Date` values.
-- **Whitespace.** Leading/trailing whitespace is trimmed from text
-  columns. The source pads some fields to a fixed width (`nacionalidade`
-  ships as `"BRASILEIRA "`); untrimmed, those values break grouping and
-  joins.
-- **Missing values.** The `"NAO DISPONIVEL"` (“not available”) marker is
-  replaced by `NA` (trimming runs first, so space-padded markers are
+- **Whitespace.** Text columns lose their leading and trailing
+  whitespace. The source pads some fields to a fixed width
+  (`nacionalidade` ships as `"BRASILEIRA "`); untrimmed, those values
+  break grouping and joins.
+- **Missing values.** The `"NAO DISPONIVEL"` (“not available”) marker
+  becomes `NA` (trimming runs first, so space-padded markers are
   caught).
 - **Ordered factors.** Ordinal columns sort and plot in their natural
-  order instead of alphabetically:
+  order instead of alphabetically.
   - `dia_da_semana`: `Domingo` \< … \< `Sábado` (the Brazilian week
     starts on Sunday);
   - `turno`: `MADRUGADA` \< `MANHA` \< `TARDE` \< `NOITE`;
@@ -105,14 +103,14 @@ in brief:
 - **Crash-type flags.** The binary `tp_sinistro_*` columns (`"S"` /
   empty) become **logical**, so you can
   [`sum()`](https://rdrr.io/r/base/sum.html) or filter them directly.
-  The categorical `tp_sinistro_primario` is left as text.
+  The categorical `tp_sinistro_primario` stays text.
 - **Numeric strings.** `tempo_sinistro_obito` (days from crash to death)
-  becomes **integer**, and the spurious trailing `".0"` the export
-  appends to `numero_logradouro` (`"193.0"`) is stripped.
+  becomes **integer**, and `numero_logradouro` loses the spurious
+  trailing `".0"` the export appends (`"193.0"`).
 - **Coordinates.** `latitude`/`longitude` outside the São Paulo state
-  bounding box – mis-encoded values and `(0, 0)` placeholders, about 7%
-  of records – are set to `NA` as a pair. No rows are dropped; pass
-  `clean = FALSE` for the raw coordinates.
+  bounding box become `NA` as a pair. These are mis-encoded values and
+  `(0, 0)` placeholders, a few percent of records. No rows are dropped;
+  pass `clean = FALSE` for the raw coordinates.
 
 ``` r
 
@@ -120,36 +118,114 @@ sinistros <- read_infosiga("sinistros")
 levels(sinistros$dia_da_semana)
 ```
 
-Because `dia_da_semana` is an ordered factor, a weekday tabulation comes
-out in calendar order rather than alphabetically:
+`dia_da_semana` is an ordered factor, so a weekday tabulation comes out
+in calendar order rather than alphabetically.
 
 ``` r
 
 table(sinistros$dia_da_semana)
 ```
 
-If you would rather have the data exactly as published — every text
-column as a character vector, with `"NAO DISPONIVEL"` and the source’s
-whitespace padding preserved verbatim — pass `clean = FALSE`:
+Pass `clean = FALSE` if you would rather have the data exactly as
+published, with every text column a character vector and
+`"NAO DISPONIVEL"` and the source’s whitespace padding preserved
+verbatim.
 
 ``` r
 
 raw <- read_infosiga("sinistros", clean = FALSE)
 ```
 
-You can also apply the same processing to a raw import after the fact
-with
-[`clean_infosiga()`](https://viniciusoike.github.io/infosigasp/reference/clean_infosiga.md):
+[`clean_infosiga()`](https://viniciusoike.github.io/infosigasp/reference/clean_infosiga.md)
+applies the same processing to a raw import after the fact.
 
 ``` r
 
 processed <- clean_infosiga(raw, "sinistros")
 ```
 
+### Tidying the category labels
+
+[`clean_infosiga()`](https://viniciusoike.github.io/infosigasp/reference/clean_infosiga.md)
+fixes types and source artefacts but never touches category *labels*, so
+that anyone reproducing an official DETRAN-SP figure gets exactly the
+categories DETRAN-SP publishes. Those labels are, however, genuinely
+messy. For your own analysis, run the opt-in second pass
+[`tidy_infosiga_labels()`](https://viniciusoike.github.io/infosigasp/reference/tidy_infosiga_labels.md).
+
+``` r
+
+veiculos <- read_infosiga("veiculos") |>
+  tidy_infosiga_labels("veiculos")
+
+sort(table(veiculos$cor_veiculo), decreasing = TRUE)
+```
+
+Vehicle colour is the clearest case. The source carries dozens of
+distinct values for **about sixteen real colours**, because two upstream
+systems coexist in every year, one upper-case and one title-cased, and
+the two disagree on gender agreement.
+
+| source values                            | tidied     |
+|------------------------------------------|------------|
+| `PRETA`, `Preta`                         | `Preta`    |
+| `BRANCA`, `Branco`, `BRANCA (PADRAO PM)` | `Branca`   |
+| `VERMELHA`, `Vermelho`                   | `Vermelha` |
+| `CIN/VER/PRE`, `BRANCA/VERMELHA`         | `Multicor` |
+
+Note that [`toupper()`](https://rdrr.io/r/base/chartr.html) alone will
+not merge `Branca` and `Branco`.
+
+The remaining changes are listed below.
+
+- **Place names.** The source publishes `municipio` unaccented
+  (`"SAO PAULO"`) while `regiao_administrativa` keeps its accents, so
+  neither joins to other Brazilian data as published. Both take the
+  official IBGE spelling.
+- **`profissao`** is Title Cased, which merges the several hundred
+  values that differ from another only by capitalisation, and the stray
+  `"NAO INFORMADA"` markers become `NA`.
+- **`conservacao`** mixes the name of the maintaining body
+  (`"PREFEITURA"`) with bare route codes (`"10.03"`); the codes move to
+  a new `conservacao_codigo` column.
+
+Two limits are worth naming. `profissao` keeps its unaccented spelling
+and its occupations stay ungrouped, because no authoritative list covers
+these free-text values. `conservacao` names keep their source
+capitalisation, because most are brand acronyms (`SPMAR`, `TEBE`,
+`CART`) that Title Case would corrupt into `Spmar` and `Tebe`.
+
+### Joining to other Brazilian data
+
+The `infosiga_municipios` lookup ships with the package and maps
+`cod_ibge` to both spellings of each of the 645 municipalities.
+
+``` r
+
+head(infosiga_municipios, 4)
+#> # A tibble: 4 × 5
+#>   cod_ibge municipio      municipio_infosiga regiao_administrativa
+#>   <chr>    <chr>          <chr>              <chr>                
+#> 1 3500105  Adamantina     ADAMANTINA         Presidente Prudente  
+#> 2 3500204  Adolfo         ADOLFO             São José do Rio Preto
+#> 3 3500303  Aguaí          AGUAI              Campinas             
+#> 4 3500402  Águas da Prata AGUAS DA PRATA     Campinas             
+#> # ℹ 1 more variable: regiao_administrativa_infosiga <chr>
+```
+
+Always join on `cod_ibge`, never on the name. IBGE and INFOSIGA-SP spell
+nine municipalities differently. Eight contain an apostrophe that
+INFOSIGA-SP renders as a space (`"Santa Bárbara d'Oeste"` against
+`"SANTA BARBARA D OESTE"`), and IBGE’s `"São Luiz do Paraitinga"`
+appears as `"SAO LUIS DO PARAITINGA"`. A name join loses all nine
+silently. `cod_ibge` is also the standard Brazilian municipality key, so
+it joins INFOSIGA-SP to census and population data. Those are the
+denominators that turn crash counts into crash *rates*.
+
 ### A peek at the structure without downloading
 
 The package ships a small sample of each dataset so you can inspect the
-columns without any network access:
+columns without any network access.
 
 ``` r
 
@@ -188,11 +264,87 @@ names(sample)
 #> [47] "tp_sinistro_outros"              "tp_sinistro_nao_disponivel"
 ```
 
+## Coverage and caveats
+
+INFOSIGA-SP publishes one continuous series from 2015 onward, but what
+the series *contains* has changed over time. These are properties of the
+source data, not import artefacts, so `infosigasp` reports them rather
+than correcting them. Several will quietly invalidate an analysis that
+looks perfectly reasonable.
+[`?read_infosiga`](https://viniciusoike.github.io/infosigasp/reference/read_infosiga.md)
+carries the full list; the two below catch people out most often.
+
+### 2015–2018 covers fatal crashes only
+
+Non-fatal records begin in **2019**. Before that, every row is a fatal
+crash. Counting crashes per year over the whole series therefore
+produces a roughly 20-fold jump in 2019 that reflects only the expansion
+of data collection.
+
+| year | fatal crashes | non-fatal crashes |
+|------|---------------|-------------------|
+| 2015 | 5,942         | 0                 |
+| 2018 | 4,869         | 0                 |
+| 2019 | 4,804         | 116,412           |
+| 2023 | 5,166         | 135,329           |
+
+Those counts come from a 2026 release and shift as DETRAN-SP revises the
+data. The break in 2019 does not move. The same break appears in
+`pessoas`, where the `LEVE` and `GRAVE` injury levels simply do not
+occur before 2019.
+
+So for any trend that reaches back before 2019, **restrict to
+fatalities**.
+
+``` r
+
+library(dplyr)
+
+read_infosiga("sinistros") |>
+  filter(tipo_registro == "SINISTRO FATAL") |>
+  count(ano_sinistro)
+```
+
+Otherwise, start the series in 2019 with
+`read_infosiga("sinistros", year = 2019:2026)`.
+
+### A third of `sinistros` rows are notifications
+
+`tipo_registro` distinguishes confirmed crashes from `"NOTIFICACAO"`, a
+reported event not yet confirmed as a crash. Notifications are about a
+third of all rows, so treating every row as a crash overstates the total
+considerably.
+
+``` r
+
+read_infosiga("sinistros") |>
+  count(tipo_registro, sort = TRUE)
+```
+
+DETRAN-SP reclassifies records as it validates them, so the newest
+months carry an unusually high share of notifications. The last month or
+two of any release is also incomplete. Drop the tail of the series
+before reading anything into a recent trend.
+
+### Others worth knowing
+
+- **`tempo_sinistro_obito` is capped at 30 days**, the standard
+  convention for attributing a death to a crash. Fatality counts here
+  are 30-day counts.
+- **The `qtd_*` vehicle columns disagree with the `veiculos` row count**
+  for a small share of crashes. Pick one definition and say which. (The
+  `qtd_gravidade_*` columns *do* match `pessoas` exactly.)
+- **Coordinate availability varies by year.** It is highest through the
+  middle of the series and lower at both ends, so a mapped subset is not
+  a uniform time sample.
+- **About a third of crashes have no `pessoas` row.** Use a left join to
+  keep them.
+
 ## A short analysis
 
-Once imported, the data are ordinary tibbles, so any tidyverse (or base
-R) workflow applies. For example, counting traffic fatalities per year
-from the victims dataset:
+The imported data are ordinary tibbles, so any tidyverse (or base R)
+workflow applies. Here is a count of traffic fatalities per year from
+the victims dataset.
 
 ``` r
 
@@ -206,8 +358,11 @@ deaths_by_year <- read_infosiga("pessoas") |>
 deaths_by_year
 ```
 
-Or fatalities broken down by the type of victim (driver, passenger,
-pedestrian):
+That series is safe to read across all years because it counts only
+fatalities, the one thing collected consistently since 2015.
+
+Fatalities also break down by the type of victim (driver, passenger,
+pedestrian).
 
 ``` r
 
@@ -216,13 +371,13 @@ read_infosiga("pessoas") |>
   count(tipo_de_vitima, sort = TRUE)
 ```
 
-Because `sinistros` carries latitude and longitude as numeric columns,
-crash locations can be mapped directly or aggregated by municipality
+`sinistros` carries latitude and longitude as numeric columns, so you
+can map crash locations directly or aggregate them by municipality
 (`municipio` / `cod_ibge`).
 
 ## Managing the cache
 
-The download lives in an operating-system specific cache directory:
+The download lives in an operating-system specific cache directory.
 
 ``` r
 
@@ -232,15 +387,15 @@ infosiga_cache_list()
 #> character(0)
 ```
 
-The archive is refreshed monthly by DETRAN-SP. To pull the latest
-version, force a re-download:
+DETRAN-SP refreshes the archive monthly. Force a re-download to pull the
+latest version.
 
 ``` r
 
 infosiga_download(overwrite = TRUE)
 ```
 
-To reclaim disk space, clear the cache:
+Clear the cache to reclaim disk space.
 
 ``` r
 
@@ -248,7 +403,7 @@ infosiga_cache_clear()
 ```
 
 You can point the cache somewhere else for a session (or permanently via
-your `.Rprofile`) with the `infosigasp.cache_dir` option:
+your `.Rprofile`) with the `infosigasp.cache_dir` option.
 
 ``` r
 
@@ -260,7 +415,7 @@ options(infosigasp.cache_dir = "~/data/infosiga")
 INFOSIGA-SP distributes a field-by-field data dictionary (PDF, in
 Portuguese).
 [`infosiga_dictionary()`](https://viniciusoike.github.io/infosigasp/reference/infosiga_dictionary.md)
-downloads it and returns the paths to the extracted files:
+downloads it and returns the paths to the extracted files.
 
 ``` r
 
@@ -270,7 +425,7 @@ basename(pdfs)
 
 ## Citing the data
 
-Data are published by DETRAN-SP under a Creative Commons Attribution 4.0
+DETRAN-SP publishes the data under a Creative Commons Attribution 4.0
 licence. When you publish results based on these data, please cite
-INFOSIGA-SP / DETRAN-SP as the source:
+INFOSIGA-SP / DETRAN-SP as the source,
 <https://infosiga.detran.sp.gov.br/>.

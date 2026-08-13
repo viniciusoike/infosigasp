@@ -25,6 +25,10 @@ offline) or to force a refresh."><meta property="og:image" content="https://vini
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto"><li class="nav-item"><a class="nav-link" href="../articles/infosigasp.html">Get started</a></li>
 <li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
+<li class="nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/data-dictionary.html">Data dictionary</a></li>
+  </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json"></form></li>
@@ -81,18 +85,18 @@ informative messages.</p></dd>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>The archive is updated monthly by DETRAN-SP and accumulates all records
-from 2015 onward. The download URL can be overridden with the
+    <p>DETRAN-SP updates the archive monthly; it accumulates all records from 2015
+onward. The download URL can be overridden with the
 <code>infosigasp.zip_url</code> option, which may be a character vector of mirror URLs
 tried in order until one succeeds. The default is the official DETRAN-SP
 endpoint followed by a GitHub-release mirror that serves a point-in-time
 snapshot when the official portal is unavailable. Override the option to add
 your own mirror or for testing.</p>
-<p>Because DETRAN-SP overwrites the archive in place each month under the same
-file name, a cached copy can become stale silently. When a cached archive is
-reused that is older than the <code>infosigasp.stale_days</code> option (30 days by
-default; set to <code>Inf</code> to disable), a warning suggests refreshing it. The age
-is taken from the cached file's modification time.</p>
+<p>DETRAN-SP overwrites the archive in place each month under the same file
+name, so a cached copy can become stale silently. Reusing a cached archive
+older than the <code>infosigasp.stale_days</code> option (30 days by default; set to
+<code>Inf</code> to disable) raises a warning suggesting a refresh. The age comes from
+the cached file's modification time.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
@@ -120,7 +124,7 @@ to locate the cache.</p></div>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
 </div>
 
     </footer></div>

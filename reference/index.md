@@ -11,6 +11,17 @@ Download and read the INFOSIGA-SP datasets.
 - [`infosiga_datasets()`](https://viniciusoike.github.io/infosigasp/reference/infosiga_datasets.md)
   : List the available INFOSIGA-SP datasets
 
+## Tidying labels
+
+Opt-in helpers that rewrite the published category labels into a
+consistent, presentation-ready form.
+
+- [`tidy_infosiga_labels()`](https://viniciusoike.github.io/infosigasp/reference/tidy_infosiga_labels.md)
+  : Tidy the category labels of an INFOSIGA-SP dataset
+- [`infosiga_municipios`](https://viniciusoike.github.io/infosigasp/reference/infosiga_municipios.md)
+  : Municipalities of Sao Paulo state, as named by IBGE and by
+  INFOSIGA-SP
+
 ## Downloads and cache
 
 Fetch the source archive and manage the local cache.

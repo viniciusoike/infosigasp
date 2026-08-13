@@ -1,6 +1,6 @@
 # infosigasp
 
-`infosigasp` provides a clean, programmatic interface to the open data
+`infosigasp` provides a programmatic interface to the open data
 published by **INFOSIGA-SP**, the São Paulo State Traffic Accident
 Information and Management System maintained by **DETRAN-SP** (the São
 Paulo State Department of Motor Vehicles).
@@ -13,7 +13,14 @@ covers every traffic crash recorded in the state of São Paulo from
 
 ## Installation
 
-You can install the development version from GitHub with:
+Install the released version from CRAN.
+
+``` r
+
+install.packages("infosigasp")
+```
+
+The development version lives on GitHub.
 
 ``` r
 
@@ -23,18 +30,18 @@ pak::pak("viniciusoike/infosigasp")
 
 ## Datasets
 
-INFOSIGA-SP publishes three linked datasets:
+INFOSIGA-SP publishes three linked datasets.
 
 ``` r
 
 library(infosigasp)
 infosiga_datasets()
-#> # A tibble: 3 × 4
+#> # A tibble: 3 x 4
 #>   dataset   description                                              grain keys 
 #>   <chr>     <chr>                                                    <chr> <chr>
-#> 1 sinistros Traffic crash events recorded in the state of Sao Paulo. one … id_s…
-#> 2 pessoas   People (victims) involved in traffic crashes.            one … id_p…
-#> 3 veiculos  Vehicles involved in traffic crashes.                    one … id_v…
+#> 1 sinistros Traffic crash events recorded in the state of Sao Paulo. one ~ id_s~
+#> 2 pessoas   People (victims) involved in traffic crashes.            one ~ id_p~
+#> 3 veiculos  Vehicles involved in traffic crashes.                    one ~ id_v~
 ```
 
 The datasets can be joined through `id_sinistro` (and `id_veiculo`,
@@ -63,15 +70,15 @@ veiculos <- read_infosiga("veiculos")
 
 By default
 [`read_infosiga()`](https://viniciusoike.github.io/infosigasp/reference/read_infosiga.md)
-returns a **processed** dataset. Dates are parsed to `Date` (including
-the `ano_mes_*` year-month columns, as first-of-month dates), text is
-whitespace-trimmed, the `"NAO DISPONIVEL"` (“not available”) marker
-becomes `NA`, the binary `tp_sinistro_*` crash-type flags become
-logical, coordinates outside São Paulo state are dropped, and the
-ordinal columns become **ordered factors** so they sort and plot in
-their natural order rather than alphabetically (see
+returns a **processed** dataset. Dates parse to `Date` (including the
+`ano_mes_*` year-month columns, as first-of-month dates), text loses its
+padding, the `"NAO DISPONIVEL"` (“not available”) marker becomes `NA`,
+the binary `tp_sinistro_*` crash-type flags become logical, coordinates
+outside São Paulo state become `NA`, and the ordinal columns become
+**ordered factors** so they sort and plot in their natural order rather
+than alphabetically.
 [`?clean_infosiga`](https://viniciusoike.github.io/infosigasp/reference/clean_infosiga.md)
-for the full list):
+has the full list.
 
 ``` r
 
@@ -105,8 +112,9 @@ infosiga_cache_clear()    # delete cached files
 
 ### Data dictionary
 
-The official field-by-field documentation (PDF, in Portuguese) can be
-fetched with:
+[`infosiga_dictionary()`](https://viniciusoike.github.io/infosigasp/reference/infosiga_dictionary.md)
+downloads the official field-by-field documentation (PDF, in
+Portuguese).
 
 ``` r
 
@@ -115,7 +123,7 @@ infosiga_dictionary()
 
 ## Example
 
-A small fatality summary by year, using the victims dataset:
+The victims dataset gives a fatality count per year.
 
 ``` r
 
@@ -129,12 +137,12 @@ read_infosiga("pessoas") |>
 
 ## Data source and licence
 
-Data are published by DETRAN-SP under a [Creative Commons Attribution
+DETRAN-SP publishes the data under a [Creative Commons Attribution
 4.0](https://creativecommons.org/licenses/by/4.0/) licence at
 <https://infosiga.detran.sp.gov.br/>. When using the data, please cite
 INFOSIGA-SP / DETRAN-SP as the source.
 
-This package is released under the MIT licence and is **not** affiliated
+The package itself carries the MIT licence. It is **not** affiliated
 with or endorsed by DETRAN-SP or the Government of the State of São
 Paulo.
 
@@ -150,6 +158,17 @@ Download and read the INFOSIGA-SP datasets.
   : Clean and process an INFOSIGA-SP dataset
 - [`infosiga_datasets()`](https://viniciusoike.github.io/infosigasp/reference/infosiga_datasets.md)
   : List the available INFOSIGA-SP datasets
+
+## Tidying labels
+
+Opt-in helpers that rewrite the published category labels into a
+consistent, presentation-ready form.
+
+- [`tidy_infosiga_labels()`](https://viniciusoike.github.io/infosigasp/reference/tidy_infosiga_labels.md)
+  : Tidy the category labels of an INFOSIGA-SP dataset
+- [`infosiga_municipios`](https://viniciusoike.github.io/infosigasp/reference/infosiga_municipios.md)
+  : Municipalities of Sao Paulo state, as named by IBGE and by
+  INFOSIGA-SP
 
 ## Downloads and cache
 
@@ -176,3 +195,5 @@ Fetch the source archive and manage the local cache.
 
 - [Getting started with
   infosigasp](https://viniciusoike.github.io/infosigasp/articles/infosigasp.md):
+- [Data
+  dictionary](https://viniciusoike.github.io/infosigasp/articles/data-dictionary.md):

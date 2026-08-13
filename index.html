@@ -16,9 +16,9 @@
 <script src="deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
 <script src="deps/headroom-0.11.0/headroom.min.js"></script><script src="deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="deps/search-1.0.0/fuse.min.js"></script><script src="deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="pkgdown.js"></script><meta property="og:title" content="Download and import traffic crash data from INFOSIGA-SP">
-<meta name="description" content="A clean R interface to the São Paulo State traffic crash open data published by DETRAN-SP.
+<meta name="description" content="An R interface to the São Paulo State traffic crash open data published by DETRAN-SP.
 ">
-<meta property="og:description" content="A clean R interface to the São Paulo State traffic crash open data published by DETRAN-SP.
+<meta property="og:description" content="An R interface to the São Paulo State traffic crash open data published by DETRAN-SP.
 ">
 <meta property="og:image" content="https://viniciusoike.github.io/infosigasp/logo.png">
 </head>
@@ -41,6 +41,12 @@
       <ul class="navbar-nav me-auto">
 <li class="nav-item"><a class="nav-link" href="articles/infosigasp.html">Get started</a></li>
 <li class="nav-item"><a class="nav-link" href="reference/index.html">Reference</a></li>
+<li class="nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
+<li><a class="dropdown-item" href="articles/data-dictionary.html">Data dictionary</a></li>
+  </ul>
+</li>
 <li class="nav-item"><a class="nav-link" href="news/index.html">Changelog</a></li>
       </ul>
 <ul class="navbar-nav">
@@ -63,36 +69,39 @@
 </div>
 <!-- badges: start -->
 
-<p><code>infosigasp</code> provides a clean, programmatic interface to the open data published by <strong>INFOSIGA-SP</strong>, the São Paulo State Traffic Accident Information and Management System maintained by <strong>DETRAN-SP</strong> (the São Paulo State Department of Motor Vehicles).</p>
+<p><code>infosigasp</code> provides a programmatic interface to the open data published by <strong>INFOSIGA-SP</strong>, the São Paulo State Traffic Accident Information and Management System maintained by <strong>DETRAN-SP</strong> (the São Paulo State Department of Motor Vehicles).</p>
 <p>The package downloads the official data archive, handles its quirks (Latin-1 encoding, semicolon separators, comma decimal marks, <code>DD/MM/YYYY</code> dates) and returns tidy tibbles ready for analysis. It covers every traffic crash recorded in the state of São Paulo from <strong>2015 onward</strong>.</p>
 <div class="section level2">
 <h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
 </h2>
-<p>You can install the development version from GitHub with:</p>
+<p>Install the released version from CRAN.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"infosigasp"</span><span class="op">)</span></span></code></pre></div>
+<p>The development version lives on GitHub.</p>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># install.packages("pak")</span></span>
 <span><span class="fu">pak</span><span class="fu">::</span><span class="fu"><a href="https://pak.r-lib.org/reference/pak.html" class="external-link">pak</a></span><span class="op">(</span><span class="st">"viniciusoike/infosigasp"</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="datasets">Datasets<a class="anchor" aria-label="anchor" href="#datasets"></a>
 </h2>
-<p>INFOSIGA-SP publishes three linked datasets:</p>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<p>INFOSIGA-SP publishes three linked datasets.</p>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/viniciusoike/infosigasp" class="external-link">infosigasp</a></span><span class="op">)</span></span>
 <span><span class="fu"><a href="reference/infosiga_datasets.html">infosiga_datasets</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt; # A tibble: 3 × 4</span></span>
+<span><span class="co">#&gt; # A tibble: 3 x 4</span></span>
 <span><span class="co">#&gt;   dataset   description                                              grain keys </span></span>
 <span><span class="co">#&gt;   &lt;chr&gt;     &lt;chr&gt;                                                    &lt;chr&gt; &lt;chr&gt;</span></span>
-<span><span class="co">#&gt; 1 sinistros Traffic crash events recorded in the state of Sao Paulo. one … id_s…</span></span>
-<span><span class="co">#&gt; 2 pessoas   People (victims) involved in traffic crashes.            one … id_p…</span></span>
-<span><span class="co">#&gt; 3 veiculos  Vehicles involved in traffic crashes.                    one … id_v…</span></span></code></pre></div>
+<span><span class="co">#&gt; 1 sinistros Traffic crash events recorded in the state of Sao Paulo. one ~ id_s~</span></span>
+<span><span class="co">#&gt; 2 pessoas   People (victims) involved in traffic crashes.            one ~ id_p~</span></span>
+<span><span class="co">#&gt; 3 veiculos  Vehicles involved in traffic crashes.                    one ~ id_v~</span></span></code></pre></div>
 <p>The datasets can be joined through <code>id_sinistro</code> (and <code>id_veiculo</code>, where present).</p>
 </div>
 <div class="section level2">
 <h2 id="usage">Usage<a class="anchor" aria-label="anchor" href="#usage"></a>
 </h2>
 <p>The first call downloads the source archive (~120 MB) into a local cache; later calls read straight from disk.</p>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/viniciusoike/infosigasp" class="external-link">infosigasp</a></span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Crash events (one row per event)</span></span>
@@ -106,8 +115,8 @@
 <div class="section level3">
 <h3 id="processed-by-default-raw-on-demand">Processed by default, raw on demand<a class="anchor" aria-label="anchor" href="#processed-by-default-raw-on-demand"></a>
 </h3>
-<p>By default <code><a href="reference/read_infosiga.html">read_infosiga()</a></code> returns a <strong>processed</strong> dataset. Dates are parsed to <code>Date</code> (including the <code>ano_mes_*</code> year-month columns, as first-of-month dates), text is whitespace-trimmed, the <code>"NAO DISPONIVEL"</code> (“not available”) marker becomes <code>NA</code>, the binary <code>tp_sinistro_*</code> crash-type flags become logical, coordinates outside São Paulo state are dropped, and the ordinal columns become <strong>ordered factors</strong> so they sort and plot in their natural order rather than alphabetically (see <code><a href="reference/clean_infosiga.html">?clean_infosiga</a></code> for the full list):</p>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<p>By default <code><a href="reference/read_infosiga.html">read_infosiga()</a></code> returns a <strong>processed</strong> dataset. Dates parse to <code>Date</code> (including the <code>ano_mes_*</code> year-month columns, as first-of-month dates), text loses its padding, the <code>"NAO DISPONIVEL"</code> (“not available”) marker becomes <code>NA</code>, the binary <code>tp_sinistro_*</code> crash-type flags become logical, coordinates outside São Paulo state become <code>NA</code>, and the ordinal columns become <strong>ordered factors</strong> so they sort and plot in their natural order rather than alphabetically. <code><a href="reference/clean_infosiga.html">?clean_infosiga</a></code> has the full list.</p>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/levels.html" class="external-link">levels</a></span><span class="op">(</span><span class="va">sinistros</span><span class="op">$</span><span class="va">dia_da_semana</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] "Domingo"       "Segunda-feira" "Terça-feira"   "Quarta-feira"</span></span>
 <span><span class="co">#&gt; [5] "Quinta-feira"  "Sexta-feira"   "Sábado"</span></span>
@@ -115,13 +124,13 @@
 <span><span class="fu"><a href="https://rdrr.io/r/base/levels.html" class="external-link">levels</a></span><span class="op">(</span><span class="va">vitimas</span><span class="op">$</span><span class="va">gravidade_lesao</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] "LEVE"  "GRAVE" "FATAL"</span></span></code></pre></div>
 <p>Pass <code>clean = FALSE</code> to get the data exactly as published (every text column as a character vector, markers preserved). You can also process a raw import later with <code><a href="reference/clean_infosiga.html">clean_infosiga()</a></code>.</p>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">raw</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/read_infosiga.html">read_infosiga</a></span><span class="op">(</span><span class="st">"sinistros"</span>, clean <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="managing-the-cache">Managing the cache<a class="anchor" aria-label="anchor" href="#managing-the-cache"></a>
 </h3>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="reference/infosiga_cache.html">infosiga_cache_dir</a></span><span class="op">(</span><span class="op">)</span>      <span class="co"># where files are stored</span></span>
 <span><span class="fu"><a href="reference/infosiga_cache.html">infosiga_cache_list</a></span><span class="op">(</span><span class="op">)</span>     <span class="co"># what is currently cached</span></span>
 <span><span class="fu"><a href="reference/infosiga_download.html">infosiga_download</a></span><span class="op">(</span>overwrite <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>  <span class="co"># force a refresh after a monthly update</span></span>
@@ -130,16 +139,16 @@
 <div class="section level3">
 <h3 id="data-dictionary">Data dictionary<a class="anchor" aria-label="anchor" href="#data-dictionary"></a>
 </h3>
-<p>The official field-by-field documentation (PDF, in Portuguese) can be fetched with:</p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<p><code><a href="reference/infosiga_dictionary.html">infosiga_dictionary()</a></code> downloads the official field-by-field documentation (PDF, in Portuguese).</p>
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="reference/infosiga_dictionary.html">infosiga_dictionary</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 </div>
 </div>
 <div class="section level2">
 <h2 id="example">Example<a class="anchor" aria-label="anchor" href="#example"></a>
 </h2>
-<p>A small fatality summary by year, using the victims dataset:</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<p>The victims dataset gives a fatality count per year.</p>
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://dplyr.tidyverse.org" class="external-link">dplyr</a></span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="reference/read_infosiga.html">read_infosiga</a></span><span class="op">(</span><span class="st">"pessoas"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
@@ -150,8 +159,8 @@
 <div class="section level2">
 <h2 id="data-source-and-licence">Data source and licence<a class="anchor" aria-label="anchor" href="#data-source-and-licence"></a>
 </h2>
-<p>Data are published by DETRAN-SP under a <a href="https://creativecommons.org/licenses/by/4.0/" class="external-link">Creative Commons Attribution 4.0</a> licence at <a href="https://infosiga.detran.sp.gov.br/" class="external-link uri">https://infosiga.detran.sp.gov.br/</a>. When using the data, please cite INFOSIGA-SP / DETRAN-SP as the source.</p>
-<p>This package is released under the MIT licence and is <strong>not</strong> affiliated with or endorsed by DETRAN-SP or the Government of the State of São Paulo.</p>
+<p>DETRAN-SP publishes the data under a <a href="https://creativecommons.org/licenses/by/4.0/" class="external-link">Creative Commons Attribution 4.0</a> licence at <a href="https://infosiga.detran.sp.gov.br/" class="external-link uri">https://infosiga.detran.sp.gov.br/</a>. When using the data, please cite INFOSIGA-SP / DETRAN-SP as the source.</p>
+<p>The package itself carries the MIT licence. It is <strong>not</strong> affiliated with or endorsed by DETRAN-SP or the Government of the State of São Paulo.</p>
 </div>
 </div>
   </main><aside class="col-md-3"><div class="links">
@@ -203,7 +212,7 @@
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
 </div>
 
     </footer>
