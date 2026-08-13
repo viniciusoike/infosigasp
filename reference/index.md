@@ -28,6 +28,8 @@ Fetch the source archive and manage the local cache.
 
 - [`infosiga_download()`](https://viniciusoike.github.io/infosigasp/reference/infosiga_download.md)
   : Download the INFOSIGA-SP source archive
+- [`infosiga_check_update()`](https://viniciusoike.github.io/infosigasp/reference/infosiga_check_update.md)
+  : Check the cached archive against the package mirror
 - [`infosiga_cache_dir()`](https://viniciusoike.github.io/infosigasp/reference/infosiga_cache.md)
   [`infosiga_cache_list()`](https://viniciusoike.github.io/infosigasp/reference/infosiga_cache.md)
   [`infosiga_cache_clear()`](https://viniciusoike.github.io/infosigasp/reference/infosiga_cache.md)

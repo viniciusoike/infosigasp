@@ -91,7 +91,8 @@ text columns are whitespace-trimmed, the `"NAO DISPONIVEL"` ("not
 available") marker becomes `NA`, ordinal columns (`dia_da_semana`,
 `turno`, `gravidade_lesao`, the age bands) become **ordered factors**,
 the `ano_mes_*` year-month strings are parsed to first-of-month `Date`s,
-the binary `tp_sinistro_*` crash-type flags become **logical**,
+the binary `tp_sinistro_*` crash-type flags become **logical**, blank
+`qtd_*` counts inside an otherwise-filled block become `0`,
 `tempo_sinistro_obito` becomes **integer**, and `latitude`/`longitude`
 values outside the bounding box of Sao Paulo state become `NA`. See
 [`clean_infosiga()`](https://viniciusoike.github.io/infosigasp/reference/clean_infosiga.md)

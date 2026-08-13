@@ -108,6 +108,13 @@ e.g. <code>"COLISAO"</code>) is <em>not</em> a flag and stays text.
 and therefore becomes uniformly <code>FALSE</code>. That is an unpopulated upstream
 field, not evidence that no rear-end collisions occurred. A crash may
 also set several flags at once, so the flags do not partition the data.</p></li>
+<li><p><strong>Count columns</strong> (<code>sinistros</code>). The <code>qtd_*</code> columns form two
+independent blocks: vehicle counts (<code>qtd_pedestre</code>, <code>qtd_automovel</code>,
+...) and victim-severity counts (<code>qtd_gravidade_*</code>). A blank entry inside
+a block that is otherwise filled in means <em>zero</em> and becomes <code>0L</code>. When a
+record carries no breakdown at all, the whole block is blank; those
+blanks are genuinely "not recorded" and stay <code>NA</code>. The two blocks are
+handled separately because many records carry one but not the other.</p></li>
 <li><p><strong>Days to death</strong> (<code>pessoas</code>). <code>tempo_sinistro_obito</code>, the number of
 days between the crash and the victim's death (published as a numeric
 string), becomes <strong>integer</strong>.</p></li>

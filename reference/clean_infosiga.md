@@ -82,11 +82,20 @@ dataset changes nothing.
     occurred. A crash may also set several flags at once, so the flags
     do not partition the data.
 
-6.  **Days to death** (`pessoas`). `tempo_sinistro_obito`, the number of
+6.  **Count columns** (`sinistros`). The `qtd_*` columns form two
+    independent blocks: vehicle counts (`qtd_pedestre`, `qtd_automovel`,
+    ...) and victim-severity counts (`qtd_gravidade_*`). A blank entry
+    inside a block that is otherwise filled in means *zero* and becomes
+    `0L`. When a record carries no breakdown at all, the whole block is
+    blank; those blanks are genuinely "not recorded" and stay `NA`. The
+    two blocks are handled separately because many records carry one but
+    not the other.
+
+7.  **Days to death** (`pessoas`). `tempo_sinistro_obito`, the number of
     days between the crash and the victim's death (published as a
     numeric string), becomes **integer**.
 
-7.  **Street numbers and kilometre markers** (`sinistros`).
+8.  **Street numbers and kilometre markers** (`sinistros`).
     `numero_logradouro` carries a house number on urban streets but a
     **kilometre marker** on highways, where a fractional part is
     meaningful (`"0.25"` is km 250 m, not a malformed house number).
@@ -96,7 +105,7 @@ dataset changes nothing.
     survives. The column stays character because the two meanings are
     not comparable on a single numeric scale.
 
-8.  **Coordinates** (`sinistros`). Validates `latitude`/`longitude` as a
+9.  **Coordinates** (`sinistros`). Validates `latitude`/`longitude` as a
     pair against the bounding box of the state of Sao Paulo. Points
     outside the box, which are mis-encoded values and `(0, 0)` "null
     island" placeholders, have both coordinates set to `NA`. This

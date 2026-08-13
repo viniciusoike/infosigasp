@@ -128,7 +128,8 @@ transparently.</p>
 (<code>dia_da_semana</code>, <code>turno</code>, <code>gravidade_lesao</code>, the age bands) become
 <strong>ordered factors</strong>, the <code>ano_mes_*</code> year-month strings are parsed to
 first-of-month <code>Date</code>s, the binary <code>tp_sinistro_*</code> crash-type flags become
-<strong>logical</strong>, <code>tempo_sinistro_obito</code> becomes <strong>integer</strong>, and
+<strong>logical</strong>, blank <code>qtd_*</code> counts inside an otherwise-filled block become
+<code>0</code>, <code>tempo_sinistro_obito</code> becomes <strong>integer</strong>, and
 <code>latitude</code>/<code>longitude</code> values outside the bounding box of Sao Paulo state
 become <code>NA</code>. See <code><a href="clean_infosiga.html">clean_infosiga()</a></code> for the complete, ordered list. Pass
 <code>clean = FALSE</code> to obtain the raw data exactly as published, with every text

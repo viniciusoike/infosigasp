@@ -387,8 +387,18 @@ infosiga_cache_list()
 #> character(0)
 ```
 
-DETRAN-SP refreshes the archive monthly. Force a re-download to pull the
-latest version.
+DETRAN-SP refreshes the archive monthly.
+[`infosiga_check_update()`](https://viniciusoike.github.io/infosigasp/reference/infosiga_check_update.md)
+compares your cached copy against the mirror the package publishes,
+which a weekly job re-fetches from DETRAN-SP, so it answers whether a
+newer archive exists without downloading one.
+
+``` r
+
+infosiga_check_update()
+```
+
+Force a re-download to pull the latest version.
 
 ``` r
 

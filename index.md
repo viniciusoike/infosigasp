@@ -106,6 +106,7 @@ raw <- read_infosiga("sinistros", clean = FALSE)
 
 infosiga_cache_dir()      # where files are stored
 infosiga_cache_list()     # what is currently cached
+infosiga_check_update()   # is the mirror holding newer data than your copy?
 infosiga_download(overwrite = TRUE)  # force a refresh after a monthly update
 infosiga_cache_clear()    # delete cached files
 ```

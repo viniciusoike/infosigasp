@@ -506,17 +506,23 @@ directory.</p>
 <span><span class="co">#&gt; [1] "/home/runner/.cache/R/infosigasp"</span></span>
 <span><span class="fu"><a href="../reference/infosiga_cache.html">infosiga_cache_list</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="co">#&gt; character(0)</span></span></code></pre></div>
-<p>DETRAN-SP refreshes the archive monthly. Force a re-download to pull
-the latest version.</p>
+<p>DETRAN-SP refreshes the archive monthly.
+<code><a href="../reference/infosiga_check_update.html">infosiga_check_update()</a></code> compares your cached copy against
+the mirror the package publishes, which a weekly job re-fetches from
+DETRAN-SP, so it answers whether a newer archive exists without
+downloading one.</p>
 <div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/infosiga_check_update.html">infosiga_check_update</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
+<p>Force a re-download to pull the latest version.</p>
+<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/infosiga_download.html">infosiga_download</a></span><span class="op">(</span>overwrite <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
 <p>Clear the cache to reclaim disk space.</p>
-<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/infosiga_cache.html">infosiga_cache_clear</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 <p>You can point the cache somewhere else for a session (or permanently
 via your <code>.Rprofile</code>) with the
 <code>infosigasp.cache_dir</code> option.</p>
-<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">options</a></span><span class="op">(</span>infosigasp.cache_dir <span class="op">=</span> <span class="st">"~/data/infosiga"</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
@@ -525,7 +531,7 @@ via your <code>.Rprofile</code>) with the
 <p>INFOSIGA-SP distributes a field-by-field data dictionary (PDF, in
 Portuguese). <code><a href="../reference/infosiga_dictionary.html">infosiga_dictionary()</a></code> downloads it and returns
 the paths to the extracted files.</p>
-<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">pdfs</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/infosiga_dictionary.html">infosiga_dictionary</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/basename.html" class="external-link">basename</a></span><span class="op">(</span><span class="va">pdfs</span><span class="op">)</span></span></code></pre></div>
 </div>

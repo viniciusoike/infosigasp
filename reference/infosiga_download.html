@@ -94,9 +94,16 @@ snapshot when the official portal is unavailable. Override the option to add
 your own mirror or for testing.</p>
 <p>DETRAN-SP overwrites the archive in place each month under the same file
 name, so a cached copy can become stale silently. Reusing a cached archive
-older than the <code>infosigasp.stale_days</code> option (30 days by default; set to
-<code>Inf</code> to disable) raises a warning suggesting a refresh. The age comes from
-the cached file's modification time.</p>
+whose data are older than the <code>infosigasp.stale_days</code> option (30 days by
+default; set to <code>Inf</code> to disable) raises a warning suggesting a refresh. The
+age is that of the CSVs inside the archive, taken from their timestamps in
+the ZIP listing, and falls back to the cached file's modification time when
+that listing cannot be read.</p>
+<p>The warning describes the local copy only. Neither this function nor
+<code><a href="read_infosiga.html">read_infosiga()</a></code> contacts DETRAN-SP to ask whether a newer release exists,
+so a warning means the cached data have aged past the threshold, not that an
+update is known to be available. The two differ because DETRAN-SP publishes
+with a lag.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
