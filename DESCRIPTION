@@ -44,4 +44,4 @@ URL: https://github.com/viniciusoike/infosigasp,
     https://viniciusoike.github.io/infosigasp/
 BugReports: https://github.com/viniciusoike/infosigasp/issues
 VignetteBuilder: knitr
-LazyData: false
+LazyData: true
