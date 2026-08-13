@@ -28,9 +28,17 @@
 #'
 #' DETRAN-SP overwrites the archive in place each month under the same file
 #' name, so a cached copy can become stale silently. Reusing a cached archive
-#' older than the `infosigasp.stale_days` option (30 days by default; set to
-#' `Inf` to disable) raises a warning suggesting a refresh. The age comes from
-#' the cached file's modification time.
+#' whose data are older than the `infosigasp.stale_days` option (30 days by
+#' default; set to `Inf` to disable) raises a warning suggesting a refresh. The
+#' age is that of the CSVs inside the archive, taken from their timestamps in
+#' the ZIP listing, and falls back to the cached file's modification time when
+#' that listing cannot be read.
+#'
+#' The warning describes the local copy only. Neither this function nor
+#' [read_infosiga()] contacts DETRAN-SP to ask whether a newer release exists,
+#' so a warning means the cached data have aged past the threshold, not that an
+#' update is known to be available. The two differ because DETRAN-SP publishes
+#' with a lag.
 #'
 #' @seealso [read_infosiga()] to import the data, and [infosiga_cache_dir()]
 #'   to locate the cache.
@@ -144,10 +152,24 @@ infosiga_download <- function(overwrite = FALSE,
 # Default age (in days) beyond which a cached archive is considered stale.
 .infosiga_stale_days <- 30L
 
-# Warn when a cached archive is reused that is older than the staleness
-# threshold. DETRAN-SP refreshes the data monthly under the same file name, so
-# the cached file's modification time is a good proxy for how old the data is.
-# Set `infosigasp.stale_days` to `Inf` (or a non-positive value) to disable.
+# Timestamp of the CSVs inside a cached archive, or NA if the listing cannot be
+# read. This dates the data itself; the file's own mtime records only when this
+# machine downloaded it, and so understates the age of the data by however long
+# the archive had already been published. Reading the ZIP central directory
+# decompresses nothing, so this stays cheap on the ~115 MB archive.
+.infosiga_archive_date <- function(path) {
+  listing <- tryCatch(utils::unzip(path, list = TRUE), error = function(e) NULL)
+  if (is.null(listing) || nrow(listing) == 0 || !"Date" %in% names(listing)) {
+    return(NA)
+  }
+  built <- suppressWarnings(max(listing$Date, na.rm = TRUE))
+  if (!is.finite(as.numeric(built))) NA else built
+}
+
+# Warn when a cached archive is reused whose data are older than the staleness
+# threshold. The check is entirely local: it reports the age of the cached copy
+# and never asks DETRAN-SP whether a newer release exists. Set
+# `infosigasp.stale_days` to `Inf` (or a non-positive value) to disable.
 .infosiga_check_staleness <- function(path) {
   if (!file.exists(path)) {
     return(invisible(NULL))
@@ -157,16 +179,28 @@ infosiga_download <- function(overwrite = FALSE,
     return(invisible(NULL))
   }
 
-  age_days <- as.numeric(
-    difftime(Sys.time(), file.mtime(path), units = "days")
-  )
-  if (age_days > threshold) {
-    cli::cli_warn(c(
-      "!" = "The cached INFOSIGA-SP archive is {round(age_days)} days old.",
-      "i" = "DETRAN-SP updates the data monthly; refresh with \\
-             {.code infosiga_download(overwrite = TRUE)}."
-    ))
+  # Prefer the data's own timestamp, falling back to the download time when the
+  # listing is unreadable (a truncated or corrupt archive), which is still worth
+  # warning about.
+  built <- .infosiga_archive_date(path)
+  reference <- if (is.na(built)) file.mtime(path) else built
+  age_days <- as.numeric(difftime(Sys.time(), reference, units = "days"))
+  if (age_days <= threshold) {
+    return(invisible(NULL))
   }
+
+  headline <- if (is.na(built)) {
+    "The cached INFOSIGA-SP archive was downloaded {round(age_days)} days ago."
+  } else {
+    "The cached INFOSIGA-SP archive holds data dated \\
+     {format(built, '%Y-%m-%d')} ({round(age_days)} days ago)."
+  }
+  cli::cli_warn(c(
+    "!" = headline,
+    "i" = "This is the age of your local copy; the package does not check \\
+           DETRAN-SP for a newer release. DETRAN-SP updates the data monthly.",
+    "i" = "Refresh with {.code infosiga_download(overwrite = TRUE)}."
+  ))
   invisible(NULL)
 }
 
