@@ -11,7 +11,7 @@ experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](h
 [![R-universe](https://viniciusoike.r-universe.dev/badges/infosigasp)](https://viniciusoike.r-universe.dev/infosigasp)
 <!-- badges: end -->
 
-`infosigasp` provides a clean, programmatic interface to the open data
+`infosigasp` provides a programmatic interface to the open data
 published by **INFOSIGA-SP**, the São Paulo State Traffic Accident
 Information and Management System maintained by **DETRAN-SP** (the São
 Paulo State Department of Motor Vehicles).
@@ -24,7 +24,13 @@ covers every traffic crash recorded in the state of São Paulo from
 
 ## Installation
 
-You can install the development version from GitHub with:
+Install the released version from CRAN.
+
+``` r
+install.packages("infosigasp")
+```
+
+The development version lives on GitHub.
 
 ``` r
 # install.packages("pak")
@@ -33,17 +39,17 @@ pak::pak("viniciusoike/infosigasp")
 
 ## Datasets
 
-INFOSIGA-SP publishes three linked datasets:
+INFOSIGA-SP publishes three linked datasets.
 
 ``` r
 library(infosigasp)
 infosiga_datasets()
-#> # A tibble: 3 × 4
+#> # A tibble: 3 x 4
 #>   dataset   description                                              grain keys 
 #>   <chr>     <chr>                                                    <chr> <chr>
-#> 1 sinistros Traffic crash events recorded in the state of Sao Paulo. one … id_s…
-#> 2 pessoas   People (victims) involved in traffic crashes.            one … id_p…
-#> 3 veiculos  Vehicles involved in traffic crashes.                    one … id_v…
+#> 1 sinistros Traffic crash events recorded in the state of Sao Paulo. one ~ id_s~
+#> 2 pessoas   People (victims) involved in traffic crashes.            one ~ id_p~
+#> 3 veiculos  Vehicles involved in traffic crashes.                    one ~ id_v~
 ```
 
 The datasets can be joined through `id_sinistro` (and `id_veiculo`,
@@ -69,14 +75,14 @@ veiculos <- read_infosiga("veiculos")
 
 ### Processed by default, raw on demand
 
-By default `read_infosiga()` returns a **processed** dataset. Dates are
-parsed to `Date` (including the `ano_mes_*` year-month columns, as
-first-of-month dates), text is whitespace-trimmed, the
+By default `read_infosiga()` returns a **processed** dataset. Dates parse
+to `Date` (including the `ano_mes_*` year-month columns, as
+first-of-month dates), text loses its padding, the
 `"NAO DISPONIVEL"` (“not available”) marker becomes `NA`, the binary
 `tp_sinistro_*` crash-type flags become logical, coordinates outside São
-Paulo state are dropped, and the ordinal columns become **ordered
+Paulo state become `NA`, and the ordinal columns become **ordered
 factors** so they sort and plot in their natural order rather than
-alphabetically (see `?clean_infosiga` for the full list):
+alphabetically. `?clean_infosiga` has the full list.
 
 ``` r
 levels(sinistros$dia_da_semana)
@@ -106,8 +112,8 @@ infosiga_cache_clear()    # delete cached files
 
 ### Data dictionary
 
-The official field-by-field documentation (PDF, in Portuguese) can be
-fetched with:
+`infosiga_dictionary()` downloads the official field-by-field
+documentation (PDF, in Portuguese).
 
 ``` r
 infosiga_dictionary()
@@ -115,7 +121,7 @@ infosiga_dictionary()
 
 ## Example
 
-A small fatality summary by year, using the victims dataset:
+The victims dataset gives a fatality count per year.
 
 ``` r
 library(dplyr)
@@ -128,11 +134,11 @@ read_infosiga("pessoas") |>
 
 ## Data source and licence
 
-Data are published by DETRAN-SP under a [Creative Commons Attribution
+DETRAN-SP publishes the data under a [Creative Commons Attribution
 4.0](https://creativecommons.org/licenses/by/4.0/) licence at
 <https://infosiga.detran.sp.gov.br/>. When using the data, please cite
 INFOSIGA-SP / DETRAN-SP as the source.
 
-This package is released under the MIT licence and is **not** affiliated
+The package itself carries the MIT licence. It is **not** affiliated
 with or endorsed by DETRAN-SP or the Government of the State of São
 Paulo.

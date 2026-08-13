@@ -6,7 +6,7 @@
 #' Vehicles (DETRAN-SP).
 #'
 #' INFOSIGA-SP distributes three related datasets covering every traffic crash
-#' recorded in the state of Sao Paulo, Brazil, from 2015 onward:
+#' recorded in the state of Sao Paulo, Brazil, from 2015 onward.
 #'
 #' \describe{
 #'   \item{`sinistros`}{Crash events: one row per recorded event, with date,
@@ -31,7 +31,7 @@
 #' }
 #'
 #' @section Data source and licence:
-#' Data are published by DETRAN-SP under a Creative Commons Attribution 4.0
+#' DETRAN-SP publishes the data under a Creative Commons Attribution 4.0
 #' licence at <https://infosiga.detran.sp.gov.br/>. This package is not
 #' affiliated with or endorsed by DETRAN-SP or the Government of the State of
 #' Sao Paulo.

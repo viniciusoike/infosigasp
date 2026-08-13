@@ -1,0 +1,286 @@
+---
+title: "Data dictionary"
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
+```
+
+This article reproduces the official INFOSIGA-SP data dictionary
+(**v1.5, 2026-06-16**), published by DETRAN-SP, for the three datasets
+returned by `read_infosiga()`: `sinistros` (crash events), `pessoas`
+(victims) and `veiculos` (vehicles). Field names, descriptions and allowed
+values appear here verbatim; `infosiga_dictionary()` downloads the original
+PDFs, which are in Portuguese.
+
+Three notes on reading the tables.
+
+- **Click a row** (or the arrow) to expand the storage format, the source
+  of the field, the full list of allowed values and any additional notes.
+- The **Type** and **Nulls** columns describe the files *as published*,
+  i.e. what you get with `read_infosiga(clean = FALSE)`. With the default
+  `clean = TRUE`, some columns change class: dates and times are parsed,
+  the `tp_sinistro_*` flags become logical, ordinal columns become ordered
+  factors and the `NAO DISPONIVEL` marker becomes `NA` (see
+  `clean_infosiga()` for the full list).
+- In the *Source* field, **PC**, **PM** and **PRF** stand for Polícia
+  Civil, Polícia Militar and Polícia Rodoviária Federal; **DETRAN-SP**
+  marks fields derived by the Infosiga system itself.
+
+```{r setup}
+library(reactable)
+library(htmltools)
+```
+
+```{r data}
+read_dict <- function(file) {
+  readr::read_tsv(
+    file,
+    col_types = readr::cols(.default = readr::col_character()),
+    quote = "",
+    na = character()
+  )
+}
+
+dict_sinistros <- read_dict("dictionary-sinistros.tsv")
+dict_pessoas <- read_dict("dictionary-pessoas.tsv")
+dict_veiculos <- read_dict("dictionary-veiculos.tsv")
+```
+
+```{r helpers}
+# Renders one dictionary as a searchable reactable. The main view shows the
+# variable, description, type and nullability; format, source, allowed
+# values and notes live in an expandable details row.
+dict_table <- function(dict) {
+  detail_row <- function(label, content) {
+    div(
+      class = "dict-detail-row",
+      span(class = "dict-detail-label", label),
+      content
+    )
+  }
+
+  reactable(
+    dict,
+    searchable = TRUE,
+    highlight = TRUE,
+    defaultPageSize = 15,
+    showPageSizeOptions = TRUE,
+    pageSizeOptions = c(15, 30, 50),
+    onClick = "expand",
+    rowStyle = list(cursor = "pointer"),
+    defaultColDef = colDef(vAlign = "top", headerVAlign = "bottom"),
+    columns = list(
+      variavel = colDef(
+        name = "Variable",
+        minWidth = 190,
+        cell = function(value) tags$code(class = "dict-var", value)
+      ),
+      nome = colDef(show = FALSE),
+      descricao = colDef(
+        name = "Description",
+        minWidth = 320,
+        cell = function(value, index) {
+          div(
+            div(class = "dict-name", dict$nome[index]),
+            div(class = "dict-desc", value)
+          )
+        }
+      ),
+      tipo = colDef(
+        name = "Type",
+        width = 100,
+        cell = function(value) {
+          if (value == "-") {
+            return(span(class = "dict-type-none", "\u2014"))
+          }
+          span(class = paste0("dict-type dict-type-", value), value)
+        }
+      ),
+      nulos = colDef(
+        name = "Nulls",
+        width = 80,
+        align = "center",
+        cell = function(value) {
+          if (value == "sim") {
+            span(class = "dict-null dict-null-yes", "yes")
+          } else {
+            span(class = "dict-null dict-null-no", "no")
+          }
+        }
+      ),
+      formato = colDef(show = FALSE),
+      fonte = colDef(show = FALSE),
+      valores = colDef(show = FALSE),
+      observacao = colDef(show = FALSE)
+    ),
+    details = function(index) {
+      row <- dict[index, ]
+      values <- strsplit(row$valores, "|", fixed = TRUE)[[1]]
+      div(
+        class = "dict-detail",
+        detail_row("Format", span(row$formato)),
+        detail_row("Source", span(row$fonte)),
+        if (nzchar(row$valores)) {
+          detail_row(
+            "Allowed values",
+            if (length(values) > 1) {
+              div(
+                class = "dict-chips",
+                lapply(values, function(v) span(class = "dict-chip", v))
+              )
+            } else {
+              span(row$valores)
+            }
+          )
+        },
+        if (nzchar(row$observacao)) {
+          detail_row("Notes", span(row$observacao))
+        }
+      )
+    },
+    theme = reactableTheme(
+      borderColor = "#e4e8ee",
+      highlightColor = "#f3f6fb",
+      headerStyle = list(
+        borderBottom = "2px solid #d7dde6",
+        fontSize = "0.78rem",
+        textTransform = "uppercase",
+        letterSpacing = "0.04em",
+        color = "#5b6675"
+      ),
+      searchInputStyle = list(width = "100%", maxWidth = "24rem")
+    ),
+    language = reactableLang(searchPlaceholder = "Search variables...")
+  )
+}
+```
+
+```{css}
+.dict-var {
+  background: transparent;
+  padding: 0;
+  font-weight: 600;
+  word-break: break-word;
+}
+.dict-name {
+  font-weight: 600;
+}
+.dict-desc {
+  color: #5b6675;
+  font-size: 0.875rem;
+  margin-top: 2px;
+}
+.dict-type {
+  display: inline-block;
+  font-family: var(--bs-font-monospace, monospace);
+  font-size: 0.75rem;
+  padding: 2px 8px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+.dict-type-string {
+  background: #eef2ff;
+  color: #3730a3;
+}
+.dict-type-int64 {
+  background: #ecfdf5;
+  color: #047857;
+}
+.dict-type-float64 {
+  background: #f0fdfa;
+  color: #0f766e;
+}
+.dict-type-date,
+.dict-type-time {
+  background: #fff7ed;
+  color: #c2410c;
+}
+.dict-type-none {
+  color: #9aa3b0;
+}
+.dict-null {
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+.dict-null-yes {
+  color: #b45309;
+}
+.dict-null-no {
+  color: #9aa3b0;
+}
+.dict-detail {
+  padding: 0.9rem 1rem 0.9rem 2.8rem;
+  background: #f8fafc;
+  font-size: 0.875rem;
+  border-top: 1px solid #e4e8ee;
+}
+.dict-detail-row {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 0.45rem;
+}
+.dict-detail-row:last-child {
+  margin-bottom: 0;
+}
+.dict-detail-label {
+  flex: 0 0 8.5rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #8b95a5;
+  padding-top: 2px;
+}
+.dict-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.dict-chip {
+  background: #fff;
+  border: 1px solid #d7dde6;
+  border-radius: 4px;
+  padding: 1px 8px;
+  font-size: 0.8rem;
+  font-family: var(--bs-font-monospace, monospace);
+}
+```
+
+## Sinistros (crash events)
+
+One row per recorded crash event, keyed by `id_sinistro`
+(`r nrow(dict_sinistros)` variables).
+
+```{r sinistros}
+dict_table(dict_sinistros)
+```
+
+## Pessoas (victims)
+
+One row per person involved in a crash, keyed by `id_pessoa` and linked to
+the other datasets by `id_sinistro` and `id_veiculo`
+(`r nrow(dict_pessoas)` variables).
+
+```{r pessoas}
+dict_table(dict_pessoas)
+```
+
+## Veículos (vehicles)
+
+One row per vehicle involved in a crash, keyed by `id_veiculo` and linked
+to the events by `id_sinistro` (`r nrow(dict_veiculos)` variables).
+
+```{r veiculos}
+dict_table(dict_veiculos)
+```
+
+## Source
+
+DETRAN-SP, *Dicionário de dados* v1.5 (2026-06-16), distributed with the
+INFOSIGA-SP open data at <https://infosiga.detran.sp.gov.br/>.
+`infosiga_dictionary()` retrieves the official PDFs.
+
+```{r dictionary, echo = TRUE, eval = FALSE}
+infosigasp::infosiga_dictionary()
+```

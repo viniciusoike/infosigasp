@@ -8,7 +8,7 @@ template:
 home:
   title: Download and import traffic crash data from INFOSIGA-SP
   description: >
-    A clean R interface to the São Paulo State traffic crash open data
+    An R interface to the São Paulo State traffic crash open data
     published by DETRAN-SP.
 
 reference:
@@ -18,6 +18,13 @@ reference:
   - read_infosiga
   - clean_infosiga
   - infosiga_datasets
+- title: Tidying labels
+  desc: >
+    Opt-in helpers that rewrite the published category labels into a
+    consistent, presentation-ready form.
+  contents:
+  - tidy_infosiga_labels
+  - infosiga_municipios
 - title: Downloads and cache
   desc: Fetch the source archive and manage the local cache.
   contents:
@@ -33,3 +40,4 @@ articles:
   navbar: ~
   contents:
   - infosigasp
+  - articles/data-dictionary

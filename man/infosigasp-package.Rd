@@ -13,7 +13,7 @@ Vehicles (DETRAN-SP).
 }
 \details{
 INFOSIGA-SP distributes three related datasets covering every traffic crash
-recorded in the state of Sao Paulo, Brazil, from 2015 onward:
+recorded in the state of Sao Paulo, Brazil, from 2015 onward.
 
 \describe{
 \item{\code{sinistros}}{Crash events: one row per recorded event, with date,
@@ -41,7 +41,7 @@ cache.}
 
 \section{Data source and licence}{
 
-Data are published by DETRAN-SP under a Creative Commons Attribution 4.0
+DETRAN-SP publishes the data under a Creative Commons Attribution 4.0
 licence at \url{https://infosiga.detran.sp.gov.br/}. This package is not
 affiliated with or endorsed by DETRAN-SP or the Government of the State of
 Sao Paulo.
@@ -57,7 +57,7 @@ Useful links:
 
 }
 \author{
-\strong{Maintainer}: Vinicius Oike \email{viniciusoike@gmail.com} [copyright holder]
+\strong{Maintainer}: Vinicius Oike \email{viniciusoike@gmail.com} (\href{https://orcid.org/0009-0005-8015-9189}{ORCID}) [copyright holder]
 
 }
 \keyword{internal}

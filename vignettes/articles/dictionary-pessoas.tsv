@@ -1,0 +1,31 @@
+variavel	nome	descricao	tipo	formato	fonte	valores	nulos	observacao
+id_sinistro	Identificador do sinistro	Identificador único do sinistro (chave estrangeira)	int64	Número inteiro	DETRAN-SP	Número inteiro de 7 algarismos	não	Pode haver mais de uma pessoa por sinistro.
+id_pessoa	Identificador da pessoa no sinistro	Identificador único da pessoa (chave estrangeira)	int64	Número inteiro	DETRAN-SP	ID único de 1 a 9999999 (até 7 dígitos)	não	ID sequencial gerado para cada pessoa envolvida no sinistro.
+id_veiculo	Identificador do veículo	Identificador único do veículo (chave estrangeira)	int64	Número inteiro	DETRAN-SP	Número inteiro de 1 a 9999999	sim	Pode haver mais de uma pessoa por veículo.
+cod_ibge	Código IBGE	Código do município no IBGE	int64	Número inteiro	IBGE	Número inteiro de 7 algarismos	não	Códigos IBGE individuais para cada município do estado de São Paulo.
+municipio	Município	Município onde ocorreu o sinistro	string	Texto predefinido	PC, PM e PRF	Valores da lista de municípios	não	Nomes dos 645 municípios do estado de São Paulo em caixa alta, sem acento.
+regiao_administrativa	Região administrativa	Região administrativa onde ocorreu o sinistro	string	Texto predefinido	DETRAN-SP	METROPOLITANA DE SÃO PAULO|CAMPINAS|SOROCABA|SÃO JOSÉ DOS CAMPOS|SÃO JOSÉ DO RIO PRETO|BAIXADA SANTISTA|RIBEIRÃO PRETO|CENTRAL|BAURU|MARÍLIA|PRESIDENTE PRUDENTE|ARAÇATUBA|FRANCA|ITAPEVA|REGISTRO|BARRETOS	não	Divisão territorial de acordo com a legislação do estado de São Paulo, que pode ser consultada em http://produtos.seade.gov.br/produtos/divpolitica/
+tipo_via	Tipo da via	Tipo da via onde ocorreu o sinistro	string	Texto predefinido	PC, PM e PRF	ESTRADAS E RODOVIAS|VIAS URBANAS|NAO DISPONIVEL	não	
+tipo_veiculo_vitima	Veículo de locomoção da vítima	Veículo de locomoção da vítima	string	Texto predefinido	PC, PM e PRF	AUTOMOVEL|BICICLETA|CAMINHAO|MOTOCICLETA|ONIBUS|OUTROS|NAO DISPONIVEL	sim	
+sexo	Sexo da vítima	Sexo da vítima	string	Texto predefinido	PC, PM e PRF	FEMININO|MASCULINO|NAO DISPONIVEL	não	
+idade	Idade da vítima	Idade da vítima na data do sinistro	int64	Número inteiro	PC, PM e PRF	Maior ou igual a 0	sim	
+gravidade_lesao	Gravidade da lesão	Gravidade da lesão na vítima classificada pelo agente que registrou a ocorrência	string	Texto predefinido	PC, PM e PRF	FATAL|GRAVE|LEVE|NAO DISPONIVEL	não	A gravidade da lesão pode ser atualizada com a obtenção de novas informações a partir de boletins de ocorrência registrados posteriormente.
+tipo_de_vitima	Posição da vítima	Posição da vítima no sinistro	string	Texto predefinido	PC, PM e PRF	CONDUTOR|PASSAGEIRO|PEDESTRE|NAO DISPONIVEL	sim	
+faixa_etaria_demografica	Faixa etária demográfica	Classificação etária da vítima para análise populacional, seguindo as classes do IBGE	string	Texto predefinido	DETRAN-SP	00 a 04|05 a 09|10 a 14|15 a 19|20 a 24|25 a 29|30 a 34|35 a 39|40 a 44|45 a 49|50 a 54|55 a 59|60 a 64|65 a 69|70 a 74|75 a 79|80 a 84|85 a 89|90 e +|NAO DISPONIVEL	não	
+faixa_etaria_legal	Faixa etária legal	Classificação etária da vítima seguindo a legislação: 0-17 anos para menores, acima de 60 anos para idosos	string	Texto predefinido	DETRAN-SP	0-17|18-24|25-29|30-34|35-39|40-44|45-49|50-54|55-59|60-64|65-69|70-74|75-79|80 ou mais|NAO DISPONIVEL	não	
+profissao	Profissão da vítima	Profissão da vítima	string	Texto livre	PC, PM e PRF	Livre	sim	
+grau_de_instrucao	Grau de instrução	Grau de instrução da vítima	string	Texto predefinido	DETRAN-SP	BÁSICO|MÉDIO|SUPERIOR	sim	
+nacionalidade	Nacionalidade	Nacionalidade da vítima	string	Texto livre	PC, PM e PRF	Livre	sim	
+data_sinistro	Data do sinistro	Data do sinistro	date	Data no formato dd/mm/aaaa	PC, PM e PRF	Entre 21/12/2014 e 31/12/2021 no arquivo "sinistros_2015-2021", e maior ou igual a 01/01/2022 no arquivo "sinistros_2022-2026".	não	
+ano_sinistro	Ano do sinistro	Ano do sinistro	int64	Número inteiro (4 dígitos)	PC, PM e PRF	Entre 2014 e 2021 no arquivo "sinistros_2015-2021", e maior que 2022 no arquivo "sinistros_2022-2026".	não	
+mes_sinistro	Mês do sinistro	Mês do sinistro	int64	Número inteiro (2 dígitos)	PC, PM e PRF	Entre 1 e 12	não	
+dia_sinistro	Dia do sinistro	Dia do sinistro	int64	Número inteiro (2 dígitos)	PC, PM e PRF	Entre 1 e 31	não	
+ano_mes_sinistro	Ano e mês do sinistro	Agrupamento do ano_sinistro com mes_sinistro	string	Texto no formato mm/aaaa	PC, PM e PRF	Entre 2015/01 e 2021/12 no arquivo "sinistros_2015-2021", e maior ou igual a 2022/01 no arquivo "sinistros_2022-2026".	não	
+data_obito	Data do óbito	Data do óbito (se aplicável)	date	Data no formato dd/mm/aaaa	PC, PM e PRF	Entre 01/01/2015 e 31/12/2021 no arquivo "sinistros_2015-2021", e maior ou igual a 01/01/2022 no arquivo "sinistros_2022-2026".	sim	
+ano_obito	Ano do óbito	Ano do óbito (se aplicável)	int64	Número inteiro (4 dígitos)	PC, PM e PRF	Entre 2015 e 2021 no arquivo "sinistros_2015-2021", e maior que 2022 no arquivo "sinistros_2022-2026".	sim	
+mes_obito	Mês do óbito	Mês do óbito (se aplicável)	int64	Número inteiro (2 dígitos)	PC, PM e PRF	Entre 1 e 12	sim	
+dia_obito	Dia do óbito	Dia do óbito (se aplicável)	int64	Número inteiro (2 dígitos)	PC, PM e PRF	Entre 1 e 31	sim	
+ano_mes_obito	Ano e mês do óbito	Agrupamento do ano_obito com mes_obito	string	Texto no formato mm/aaaa	PC, PM e PRF	Entre 2015/01 e 2021/12 no arquivo "sinistros_2015-2021", e maior ou igual a 2022/01 no arquivo "sinistros_2022-2026".	sim	
+local_obito	Local do óbito	Tipo de local onde ocorreu o óbito	string	Texto predefinido	DETRAN-SP	VIA|ESTABELECIMENTO SAUDE|OUTROS|NAO DISPONIVEL	sim	
+local_via	Tipo de local	Tipo de jurisdição onde ocorreu o óbito	string	Texto predefinido	DETRAN-SP	PUBLICO|PRIVADO|NAO DISPONIVEL	sim	
+tempo_sinistro_obito	Tempo entre o sinistro e o óbito	Tempo em dias entre o sinistro e o óbito	int64	Número inteiro	DETRAN-SP	Entre 0 e 30	sim	

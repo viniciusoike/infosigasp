@@ -1,0 +1,55 @@
+# Monthly refresh of the INFOSIGA-SP data mirror.
+#
+# DETRAN-SP overwrites dados_infosiga.zip in place each month. This workflow
+# snapshots the current archive to a GitHub release tagged `data-YYYY-MM`, so
+# the package's fallback mirror (see .infosiga_zip_url() in R/infosiga-specs.R)
+# always has a recent point-in-time copy to fall back to when the official
+# portal is unavailable.
+on:
+  schedule:
+    # 06:00 UTC on the 5th of each month, a few days after the monthly update.
+    - cron: "0 6 5 * *"
+  workflow_dispatch:
+
+name: refresh-data-mirror.yaml
+
+permissions:
+  contents: write
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    concurrency:
+      group: refresh-data-mirror
+      cancel-in-progress: false
+    steps:
+      - name: Download the current INFOSIGA-SP archive
+        run: |
+          curl --fail --location --retry 3 --retry-delay 30 \
+            --connect-timeout 60 --max-time 3600 \
+            -o dados_infosiga.zip \
+            "https://infosiga.detran.sp.gov.br/rest/painel/download/file/dados_infosiga.zip"
+
+      - name: Verify the archive is a non-empty, valid zip
+        run: |
+          test -s dados_infosiga.zip
+          unzip -t dados_infosiga.zip > /dev/null
+          echo "size=$(du -h dados_infosiga.zip | cut -f1)"
+
+      - name: Compute the release tag
+        id: tag
+        run: echo "tag=data-$(date -u +%Y-%m)" >> "$GITHUB_OUTPUT"
+
+      - name: Publish (or update) the monthly release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          tag="${{ steps.tag.outputs.tag }}"
+          title="INFOSIGA-SP data snapshot $(date -u +%Y-%m)"
+          notes="Point-in-time mirror of dados_infosiga.zip fetched from DETRAN-SP on $(date -u +%Y-%m-%d). Used as a fallback source by the infosigasp R package."
+          if gh release view "$tag" >/dev/null 2>&1; then
+            gh release upload "$tag" dados_infosiga.zip --clobber
+          else
+            gh release create "$tag" dados_infosiga.zip \
+              --title "$title" --notes "$notes"
+          fi

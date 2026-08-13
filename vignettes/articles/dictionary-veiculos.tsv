@@ -1,0 +1,13 @@
+variavel	nome	descricao	tipo	formato	fonte	valores	nulos	observacao
+id_sinistro	Identificador do sinistro	Identificador único do sinistro (chave estrangeira)	int64	Número inteiro	DETRAN-SP	IDs devem ter 7 dígitos	não	Pode haver mais de um veículo em um mesmo sinistro.
+id_veiculo	Identificador do veículo	Identificador único do veículo (chave estrangeira)	int64	Número inteiro	DETRAN-SP	ID único de 1 a 9999999 (até 7 dígitos)	não	ID sequencial gerado para cada veículo envolvido no sinistro.
+marca_modelo	Marca e modelo do veículo	Marca e modelo do veículo envolvido no sinistro	string	Texto livre	DETRAN-SP	Livre	sim	
+ano_fab	Ano de fabricação do veículo	Ano de fabricação do veículo envolvido no sinistro	int64	Número decimal	DETRAN-SP	Ano no formato aaaa	sim	1956 >= ano_fab >= ano_sinistro
+ano_modelo	Ano do modelo do veículo	Ano do modelo do veículo envolvido no sinistro	int64	Número decimal	DETRAN-SP	Ano no formato aaaa	sim	1956 >= ano_modelo >= ano_sinistro + 1
+cor_veiculo	Cor do veículo	Cor do veículo envolvido no sinistro	string	Texto livre	DETRAN-SP	Livre	sim	
+tipo_veiculo	Tipo de veículo	Tipo de veículo envolvido no sinistro	string	Texto predefinido	PC, PM e PRF	AUTOMOVEL|BICICLETA|CAMINHAO|MOTOCICLETA|ONIBUS|OUTROS|NAO DISPONIVEL	não	
+data_sinistro	Data do sinistro	Data do sinistro	date	Data no formato dd/mm/aaaa	PC, PM e PRF	Entre 01/01/2015 e 31/12/2021 no arquivo "sinistros_2015-2021", e maior ou igual a 01/01/2022 no arquivo "sinistros_2022-2026".	não	
+ano_sinistro	Ano do sinistro	Ano do sinistro	int64	Número inteiro (4 dígitos)	DETRAN-SP	Entre 2015 e 2021 no arquivo "sinistros_2015-2021", e maior que 2022 no arquivo "sinistros_2022-2026".	não	
+mes_sinistro	Mês do sinistro	Mês do sinistro	int64	Número inteiro (2 dígitos)	DETRAN-SP	Entre 1 e 12	não	
+dia_sinistro	Dia do sinistro	Dia do sinistro	int64	Número inteiro (2 dígitos)	DETRAN-SP	Entre 1 e 31	não	
+ano_mes_sinistro	Ano e mês do sinistro	Agrupamento do ano_sinistro com mes_sinistro	string	Texto no formato aaaa/mm	DETRAN-SP	Entre 2015/01 e 2021/12 no arquivo "sinistros_2015-2021", e maior ou igual a 2022/01 no arquivo "sinistros_2022-2026".	não	
