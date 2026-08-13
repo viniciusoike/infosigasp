@@ -9,11 +9,11 @@ knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
 This article reproduces the official INFOSIGA-SP data dictionary
 (**v1.5, 2026-06-16**), published by DETRAN-SP, for the three datasets
 returned by `read_infosiga()`: `sinistros` (crash events), `pessoas`
-(victims) and `veiculos` (vehicles). The original PDFs (in Portuguese) can
-be downloaded with `infosiga_dictionary()`; field names, descriptions and
-allowed values are reproduced here verbatim.
+(victims) and `veiculos` (vehicles). Field names, descriptions and allowed
+values appear here verbatim; `infosiga_dictionary()` downloads the original
+PDFs, which are in Portuguese.
 
-A few notes on reading the tables:
+Three notes on reading the tables.
 
 - **Click a row** (or the arrow) to expand the storage format, the source
   of the field, the full list of allowed values and any additional notes.
@@ -21,7 +21,7 @@ A few notes on reading the tables:
   i.e. what you get with `read_infosiga(clean = FALSE)`. With the default
   `clean = TRUE`, some columns change class: dates and times are parsed,
   the `tp_sinistro_*` flags become logical, ordinal columns become ordered
-  factors and the `NAO DISPONIVEL` marker is replaced by `NA` (see
+  factors and the `NAO DISPONIVEL` marker becomes `NA` (see
   `clean_infosiga()` for the full list).
 - In the *Source* field, **PC**, **PM** and **PRF** stand for Polícia
   Civil, Polícia Militar and Polícia Rodoviária Federal; **DETRAN-SP**
@@ -278,8 +278,8 @@ dict_table(dict_veiculos)
 ## Source
 
 DETRAN-SP, *Dicionário de dados* v1.5 (2026-06-16), distributed with the
-INFOSIGA-SP open data at <https://infosiga.detran.sp.gov.br/>. Retrieve
-the official PDFs with:
+INFOSIGA-SP open data at <https://infosiga.detran.sp.gov.br/>.
+`infosiga_dictionary()` retrieves the official PDFs.
 
 ```{r dictionary, echo = TRUE, eval = FALSE}
 infosigasp::infosiga_dictionary()

@@ -43,12 +43,10 @@
 #' (`clean = TRUE`). Use this directly only when you imported a dataset with
 #' `clean = FALSE` (the raw version) and want to process it afterwards.
 #'
-#' The processing is deliberately light: it standardises missing values, fixes
-#' source formatting artefacts and assigns meaningful types to columns whose
-#' published representation is inconvenient (ordinal text, binary flags,
-#' year-month strings). It never renames columns, recodes category labels or
-#' drops rows, so the result stays a faithful, analysis-ready view of the
-#' source.
+#' The processing standardises missing values, fixes source formatting
+#' artefacts and assigns meaningful types to columns whose published
+#' representation is inconvenient (ordinal text, binary flags, year-month
+#' strings). It never renames columns, recodes category labels or drops rows.
 #'
 #' @param data A data frame imported with [read_infosiga()] (typically with
 #'   `clean = FALSE`).
@@ -59,20 +57,20 @@
 #'   processing described in *Details* applied.
 #'
 #' @details
-#' The following steps are applied, in order. Every step is idempotent, so
-#' `clean_infosiga()` can be called again on an already-processed dataset
-#' without changing it.
+#' `clean_infosiga()` applies the following steps, in order. Every step is
+#' idempotent, so calling the function again on an already-processed dataset
+#' changes nothing.
 #'
 #' \enumerate{
-#'   \item **Whitespace.** Leading and trailing whitespace is trimmed from every
-#'     text column. Some source fields are space-padded to a fixed width (for
-#'     example `nacionalidade` is published as `"BRASILEIRA          "`); without
+#'   \item **Whitespace.** Trims leading and trailing whitespace from every text
+#'     column. Some source fields are space-padded to a fixed width (for example
+#'     `nacionalidade` is published as `"BRASILEIRA          "`); without
 #'     trimming, comparisons, grouping and joins on those columns silently fail.
-#'   \item **Missing values.** The literal `"NAO DISPONIVEL"` ("not available")
-#'     marker is replaced by `NA` in every text column. Trimming happens first
-#'     so that space-padded markers are also caught.
-#'   \item **Ordered factors.** Ordinal columns are converted to **ordered
-#'     factors** with their natural order:
+#'   \item **Missing values.** Replaces the literal `"NAO DISPONIVEL"` ("not
+#'     available") marker with `NA` in every text column. Trimming runs first,
+#'     so space-padded markers are also caught.
+#'   \item **Ordered factors.** Ordinal columns become **ordered factors** in
+#'     their natural order.
 #'     \itemize{
 #'       \item `dia_da_semana`: `Domingo` < ... < `Sabado` (the Brazilian week
 #'         starts on Sunday).
@@ -81,35 +79,44 @@
 #'       \item `faixa_etaria_demografica`, `faixa_etaria_legal` (in `pessoas`):
 #'         age bands in increasing order.
 #'     }
-#'   \item **Year-month dates.** Year-month columns (`ano_mes_sinistro`,
-#'     `ano_mes_obito`), published as `"YYYY/MM"` strings, are parsed to
-#'     first-of-month `Date` values, matching the `Date` class already used for
-#'     the full-date columns.
+#'   \item **Year-month dates.** Parses the year-month columns
+#'     (`ano_mes_sinistro`, `ano_mes_obito`), published as `"YYYY/MM"` strings,
+#'     to first-of-month `Date` values, matching the `Date` class already used
+#'     for the full-date columns.
 #'   \item **Crash-type flags** (`sinistros`). The binary `tp_sinistro_*`
-#'     columns -- which mark whether a crash involved a given event type and are
-#'     published as `"S"` (yes) or empty (no) -- become **logical** (`TRUE` /
-#'     `FALSE`). The categorical `tp_sinistro_primario` (the primary crash type,
-#'     e.g. `"COLISAO"`) is *not* a flag and is left as text.
+#'     columns become **logical** (`TRUE` / `FALSE`). They mark whether a crash
+#'     involved a given event type and are published as `"S"` (yes) or empty
+#'     (no). The categorical `tp_sinistro_primario` (the primary crash type,
+#'     e.g. `"COLISAO"`) is *not* a flag and stays text.
+#'     `tp_sinistro_colisao_traseira` is empty for every record in the source
+#'     and therefore becomes uniformly `FALSE`. That is an unpopulated upstream
+#'     field, not evidence that no rear-end collisions occurred. A crash may
+#'     also set several flags at once, so the flags do not partition the data.
 #'   \item **Days to death** (`pessoas`). `tempo_sinistro_obito`, the number of
 #'     days between the crash and the victim's death (published as a numeric
 #'     string), becomes **integer**.
-#'   \item **Street numbers** (`sinistros`). `numero_logradouro` is kept as text
-#'     (house numbers may contain letters), but a spurious trailing `".0"` from
-#'     the source export (`"193.0"`) is stripped to `"193"`.
-#'   \item **Coordinates** (`sinistros`). `latitude`/`longitude` are validated as
-#'     a pair against the bounding box of the state of Sao Paulo. Points outside
-#'     the box -- mis-encoded values and `(0, 0)` "null island" placeholders --
-#'     have both coordinates set to `NA`. This affects roughly 7% of records;
-#'     no rows are dropped. Use `clean = FALSE` if you need the raw coordinates.
+#'   \item **Street numbers and kilometre markers** (`sinistros`).
+#'     `numero_logradouro` carries a house number on urban streets but a
+#'     **kilometre marker** on highways, where a fractional part is meaningful
+#'     (`"0.25"` is km 250 m, not a malformed house number). Genuine decimals
+#'     are common on `ESTRADAS E RODOVIAS` rows and rare on `VIAS URBANAS` ones.
+#'     Only a trailing `".0"` from the source export is stripped (`"193.0"` ->
+#'     `"193"`); any other decimal part survives. The column stays character
+#'     because the two meanings are not comparable on a single numeric scale.
+#'   \item **Coordinates** (`sinistros`). Validates `latitude`/`longitude` as a
+#'     pair against the bounding box of the state of Sao Paulo. Points outside
+#'     the box, which are mis-encoded values and `(0, 0)` "null island"
+#'     placeholders, have both coordinates set to `NA`. This affects a few
+#'     percent of records and drops no rows. Use `clean = FALSE` if you need the
+#'     raw coordinates.
 #' }
 #'
-#' Nominal text columns (such as `municipio`, `tipo_via` or `sexo`) are left as
-#' character vectors. Numeric columns that are already well typed -- notably
-#' `idade` (the victim's age, in `pessoas`) -- are passed through unchanged and
-#' are *not* range-checked: missing ages are `NA`, and ages of `0` (infants)
-#' are kept. In the current upstream data `idade` ranges from 0 to about 102,
-#' but the package does not enforce any bound, so validate it yourself if your
-#' analysis is sensitive to outliers.
+#' Nominal text columns (such as `municipio`, `tipo_via` or `sexo`) stay
+#' character vectors. Well-typed numeric columns, notably `idade` (the victim's
+#' age, in `pessoas`), pass through unchanged and are *not* range-checked.
+#' Missing ages are `NA` and ages of `0` (infants) are kept. The package
+#' enforces no bound on `idade`, so validate it yourself if your analysis is
+#' sensitive to outliers.
 #'
 #' @seealso [read_infosiga()], which calls this function when `clean = TRUE`.
 #'
@@ -175,9 +182,11 @@ clean_infosiga <- function(data, dataset = c("sinistros", "pessoas", "veiculos")
     )
   }
 
-  # 6. Strip the spurious trailing ".0" the source export appends to house
-  #    numbers ("193.0" -> "193"); the column stays character because numbers
-  #    may contain letters.
+  # 6. Strip the spurious trailing ".0" the source export appends ("193.0" ->
+  #    "193"). The "\\.0$" anchor matters: on highways this column holds a
+  #    kilometre marker whose decimal part is real ("0.25"), so only an exactly
+  #    zero fraction is dropped. The column stays character because a house
+  #    number and a kilometre marker are not the same quantity.
   if ("numero_logradouro" %in% names(data) &&
     is.character(data$numero_logradouro)) {
     data$numero_logradouro <- sub("\\.0$", "", data$numero_logradouro)

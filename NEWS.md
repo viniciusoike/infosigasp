@@ -1,30 +1,38 @@
 # infosigasp 0.1.0
 
-* Initial release.
-* New package hex logo: the major road network of the São Paulo Metropolitan
-  Region in the INFOSIGA-SP dark blue (`data-raw/logo.R`).
-* `read_infosiga()` downloads (with caching) and imports the three INFOSIGA-SP
-  datasets (`sinistros`, `pessoas`, `veiculos`) as tidy tibbles, handling the
-  source encoding, decimal marks and date formats.
-* `read_infosiga()` returns a processed dataset by default (`clean = TRUE`):
-  text columns are whitespace-trimmed (the source pads some fields to a fixed
-  width), `"NAO DISPONIVEL"` becomes `NA`, ordinal columns (`dia_da_semana`,
-  `turno`, `gravidade_lesao`, age bands) become ordered factors, the
-  `ano_mes_*` year-month columns are parsed to first-of-month `Date`s, the
-  binary `tp_sinistro_*` crash-type flags become logical, `tempo_sinistro_obito`
-  becomes integer, the spurious `".0"` on `numero_logradouro` is stripped, and
-  coordinates outside the São Paulo state bounding box are dropped. Use
-  `clean = FALSE` for the raw data as published, or `clean_infosiga()` to
-  process a raw import afterwards.
-* `infosiga_download()` pre-fetches the source archive into a local cache. It
-  tries the official DETRAN-SP endpoint first and falls back to a GitHub-release
-  mirror if it is unavailable; additional mirrors can be supplied via the
-  `infosigasp.zip_url` option (a character vector tried in order).
-* `read_infosiga()` and `infosiga_download()` warn when a cached archive is
-  reused that is older than the `infosigasp.stale_days` option (30 days by
+Initial release.
+
+* Added `read_infosiga()`, which downloads (with caching) and imports the three
+  INFOSIGA-SP datasets (`sinistros`, `pessoas`, `veiculos`) as tibbles, handling
+  the source encoding, decimal marks and date formats.
+* Added `clean_infosiga()`, applied by default, which trims text, maps
+  `"NAO DISPONIVEL"` to `NA`, makes the ordinal columns ordered factors, parses
+  the `ano_mes_*` columns to first-of-month `Date`s, turns the `tp_sinistro_*`
+  crash-type flags logical, casts `tempo_sinistro_obito` to integer, strips the
+  spurious `".0"` on `numero_logradouro`, and voids coordinates outside the São
+  Paulo state bounding box.
+* Added `clean = FALSE` to `read_infosiga()` for the raw data as published.
+* Added `tidy_infosiga_labels()`, an opt-in second pass that rewrites category
+  labels for analysts who do not need the published categories verbatim: IBGE
+  spellings for `municipio` and `regiao_administrativa`, merged `cor_veiculo`
+  spellings, Title Cased `profissao`, and route codes split out of
+  `conservacao` into a new `conservacao_codigo` column.
+* Added the `infosiga_municipios` dataset, pairing the official IBGE name and
+  the INFOSIGA-SP spelling of each São Paulo municipality, keyed by `cod_ibge`.
+* Added `infosiga_download()` to pre-fetch the source archive, falling back to a
+  GitHub-release mirror when the DETRAN-SP endpoint is unavailable; further
+  mirrors go in the `infosigasp.zip_url` option.
+* Added a warning when `read_infosiga()` or `infosiga_download()` reuses a
+  cached archive older than the `infosigasp.stale_days` option (30 days by
   default; set to `Inf` to disable), since DETRAN-SP refreshes the data monthly
   under the same file name.
-* `infosiga_cache_dir()`, `infosiga_cache_list()` and `infosiga_cache_clear()`
-  manage the on-disk cache.
-* `infosiga_datasets()` lists the available datasets and their keys.
-* `infosiga_dictionary()` downloads the official data dictionary.
+* Added `infosiga_cache_dir()`, `infosiga_cache_list()` and
+  `infosiga_cache_clear()` to manage the on-disk cache.
+* Added `infosiga_datasets()`, which lists the available datasets and their
+  keys, and `infosiga_dictionary()`, which downloads the official data
+  dictionary.
+* Documented the coverage caveats of the source data in `?read_infosiga` and the
+  getting-started vignette, chief among them that 2015–2018 covers fatal crashes
+  only, so an unrestricted per-year count jumps roughly 20-fold in 2019.
+* Added a package hex logo drawn from the major road network of the São Paulo
+  Metropolitan Region in the INFOSIGA-SP dark blue (`data-raw/logo.R`).

@@ -21,10 +21,10 @@ knitr::opts_chunk$set(
 [![R-universe](https://viniciusoike.r-universe.dev/badges/infosigasp)](https://viniciusoike.r-universe.dev/infosigasp)
 <!-- badges: end -->
 
-`infosigasp` provides a clean, programmatic interface to the open data
-published by **INFOSIGA-SP**, the São Paulo State Traffic Accident
-Information and Management System maintained by **DETRAN-SP** (the São Paulo
-State Department of Motor Vehicles).
+`infosigasp` provides a programmatic interface to the open data published by
+**INFOSIGA-SP**, the São Paulo State Traffic Accident Information and
+Management System maintained by **DETRAN-SP** (the São Paulo State Department
+of Motor Vehicles).
 
 The package downloads the official data archive, handles its quirks (Latin-1
 encoding, semicolon separators, comma decimal marks, `DD/MM/YYYY` dates) and
@@ -33,13 +33,13 @@ recorded in the state of São Paulo from **2015 onward**.
 
 ## Installation
 
-Install the released version from CRAN with:
+Install the released version from CRAN.
 
 ``` r
 install.packages("infosigasp")
 ```
 
-Or install the development version from GitHub with:
+The development version lives on GitHub.
 
 ``` r
 # install.packages("pak")
@@ -48,7 +48,7 @@ pak::pak("viniciusoike/infosigasp")
 
 ## Datasets
 
-INFOSIGA-SP publishes three linked datasets:
+INFOSIGA-SP publishes three linked datasets.
 
 ```{r datasets}
 library(infosigasp)
@@ -78,13 +78,13 @@ veiculos <- read_infosiga("veiculos")
 
 ### Processed by default, raw on demand
 
-By default `read_infosiga()` returns a **processed** dataset. Dates are parsed
-to `Date` (including the `ano_mes_*` year-month columns, as first-of-month
-dates), text is whitespace-trimmed, the `"NAO DISPONIVEL"` ("not available")
-marker becomes `NA`, the binary `tp_sinistro_*` crash-type flags become logical,
-coordinates outside São Paulo state are dropped, and the ordinal columns become
-**ordered factors** so they sort and plot in their natural order rather than
-alphabetically (see `?clean_infosiga` for the full list):
+By default `read_infosiga()` returns a **processed** dataset. Dates parse to
+`Date` (including the `ano_mes_*` year-month columns, as first-of-month dates),
+text loses its padding, the `"NAO DISPONIVEL"` ("not available") marker becomes
+`NA`, the binary `tp_sinistro_*` crash-type flags become logical, coordinates
+outside São Paulo state become `NA`, and the ordinal columns become **ordered
+factors** so they sort and plot in their natural order rather than
+alphabetically. `?clean_infosiga` has the full list.
 
 ``` r
 levels(sinistros$dia_da_semana)
@@ -114,8 +114,8 @@ infosiga_cache_clear()    # delete cached files
 
 ### Data dictionary
 
-The official field-by-field documentation (PDF, in Portuguese) can be
-fetched with:
+`infosiga_dictionary()` downloads the official field-by-field documentation
+(PDF, in Portuguese).
 
 ``` r
 infosiga_dictionary()
@@ -123,7 +123,7 @@ infosiga_dictionary()
 
 ## Example
 
-A small fatality summary by year, using the victims dataset:
+The victims dataset gives a fatality count per year.
 
 ``` r
 library(dplyr)
@@ -136,10 +136,10 @@ read_infosiga("pessoas") |>
 
 ## Data source and licence
 
-Data are published by DETRAN-SP under a
+DETRAN-SP publishes the data under a
 [Creative Commons Attribution 4.0](https://creativecommons.org/licenses/by/4.0/)
 licence at <https://infosiga.detran.sp.gov.br/>. When using the data, please
 cite INFOSIGA-SP / DETRAN-SP as the source.
 
-This package is released under the MIT licence and is **not** affiliated with
-or endorsed by DETRAN-SP or the Government of the State of São Paulo.
+The package itself carries the MIT licence. It is **not** affiliated with or
+endorsed by DETRAN-SP or the Government of the State of São Paulo.

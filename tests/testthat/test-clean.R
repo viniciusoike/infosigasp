@@ -5,13 +5,20 @@ test_that("clean = TRUE produces ordered factors with the correct order", {
   expect_s3_class(sin$dia_da_semana, "ordered")
   expect_identical(
     levels(sin$dia_da_semana),
-    c("Domingo", "Segunda-feira",
+    c(
+      "Domingo",
+      "Segunda-feira",
       paste0("Ter", intToUtf8(0x00e7), "a-feira"),
-      "Quarta-feira", "Quinta-feira", "Sexta-feira",
-      paste0("S", intToUtf8(0x00e1), "bado"))
+      "Quarta-feira",
+      "Quinta-feira",
+      "Sexta-feira",
+      paste0("S", intToUtf8(0x00e1), "bado")
+    )
   )
   expect_s3_class(sin$turno, "ordered")
-  expect_true(all(levels(sin$turno) == c("MADRUGADA", "MANHA", "TARDE", "NOITE")))
+  expect_true(all(
+    levels(sin$turno) == c("MADRUGADA", "MANHA", "TARDE", "NOITE")
+  ))
 
   peo <- read_infosiga("pessoas", quiet = TRUE)
   expect_s3_class(peo$gravidade_lesao, "ordered")
@@ -33,7 +40,9 @@ test_that("clean = TRUE maps the 'NAO DISPONIVEL' marker to NA", {
 
   # The raw fixture contains the marker; the cleaned version must not.
   expect_true(any(raw$gravidade_lesao == "NAO DISPONIVEL"))
-  expect_false(any(stats::na.omit(as.character(clean$tipo_de_vitima)) == "NAO DISPONIVEL"))
+  expect_false(any(
+    stats::na.omit(as.character(clean$tipo_de_vitima)) == "NAO DISPONIVEL"
+  ))
 })
 
 test_that("clean = FALSE returns raw character columns", {
@@ -47,7 +56,7 @@ test_that("clean = FALSE returns raw character columns", {
 
 test_that("clean trims whitespace and catches space-padded markers", {
   raw <- tibble::tibble(
-    nacionalidade  = c("BRASILEIRA          ", "  HAITIANA", NA),
+    nacionalidade = c("BRASILEIRA          ", "  HAITIANA", NA),
     tipo_de_vitima = c("NAO DISPONIVEL   ", "PEDESTRE", "  NAO DISPONIVEL")
   )
   cleaned <- clean_infosiga(raw, "pessoas")
@@ -66,9 +75,9 @@ test_that("clean converts tp_sinistro_* flags to logical, keeping primario", {
   expect_type(sin$tp_sinistro_primario, "character")
 
   raw <- tibble::tibble(
-    tp_sinistro_primario     = c("COLISAO", "CHOQUE"),
+    tp_sinistro_primario = c("COLISAO", "CHOQUE"),
     tp_sinistro_atropelamento = c("S", NA),
-    tp_sinistro_choque        = c(NA, "S")
+    tp_sinistro_choque = c(NA, "S")
   )
   cleaned <- clean_infosiga(raw, "sinistros")
   expect_identical(cleaned$tp_sinistro_atropelamento, c(TRUE, FALSE))
@@ -93,10 +102,24 @@ test_that("clean strips the trailing '.0' artefact from house numbers", {
   )
 })
 
+test_that("clean keeps the fractional part of highway kilometre markers", {
+  # On ESTRADAS E RODOVIAS this column is a kilometre marker, not a house
+  # number, so a non-zero decimal is real data. Only an exactly zero fraction
+  # is an export artefact.
+  raw <- tibble::tibble(
+    numero_logradouro = c("0.25", "12.5", "0.001", "-1.0", "230.0")
+  )
+  cleaned <- clean_infosiga(raw, "sinistros")
+  expect_identical(
+    cleaned$numero_logradouro,
+    c("0.25", "12.5", "0.001", "-1", "230")
+  )
+})
+
 test_that("ano_mes_* strings become first-of-month Dates when cleaning", {
   raw <- tibble::tibble(
     ano_mes_sinistro = c("2022/01", "2023/12", "", NA),
-    ano_mes_obito    = c("2022/03", NA, "2024/07", "")
+    ano_mes_obito = c("2022/03", NA, "2024/07", "")
   )
   cleaned <- clean_infosiga(raw, "pessoas")
   expect_s3_class(cleaned$ano_mes_sinistro, "Date")
@@ -113,14 +136,19 @@ test_that("ano_mes_* strings become first-of-month Dates when cleaning", {
 
 test_that("coordinates outside the Sao Paulo bounding box are dropped", {
   raw <- tibble::tibble(
-    latitude  = c(-23.5,    -234526,    0,  -23.5,  10.0),
-    longitude = c(-46.6, 236392064,     0,    0.0, 10.0),
-    descricao = c("valid SP", "corrupt", "null island",
-                  "half-valid", "outside SP")
+    latitude = c(-23.5, -234526, 0, -23.5, 10.0),
+    longitude = c(-46.6, 236392064, 0, 0.0, 10.0),
+    descricao = c(
+      "valid SP",
+      "corrupt",
+      "null island",
+      "half-valid",
+      "outside SP"
+    )
   )
   cleaned <- clean_infosiga(raw, "sinistros")
   # Only the genuine Sao Paulo point survives; everything else -> NA in pairs.
-  expect_equal(cleaned$latitude,  c(-23.5, NA, NA, NA, NA))
+  expect_equal(cleaned$latitude, c(-23.5, NA, NA, NA, NA))
   expect_equal(cleaned$longitude, c(-46.6, NA, NA, NA, NA))
 })
 
