@@ -66,10 +66,7 @@ infosiga_dictionary <- function(dest = file.path(infosiga_cache_dir(), "dictiona
     return(invisible(existing))
   }
 
-  url <- .infosiga_dictionary_url()
-  if (!quiet) {
-    cli::cli_alert_info("Downloading data dictionary from {.url {url}}")
-  }
+  urls <- .infosiga_dictionary_url()
 
   old_timeout <- getOption("timeout")
   on.exit(options(timeout = old_timeout), add = TRUE)
@@ -77,18 +74,57 @@ infosiga_dictionary <- function(dest = file.path(infosiga_cache_dir(), "dictiona
 
   tmp <- tempfile(fileext = ".zip")
   on.exit(unlink(tmp), add = TRUE)
-  ok <- tryCatch(
-    {
-      utils::download.file(url, destfile = tmp, mode = "wb", quiet = quiet)
-      TRUE
-    },
-    error = function(e) {
-      cli::cli_abort(c(
-        "Failed to download the data dictionary.",
-        "x" = conditionMessage(e)
-      ))
+
+  # Download to a tempfile and validate the archive's ZIP magic bytes before
+  # extracting, mirroring infosiga_download(). A portal that serves an HTML
+  # error page (with a 200 status), or an unreachable mirror, then falls through
+  # to the next source instead of leaving junk in the cache directory.
+  ok <- FALSE
+  for (i in seq_along(urls)) {
+    url <- urls[[i]]
+    if (!quiet) {
+      action <- if (i == 1L) {
+        "Downloading data dictionary from"
+      } else {
+        "Previous source failed; trying mirror"
+      }
+      cli::cli_alert_info("{action} {.url {url}}")
     }
-  )
+
+    downloaded <- tryCatch(
+      {
+        utils::download.file(url, destfile = tmp, mode = "wb", quiet = quiet)
+        TRUE
+      },
+      error = function(e) {
+        if (!quiet) {
+          cli::cli_alert_warning(
+            "Source {.url {url}} failed: {conditionMessage(e)}"
+          )
+        }
+        FALSE
+      }
+    )
+
+    if (isTRUE(downloaded) && .infosiga_is_zip(tmp)) {
+      ok <- TRUE
+      break
+    }
+    if (isTRUE(downloaded) && !quiet) {
+      cli::cli_alert_warning(
+        "Source {.url {url}} did not return a valid ZIP archive."
+      )
+    }
+    unlink(tmp)
+  }
+
+  if (!ok) {
+    cli::cli_abort(c(
+      "Failed to download the data dictionary from {length(urls)} source{?s}.",
+      "i" = "Check your internet connection or try again later.",
+      "i" = "You can supply a mirror with {.code options(infosigasp.dictionary_url = ...)}."
+    ))
+  }
 
   utils::unzip(tmp, exdir = dest)
   pdfs <- list.files(dest, pattern = "\\.pdf$", full.names = TRUE)

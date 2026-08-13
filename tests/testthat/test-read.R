@@ -48,6 +48,25 @@ test_that("invalid arguments are rejected", {
   expect_error(read_infosiga("sinistros", year = "abc", quiet = TRUE))
 })
 
+test_that("overwrite = TRUE is forwarded to infosiga_download on a cache hit", {
+  dir <- local_infosiga_fixture()
+  # Point downloads at a source that does not exist: with overwrite = TRUE,
+  # read_infosiga() must attempt a refresh (and fail), proving `...` reaches
+  # infosiga_download() even though a cached archive is already present.
+  withr::local_options(list(infosigasp.zip_url = "file:///nope/refresh.zip"))
+  expect_error(
+    suppressWarnings(read_infosiga("sinistros", overwrite = TRUE, quiet = TRUE)),
+    "Failed to download"
+  )
+})
+
+test_that("a cache hit without overwrite does not attempt a download", {
+  dir <- local_infosiga_fixture()
+  # A broken source must never be touched when a valid cached archive exists.
+  withr::local_options(list(infosigasp.zip_url = "file:///nope/refresh.zip"))
+  expect_no_error(read_infosiga("sinistros", quiet = TRUE))
+})
+
 test_that("missing archive without download raises an informative error", {
   tmp <- withr::local_tempdir()
   withr::local_options(list(infosigasp.cache_dir = tmp))

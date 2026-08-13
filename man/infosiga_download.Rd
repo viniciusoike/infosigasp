@@ -39,9 +39,17 @@ your own mirror or for testing.
 
 DETRAN-SP overwrites the archive in place each month under the same file
 name, so a cached copy can become stale silently. Reusing a cached archive
-older than the \code{infosigasp.stale_days} option (30 days by default; set to
-\code{Inf} to disable) raises a warning suggesting a refresh. The age comes from
-the cached file's modification time.
+whose data are older than the \code{infosigasp.stale_days} option (30 days by
+default; set to \code{Inf} to disable) raises a warning suggesting a refresh. The
+age is that of the CSVs inside the archive, taken from their timestamps in
+the ZIP listing, and falls back to the cached file's modification time when
+that listing cannot be read.
+
+The warning describes the local copy only. Neither this function nor
+\code{\link[=read_infosiga]{read_infosiga()}} contacts DETRAN-SP to ask whether a newer release exists,
+so a warning means the cached data have aged past the threshold, not that an
+update is known to be available. The two differ because DETRAN-SP publishes
+with a lag.
 }
 \examples{
 \dontrun{

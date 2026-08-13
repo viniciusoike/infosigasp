@@ -16,6 +16,37 @@ test_that("infosiga_download falls back to a mirror when a source fails", {
   expect_identical(file.size(path), file.size(fixture))
 })
 
+test_that("a source that returns a non-ZIP response falls back to a mirror", {
+  tmp <- withr::local_tempdir()
+  withr::local_options(list(infosigasp.cache_dir = tmp))
+
+  # A reachable source that serves an HTML error page rather than the archive.
+  not_a_zip <- file.path(tmp, "error.html")
+  writeLines("<html><body>503 Service Unavailable</body></html>", not_a_zip)
+  bad <- paste0("file://", normalizePath(not_a_zip, winslash = "/"))
+
+  fixture <- test_path("fixtures", "dados_infosiga.zip")
+  good <- paste0("file://", normalizePath(fixture, winslash = "/"))
+  withr::local_options(list(infosigasp.zip_url = c(bad, good)))
+
+  path <- suppressWarnings(infosiga_download(quiet = TRUE))
+  expect_true(file.exists(path))
+  # The valid ZIP mirror, not the HTML page, reached the cache.
+  expect_identical(file.size(path), file.size(fixture))
+})
+
+test_that(".infosiga_is_zip accepts ZIP archives and rejects other files", {
+  tmp <- withr::local_tempdir()
+  zip <- test_path("fixtures", "dados_infosiga.zip")
+  expect_true(.infosiga_is_zip(zip))
+
+  html <- file.path(tmp, "page.html")
+  writeLines("<html></html>", html)
+  expect_false(.infosiga_is_zip(html))
+
+  expect_false(.infosiga_is_zip(file.path(tmp, "missing.zip")))
+})
+
 test_that("infosiga_download errors when every source fails", {
   tmp <- withr::local_tempdir()
   withr::local_options(list(infosigasp.cache_dir = tmp))
@@ -32,34 +63,44 @@ test_that("infosiga_download errors when every source fails", {
 # Staleness warning ----------------------------------------------------------
 
 test_that("a stale cached archive triggers a refresh warning", {
-  dir <- local_infosiga_fixture()
-  archive <- file.path(dir, .infosiga_zip_name)
-  # Backdate the archive well beyond the default 30-day threshold.
-  Sys.setFileTime(archive, Sys.time() - as.difftime(40, units = "days"))
-
-  expect_warning(infosiga_download(quiet = TRUE), "days old")
+  local_infosiga_aged_archive(40)
+  expect_warning(infosiga_download(quiet = TRUE), "days ago")
 })
 
 test_that("a fresh cached archive does not warn", {
-  local_infosiga_fixture() # file.copy stamps the archive with the current time
+  local_infosiga_aged_archive(0)
   expect_no_warning(infosiga_download(quiet = TRUE))
 })
 
 test_that("staleness checking can be disabled via option", {
-  dir <- local_infosiga_fixture()
-  archive <- file.path(dir, .infosiga_zip_name)
-  Sys.setFileTime(archive, Sys.time() - as.difftime(40, units = "days"))
+  local_infosiga_aged_archive(40)
   withr::local_options(list(infosigasp.stale_days = Inf))
 
   expect_no_warning(infosiga_download(quiet = TRUE))
 })
 
 test_that("read_infosiga warns on a stale cache but not on a fresh one", {
-  dir <- local_infosiga_fixture()
-  archive <- file.path(dir, .infosiga_zip_name)
-
+  local_infosiga_aged_archive(0)
   expect_no_warning(read_infosiga("sinistros", quiet = TRUE))
 
+  local_infosiga_aged_archive(40)
+  expect_warning(read_infosiga("sinistros", quiet = TRUE), "days ago")
+})
+
+test_that("staleness follows the data date, not the download time", {
+  # A just-downloaded archive whose contents are old is still stale: the file's
+  # own mtime is the download time and would report zero days.
+  dir <- local_infosiga_aged_archive(40)
+  Sys.setFileTime(file.path(dir, .infosiga_zip_name), Sys.time())
+
+  expect_warning(infosiga_download(quiet = TRUE), "holds data dated")
+})
+
+test_that("an unreadable archive falls back to the download time", {
+  tmp <- withr::local_tempdir()
+  archive <- file.path(tmp, .infosiga_zip_name)
+  writeLines("not a zip", archive)
   Sys.setFileTime(archive, Sys.time() - as.difftime(40, units = "days"))
-  expect_warning(read_infosiga("sinistros", quiet = TRUE), "days old")
+
+  expect_warning(.infosiga_check_staleness(archive), "was downloaded")
 })
