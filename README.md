@@ -24,10 +24,10 @@ covers every traffic crash recorded in the state of São Paulo from
 
 ## Installation
 
-Install the released version from CRAN.
+The package is not on CRAN yet. Install it from R-universe.
 
 ``` r
-install.packages("infosigasp")
+install.packages("infosigasp", repos = "https://viniciusoike.r-universe.dev")
 ```
 
 The development version lives on GitHub.
@@ -75,14 +75,14 @@ veiculos <- read_infosiga("veiculos")
 
 ### Processed by default, raw on demand
 
-By default `read_infosiga()` returns a **processed** dataset. Dates parse
-to `Date` (including the `ano_mes_*` year-month columns, as
-first-of-month dates), text loses its padding, the
-`"NAO DISPONIVEL"` (“not available”) marker becomes `NA`, the binary
-`tp_sinistro_*` crash-type flags become logical, coordinates outside São
-Paulo state become `NA`, and the ordinal columns become **ordered
-factors** so they sort and plot in their natural order rather than
-alphabetically. `?clean_infosiga` has the full list.
+By default `read_infosiga()` returns a **processed** dataset. Dates
+parse to `Date` (including the `ano_mes_*` year-month columns, as
+first-of-month dates), text loses its padding, the `"NAO DISPONIVEL"`
+(“not available”) marker becomes `NA`, the binary `tp_sinistro_*`
+crash-type flags become logical, coordinates outside São Paulo state
+become `NA`, and the ordinal columns become **ordered factors** so they
+sort and plot in their natural order rather than alphabetically.
+`?clean_infosiga` has the full list.
 
 ``` r
 levels(sinistros$dia_da_semana)
@@ -100,6 +100,34 @@ raw import later with `clean_infosiga()`.
 ``` r
 raw <- read_infosiga("sinistros", clean = FALSE)
 ```
+
+### Tidying the category labels
+
+`clean_infosiga()` fixes types and source artefacts but leaves category
+labels alone, so anyone reproducing an official DETRAN-SP figure gets
+exactly the categories DETRAN-SP publishes. Those labels are messy.
+`cor_veiculo` carries dozens of values for about sixteen real colours,
+because two upstream systems coexist and disagree on both case and
+gender agreement (`PRETA`, `Preta`; `BRANCA`, `Branco`). Run the opt-in
+`tidy_infosiga_labels()` when you want labels that group, sort and plot
+sensibly.
+
+``` r
+veiculos <- read_infosiga("veiculos") |>
+  tidy_infosiga_labels("veiculos")
+```
+
+It also gives `municipio` and `regiao_administrativa` their official
+IBGE spellings, Title Cases `profissao`, and splits route codes out of
+`conservacao` into a new `conservacao_codigo` column. The bundled
+`infosiga_municipios` lookup pairs each spelling with `cod_ibge`, the
+key that joins INFOSIGA-SP to census and population data.
+
+``` r
+head(infosiga_municipios, 3)
+```
+
+The getting-started vignette covers both passes in full.
 
 ### Managing the cache
 

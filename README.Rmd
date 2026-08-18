@@ -33,10 +33,10 @@ recorded in the state of São Paulo from **2015 onward**.
 
 ## Installation
 
-Install the released version from CRAN.
+The package is not on CRAN yet. Install it from R-universe.
 
 ``` r
-install.packages("infosigasp")
+install.packages("infosigasp", repos = "https://viniciusoike.r-universe.dev")
 ```
 
 The development version lives on GitHub.
@@ -102,6 +102,33 @@ with `clean_infosiga()`.
 ``` r
 raw <- read_infosiga("sinistros", clean = FALSE)
 ```
+
+### Tidying the category labels
+
+`clean_infosiga()` fixes types and source artefacts but leaves category labels
+alone, so anyone reproducing an official DETRAN-SP figure gets exactly the
+categories DETRAN-SP publishes. Those labels are messy. `cor_veiculo` carries
+dozens of values for about sixteen real colours, because two upstream systems
+coexist and disagree on both case and gender agreement (`PRETA`, `Preta`;
+`BRANCA`, `Branco`). Run the opt-in `tidy_infosiga_labels()` when you want
+labels that group, sort and plot sensibly.
+
+``` r
+veiculos <- read_infosiga("veiculos") |>
+  tidy_infosiga_labels("veiculos")
+```
+
+It also gives `municipio` and `regiao_administrativa` their official IBGE
+spellings, Title Cases `profissao`, and splits route codes out of `conservacao`
+into a new `conservacao_codigo` column. The bundled `infosiga_municipios`
+lookup pairs each spelling with `cod_ibge`, the key that joins INFOSIGA-SP to
+census and population data.
+
+``` r
+head(infosiga_municipios, 3)
+```
+
+The getting-started vignette covers both passes in full.
 
 ### Managing the cache
 
