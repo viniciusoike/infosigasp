@@ -24,10 +24,19 @@
 #' \describe{
 #'   \item{[read_infosiga()]}{Download (if needed) and import a dataset as a
 #'     tibble.}
+#'   \item{[clean_infosiga()]}{Apply the processing `read_infosiga()` performs
+#'     by default, for datasets imported with `clean = FALSE`.}
+#'   \item{[infosiga_datasets()]}{List the datasets, their grain and their
+#'     keys.}
+#'   \item{[tidy_infosiga_labels()]}{Opt-in second pass that rewrites the
+#'     published category labels; see also [infosiga_municipios].}
 #'   \item{[infosiga_download()]}{Download the raw source archive to the local
 #'     cache.}
+#'   \item{[infosiga_check_update()]}{Report whether the package mirror holds a
+#'     newer archive than the cached copy.}
 #'   \item{[infosiga_cache_dir()], [infosiga_cache_list()],
 #'     [infosiga_cache_clear()]}{Manage the on-disk cache.}
+#'   \item{[infosiga_dictionary()]}{Download the official data dictionary.}
 #' }
 #'
 #' @section Data source and licence:
