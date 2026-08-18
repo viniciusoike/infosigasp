@@ -52,8 +52,7 @@ infosiga_datasets()
 #> 3 veiculos  Vehicles involved in traffic crashes.                    one ~ id_v~
 ```
 
-The datasets can be joined through `id_sinistro` (and `id_veiculo`,
-where present).
+Join the datasets on `id_sinistro`, and on `id_veiculo` where present.
 
 ## Usage
 
@@ -66,7 +65,7 @@ library(infosigasp)
 # Crash events (one row per event)
 sinistros <- read_infosiga("sinistros")
 
-# Victims, restricted to recent years
+# Victims, restricted to a range of crash years
 vitimas <- read_infosiga("pessoas", year = 2022:2025)
 
 # Vehicles involved

@@ -14,19 +14,19 @@ read_infosiga(
 )
 }
 \arguments{
-\item{dataset}{Which dataset to import. One of:
+\item{dataset}{Which dataset to import.
 \describe{
 \item{\code{"sinistros"}}{Crash events (one row per event).}
 \item{\code{"pessoas"}}{Victims / people involved (one row per person).}
 \item{\code{"veiculos"}}{Vehicles involved (one row per vehicle).}
 }}
 
-\item{clean}{Logical. If \code{TRUE} (default), return a processed dataset:
-text is trimmed, the \code{"NAO DISPONIVEL"} marker becomes \code{NA}, ordinal
-columns become ordered factors, crash-type flags become logical, and
-impossible coordinates become \code{NA} (see \code{\link[=clean_infosiga]{clean_infosiga()}} for the full
-list of steps). If \code{FALSE}, return the raw data exactly as published, with
-all text columns as character vectors.}
+\item{clean}{Logical. If \code{TRUE} (default), return a processed dataset. The
+processing trims text, maps the \code{"NAO DISPONIVEL"} marker to \code{NA}, makes
+ordinal columns ordered factors, makes the crash-type flags logical and
+voids impossible coordinates; see \code{\link[=clean_infosiga]{clean_infosiga()}} for the full list of
+steps. If \code{FALSE}, return the raw data exactly as published, with all text
+columns as character vectors.}
 
 \item{year}{Optional integer vector used to filter rows by year of the
 crash (\code{ano_sinistro}). If \code{NULL} (default), all available years are

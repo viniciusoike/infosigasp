@@ -4,18 +4,18 @@
 #' as a tidy tibble. The source archive is cached locally, so the first call
 #' triggers a download and subsequent calls read from disk.
 #'
-#' @param dataset Which dataset to import. One of:
+#' @param dataset Which dataset to import.
 #'   \describe{
 #'     \item{`"sinistros"`}{Crash events (one row per event).}
 #'     \item{`"pessoas"`}{Victims / people involved (one row per person).}
 #'     \item{`"veiculos"`}{Vehicles involved (one row per vehicle).}
 #'   }
-#' @param clean Logical. If `TRUE` (default), return a processed dataset:
-#'   text is trimmed, the `"NAO DISPONIVEL"` marker becomes `NA`, ordinal
-#'   columns become ordered factors, crash-type flags become logical, and
-#'   impossible coordinates become `NA` (see [clean_infosiga()] for the full
-#'   list of steps). If `FALSE`, return the raw data exactly as published, with
-#'   all text columns as character vectors.
+#' @param clean Logical. If `TRUE` (default), return a processed dataset. The
+#'   processing trims text, maps the `"NAO DISPONIVEL"` marker to `NA`, makes
+#'   ordinal columns ordered factors, makes the crash-type flags logical and
+#'   voids impossible coordinates; see [clean_infosiga()] for the full list of
+#'   steps. If `FALSE`, return the raw data exactly as published, with all text
+#'   columns as character vectors.
 #' @param year Optional integer vector used to filter rows by year of the
 #'   crash (`ano_sinistro`). If `NULL` (default), all available years are
 #'   returned. For example, `year = 2020:2023`.

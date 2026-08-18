@@ -27,14 +27,14 @@ Traffic Accident Information and Management System, maintained by DETRAN-SP.
 It publishes, as open data, detailed records of every traffic crash in the
 state of São Paulo from 2015 onward.
 
-The `infosigasp` package wraps the download and import of those records. It
-handles what makes the raw files awkward to read directly.
+`infosigasp` downloads and imports those records. It handles what makes the
+raw files awkward to read directly.
 
-- the files are encoded in **Latin-1** (ISO-8859-1), not UTF-8;
-- fields are separated by **semicolons** (`;`);
-- decimal numbers (such as coordinates) use a **comma** decimal mark;
-- dates are formatted **`DD/MM/YYYY`**;
-- each dataset is split across **two files** (2015--2021 and 2022 onward).
+- The files use **Latin-1** (ISO-8859-1), not UTF-8.
+- **Semicolons** (`;`) separate the fields.
+- Decimal numbers, such as coordinates, use a **comma** decimal mark.
+- Dates follow **`DD/MM/YYYY`**.
+- Each dataset spans **two files** (2015--2021 and 2022 onward).
 
 ```{r setup}
 library(infosigasp)
@@ -201,7 +201,7 @@ join loses all nine silently. `cod_ibge` is also the standard Brazilian
 municipality key, so it joins INFOSIGA-SP to census and population data. Those
 are the denominators that turn crash counts into crash *rates*.
 
-### A peek at the structure without downloading
+### Inspecting the structure without downloading
 
 The package ships a small sample of each dataset so you can inspect the
 columns without any network access.
@@ -253,7 +253,8 @@ read_infosiga("sinistros") |>
   count(ano_sinistro)
 ```
 
-Otherwise, start the series in 2019 with `read_infosiga("sinistros", year = 2019:2026)`.
+Otherwise, start the series in 2019 by passing a `year` range to
+`read_infosiga()`.
 
 ### A third of `sinistros` rows are notifications
 
@@ -271,7 +272,7 @@ an unusually high share of notifications. The last month or two of any release
 is also incomplete. Drop the tail of the series before reading anything into a
 recent trend.
 
-### Others worth knowing
+### Smaller caveats
 
 - **`tempo_sinistro_obito` is capped at 30 days**, the standard convention for
   attributing a death to a crash. Fatality counts here are 30-day counts.
