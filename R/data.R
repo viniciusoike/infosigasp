@@ -40,11 +40,23 @@
 #' @examples
 #' head(infosiga_municipios)
 #'
-#' # The nine municipalities whose names differ between the two sources
-#' folded <- gsub("'", " ", toupper(infosiga_municipios$municipio))
+#' # The nine municipalities whose names differ by more than accents and case.
+#' # chartr() rather than iconv(to = "ASCII//TRANSLIT"), which is locale- and
+#' # platform-dependent; the accented letters are built with intToUtf8().
+#' accented <- intToUtf8(c(
+#'   0x00c1, 0x00c0, 0x00c2, 0x00c3, 0x00c9, 0x00ca,
+#'   0x00cd, 0x00d3, 0x00d4, 0x00d5, 0x00da, 0x00c7,
+#'   0x00e1, 0x00e0, 0x00e2, 0x00e3, 0x00e9, 0x00ea,
+#'   0x00ed, 0x00f3, 0x00f4, 0x00f5, 0x00fa, 0x00e7
+#' ))
+#' folded <- toupper(chartr(
+#'   accented,
+#'   "AAAAEEIOOOUCaaaaeeiooouc",
+#'   infosiga_municipios$municipio
+#' ))
 #' subset(
 #'   infosiga_municipios,
-#'   iconv(folded, "UTF-8", "ASCII", sub = "?") != municipio_infosiga,
+#'   folded != municipio_infosiga,
 #'   select = c(cod_ibge, municipio, municipio_infosiga)
 #' )
 "infosiga_municipios"
