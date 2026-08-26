@@ -6,11 +6,11 @@
 \usage{
 read_infosiga(
   dataset = c("sinistros", "pessoas", "veiculos"),
-  clean = TRUE,
   year = NULL,
-  download_if_missing = TRUE,
-  quiet = FALSE,
-  ...
+  clean = TRUE,
+  labels = FALSE,
+  refresh = FALSE,
+  quiet = FALSE
 )
 }
 \arguments{
@@ -21,36 +21,37 @@ read_infosiga(
 \item{\code{"veiculos"}}{Vehicles involved (one row per vehicle).}
 }}
 
-\item{clean}{Logical. If \code{TRUE} (default), return a processed dataset. The
-processing trims text, maps the \code{"NAO DISPONIVEL"} marker to \code{NA}, makes
-ordinal columns ordered factors, makes the crash-type flags logical and
-voids impossible coordinates; see \code{\link[=clean_infosiga]{clean_infosiga()}} for the full list of
-steps. If \code{FALSE}, return the raw data exactly as published, with all text
-columns as character vectors.}
-
 \item{year}{Optional integer vector used to filter rows by year of the
 crash (\code{ano_sinistro}). If \code{NULL} (default), all available years are
 returned. For example, \code{year = 2020:2023}.}
 
-\item{download_if_missing}{Logical. If \code{TRUE} (default), download the
-archive when it is not already cached. If \code{FALSE} and the archive is
-missing, an informative error is raised.}
+\item{clean}{Logical. If \code{TRUE} (default), return a processed dataset:
+text is trimmed, the \code{"NAO DISPONIVEL"} marker becomes \code{NA}, ordinal
+columns become ordered factors, crash-type flags become logical, and
+impossible coordinates become \code{NA}. If \code{FALSE}, return the raw data
+exactly as published, with all text columns as character vectors.}
+
+\item{labels}{Logical. If \code{TRUE}, additionally standardise category labels
+for analysis and presentation. This restores authoritative place-name
+spellings, applies consistent title case, merges duplicate vehicle-colour
+categories and separates road-maintenance codes. Requires \code{clean = TRUE}.}
+
+\item{refresh}{Logical. If \code{TRUE}, download the latest available source data
+before reading. If \code{FALSE} (default), reuse the copy in the local
+\code{infosigasp} cache, downloading it only when it is missing.}
 
 \item{quiet}{Logical. If \code{FALSE} (default), report progress.}
-
-\item{...}{Additional arguments passed to \code{\link[=infosiga_download]{infosiga_download()}} (for
-example \code{overwrite = TRUE} to force a refresh).}
 }
 \value{
 A \link[tibble:tibble]{tibble} with one row per record. The columns
 keep the original INFOSIGA-SP names (in Portuguese); see the package data
-dictionary via \code{\link[=infosiga_dictionary]{infosiga_dictionary()}}. The three datasets can be joined
+dictionary via \code{\link[=dictionary_infosiga]{dictionary_infosiga()}}. The three datasets can be joined
 on \code{id_sinistro} (and \code{id_veiculo}, where present).
 }
 \description{
 Downloads (if necessary) and imports one of the three INFOSIGA-SP datasets
-as a tidy tibble. The source archive is cached locally, so the first call
-triggers a download and subsequent calls read from disk.
+as a tidy tibble. The first interactive call asks before downloading about
+120 MB to the user's local cache; subsequent calls read from disk.
 }
 \details{
 Source files are encoded in Latin-1 (ISO-8859-1), use \verb{;} as the field
@@ -60,8 +61,8 @@ coordinates. Each dataset is distributed across two period files inside the
 archive (2015-2021 and 2022 onward); they are read and row-bound
 transparently.
 
-By default (\code{clean = TRUE}) the result is then processed by
-\code{\link[=clean_infosiga]{clean_infosiga()}}: text columns are whitespace-trimmed, the
+By default (\code{clean = TRUE}) the result is then processed by the package's
+internal cleaning step: text columns are whitespace-trimmed, the
 \code{"NAO DISPONIVEL"} ("not available") marker becomes \code{NA}, ordinal columns
 (\code{dia_da_semana}, \code{turno}, \code{gravidade_lesao}, the age bands) become
 \strong{ordered factors}, the \verb{ano_mes_*} year-month strings are parsed to
@@ -69,9 +70,9 @@ first-of-month \code{Date}s, the binary \verb{tp_sinistro_*} crash-type flags be
 \strong{logical}, blank \verb{qtd_*} counts inside an otherwise-filled block become
 \code{0}, \code{tempo_sinistro_obito} becomes \strong{integer}, and
 \code{latitude}/\code{longitude} values outside the bounding box of Sao Paulo state
-become \code{NA}. See \code{\link[=clean_infosiga]{clean_infosiga()}} for the complete, ordered list. Pass
-\code{clean = FALSE} to obtain the raw data exactly as published, with every text
-column kept as a character vector and \code{"NAO DISPONIVEL"} and the source's
+become \code{NA}. Pass \code{clean = FALSE} to obtain the raw data exactly as
+published, with every text column kept as a character vector and
+\code{"NAO DISPONIVEL"} and the source's
 fixed-width whitespace padding preserved verbatim.
 
 A small fraction of rows in the source contain data-quality issues (for
@@ -125,7 +126,7 @@ of crashes, so the two routes to "how many vehicles" give different
 answers; pick one and state it. The \verb{qtd_gravidade_*} columns, by
 contrast, agree with the \code{pessoas} row counts for every crash.}
 \item{\strong{Coordinate availability varies sharply by year.}}{After the
-bounding-box validation described in \code{\link[=clean_infosiga]{clean_infosiga()}}, nearly every
+bounding-box validation described above, nearly every
 crash in the middle years of the series has usable coordinates, against a
 materially smaller share in the earliest and the most recent years.
 Mapped subsets are therefore not a uniform sample over time.}
@@ -160,6 +161,5 @@ if (nzchar(sample_path)) head(readr::read_delim(sample_path, ";"))
 
 }
 \seealso{
-\code{\link[=infosiga_download]{infosiga_download()}}, \code{\link[=infosiga_cache_dir]{infosiga_cache_dir()}},
-\code{\link[=infosiga_dictionary]{infosiga_dictionary()}}.
+\code{\link[=dictionary_infosiga]{dictionary_infosiga()}}.
 }

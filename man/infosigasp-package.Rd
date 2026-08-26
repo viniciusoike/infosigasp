@@ -32,19 +32,8 @@ The three datasets can be linked through the \code{id_sinistro} key (and
 \describe{
 \item{\code{\link[=read_infosiga]{read_infosiga()}}}{Download (if needed) and import a dataset as a
 tibble.}
-\item{\code{\link[=clean_infosiga]{clean_infosiga()}}}{Apply the processing \code{read_infosiga()} performs
-by default, for datasets imported with \code{clean = FALSE}.}
-\item{\code{\link[=infosiga_datasets]{infosiga_datasets()}}}{List the datasets, their grain and their
-keys.}
-\item{\code{\link[=tidy_infosiga_labels]{tidy_infosiga_labels()}}}{Opt-in second pass that rewrites the
-published category labels; see also \link{infosiga_municipios}.}
-\item{\code{\link[=infosiga_download]{infosiga_download()}}}{Download the raw source archive to the local
-cache.}
-\item{\code{\link[=infosiga_check_update]{infosiga_check_update()}}}{Report whether the package mirror holds a
-newer archive than the cached copy.}
-\item{\code{\link[=infosiga_cache_dir]{infosiga_cache_dir()}}, \code{\link[=infosiga_cache_list]{infosiga_cache_list()}},
-\code{\link[=infosiga_cache_clear]{infosiga_cache_clear()}}}{Manage the on-disk cache.}
-\item{\code{\link[=infosiga_dictionary]{infosiga_dictionary()}}}{Download the official data dictionary.}
+\item{\code{\link[=dictionary_infosiga]{dictionary_infosiga()}}}{Download and locate the official data
+dictionaries.}
 }
 }
 

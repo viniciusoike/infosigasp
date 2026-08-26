@@ -1,75 +1,15 @@
-#' Download the INFOSIGA-SP source archive
-#'
-#' Downloads the consolidated INFOSIGA-SP data archive (`dados_infosiga.zip`)
-#' from DETRAN-SP into the local cache. Most users do not need to call this
-#' directly: [read_infosiga()] downloads the archive on demand. Use this
-#' function when you want to pre-fetch the data (for example, before going
-#' offline) or to force a refresh.
-#'
-#' @param overwrite Logical. If `FALSE` (default) and the archive is already
-#'   cached, the existing file is kept and returned. Set to `TRUE` to download
-#'   again and replace it.
-#' @param quiet Logical. If `FALSE` (default), report progress with
-#'   informative messages.
-#' @param timeout Download timeout in seconds. The archive is large (around
-#'   120 MB), so the default temporarily raises [options()]`$timeout` to
-#'   `3600`. Pass a larger value on slow connections.
-#'
-#' @return The path to the cached archive, invisibly.
-#'
-#' @details
-#' DETRAN-SP updates the archive monthly; it accumulates all records from 2015
-#' onward. The download URL can be overridden with the
-#' `infosigasp.zip_url` option, which may be a character vector of mirror URLs
-#' tried in order until one succeeds. The default is the official DETRAN-SP
-#' endpoint followed by a GitHub-release mirror that serves a point-in-time
-#' snapshot when the official portal is unavailable. Override the option to add
-#' your own mirror or for testing.
-#'
-#' DETRAN-SP overwrites the archive in place each month under the same file
-#' name, so a cached copy can become stale silently. Reusing a cached archive
-#' whose data are older than the `infosigasp.stale_days` option (30 days by
-#' default; set to `Inf` to disable) raises a warning suggesting a refresh. The
-#' age is that of the CSVs inside the archive, taken from their timestamps in
-#' the ZIP listing, and falls back to the cached file's modification time when
-#' that listing cannot be read.
-#'
-#' The warning describes the local copy only. Neither this function nor
-#' [read_infosiga()] contacts DETRAN-SP to ask whether a newer release exists,
-#' so a warning means the cached data have aged past the threshold, not that an
-#' update is known to be available. The two differ because DETRAN-SP publishes
-#' with a lag.
-#'
-#' @seealso [read_infosiga()] to import the data, and [infosiga_cache_dir()]
-#'   to locate the cache.
-#'
-#' @examples
-#' \dontrun{
-#' # Pre-fetch the archive into the cache
-#' infosiga_download()
-#'
-#' # Force a refresh after a monthly update
-#' infosiga_download(overwrite = TRUE)
-#' }
-#' @export
-infosiga_download <- function(overwrite = FALSE,
-                              quiet = FALSE,
-                              timeout = 3600) {
-  dest <- file.path(infosiga_cache_dir(), .infosiga_zip_name)
+# Archive download ----------------------------------------------------------
 
-  if (file.exists(dest) && !overwrite) {
-    if (!quiet) {
-      cli::cli_alert_info(
-        "Using cached archive at {.path {dest}} (use {.code overwrite = TRUE} to refresh)."
-      )
-    }
-    .infosiga_check_staleness(dest)
+.infosiga_download <- function(refresh = FALSE, quiet = FALSE, timeout = 3600) {
+  dest <- .infosiga_archive_path()
+
+  if (file.exists(dest) && !refresh) {
     return(invisible(dest))
   }
 
   urls <- .infosiga_zip_url()
   if (!quiet) {
-    cli::cli_alert_info("This file is large (~120 MB) and may take a while.")
+    cli::cli_alert_info("Downloading INFOSIGA-SP data (~120 MB).")
   }
 
   old_timeout <- getOption("timeout")
@@ -85,13 +25,8 @@ infosiga_download <- function(overwrite = FALSE,
   ok <- FALSE
   for (i in seq_along(urls)) {
     url <- urls[[i]]
-    if (!quiet) {
-      action <- if (i == 1L) {
-        "Downloading INFOSIGA-SP archive from"
-      } else {
-        "Previous source failed; trying mirror"
-      }
-      cli::cli_alert_info("{action} {.url {url}}")
+    if (!quiet && i > 1L) {
+      cli::cli_alert_info("Trying an INFOSIGA-SP mirror at {.url {url}}.")
     }
 
     downloaded <- tryCatch(
@@ -143,14 +78,11 @@ infosiga_download <- function(overwrite = FALSE,
   if (!quiet) {
     size_mb <- round(file.size(dest) / 1024^2, 1)
     cli::cli_alert_success(
-      "Downloaded archive ({size_mb} MB) to {.path {dest}}."
+      "Downloaded INFOSIGA-SP data ({size_mb} MB)."
     )
   }
   invisible(dest)
 }
-
-# Default age (in days) beyond which a cached archive is considered stale.
-.infosiga_stale_days <- 30L
 
 # Timestamp of the CSVs inside a cached archive, or NA if the listing cannot be
 # read. This dates the data itself; the file's own mtime records only when this
@@ -164,44 +96,6 @@ infosiga_download <- function(overwrite = FALSE,
   }
   built <- suppressWarnings(max(listing$Date, na.rm = TRUE))
   if (!is.finite(as.numeric(built))) NA else built
-}
-
-# Warn when a cached archive is reused whose data are older than the staleness
-# threshold. The check is entirely local: it reports the age of the cached copy
-# and never asks DETRAN-SP whether a newer release exists. Set
-# `infosigasp.stale_days` to `Inf` (or a non-positive value) to disable.
-.infosiga_check_staleness <- function(path) {
-  if (!file.exists(path)) {
-    return(invisible(NULL))
-  }
-  threshold <- getOption("infosigasp.stale_days", .infosiga_stale_days)
-  if (!is.numeric(threshold) || !is.finite(threshold) || threshold <= 0) {
-    return(invisible(NULL))
-  }
-
-  # Prefer the data's own timestamp, falling back to the download time when the
-  # listing is unreadable (a truncated or corrupt archive), which is still worth
-  # warning about.
-  built <- .infosiga_archive_date(path)
-  reference <- if (is.na(built)) file.mtime(path) else built
-  age_days <- as.numeric(difftime(Sys.time(), reference, units = "days"))
-  if (age_days <= threshold) {
-    return(invisible(NULL))
-  }
-
-  headline <- if (is.na(built)) {
-    "The cached INFOSIGA-SP archive was downloaded {round(age_days)} days ago."
-  } else {
-    "The cached INFOSIGA-SP archive holds data dated \\
-     {format(built, '%Y-%m-%d')} ({round(age_days)} days ago)."
-  }
-  cli::cli_warn(c(
-    "!" = headline,
-    "i" = "This is the age of your local copy; the package does not check \\
-           DETRAN-SP for a newer release. DETRAN-SP updates the data monthly.",
-    "i" = "Refresh with {.code infosiga_download(overwrite = TRUE)}."
-  ))
-  invisible(NULL)
 }
 
 # Cheap integrity check: does the file start with the ZIP local-file-header

@@ -95,4 +95,4 @@ stopifnot(
   setequal(infosiga_municipios$cod_ibge[mismatch], known_spelling_diffs)
 )
 
-usethis::use_data(infosiga_municipios, overwrite = TRUE)
+usethis::use_data(infosiga_municipios, internal = TRUE, overwrite = TRUE)

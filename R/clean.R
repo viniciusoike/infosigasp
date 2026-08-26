@@ -5,9 +5,12 @@
 .infosiga_factor_levels <- list(
   # Brazilian calendars start the week on Sunday (Domingo).
   dia_da_semana = c(
-    "Domingo", "Segunda-feira",
+    "Domingo",
+    "Segunda-feira",
     paste0("Ter", intToUtf8(0x00e7), "a-feira"),
-    "Quarta-feira", "Quinta-feira", "Sexta-feira",
+    "Quarta-feira",
+    "Quinta-feira",
+    "Sexta-feira",
     paste0("S", intToUtf8(0x00e1), "bado")
   ),
   # Periods of the day, in chronological order.
@@ -15,13 +18,41 @@
   # Injury severity, from least to most severe.
   gravidade_lesao = c("LEVE", "GRAVE", "FATAL"),
   faixa_etaria_demografica = c(
-    "00 a 04", "05 a 09", "10 a 14", "15 a 19", "20 a 24", "25 a 29",
-    "30 a 34", "35 a 39", "40 a 44", "45 a 49", "50 a 54", "55 a 59",
-    "60 a 64", "65 a 69", "70 a 74", "75 a 79", "80 a 84", "85 a 89", "90 e +"
+    "00 a 04",
+    "05 a 09",
+    "10 a 14",
+    "15 a 19",
+    "20 a 24",
+    "25 a 29",
+    "30 a 34",
+    "35 a 39",
+    "40 a 44",
+    "45 a 49",
+    "50 a 54",
+    "55 a 59",
+    "60 a 64",
+    "65 a 69",
+    "70 a 74",
+    "75 a 79",
+    "80 a 84",
+    "85 a 89",
+    "90 e +"
   ),
   faixa_etaria_legal = c(
-    "0-17", "18-24", "25-29", "30-34", "35-39", "40-44", "45-49", "50-54",
-    "55-59", "60-64", "65-69", "70-74", "75-79", "80 ou mais"
+    "0-17",
+    "18-24",
+    "25-29",
+    "30-34",
+    "35-39",
+    "40-44",
+    "45-49",
+    "50-54",
+    "55-59",
+    "60-64",
+    "65-69",
+    "70-74",
+    "75-79",
+    "80 ou mais"
   )
 )
 
@@ -41,12 +72,21 @@
 # vehicle counts but no gravity breakdown, and ~6k the reverse.
 .infosiga_qtd_blocks <- list(
   veiculos = c(
-    "qtd_pedestre", "qtd_bicicleta", "qtd_motocicleta", "qtd_automovel",
-    "qtd_onibus", "qtd_caminhao", "qtd_veic_outros", "qtd_veic_nao_disponivel"
+    "qtd_pedestre",
+    "qtd_bicicleta",
+    "qtd_motocicleta",
+    "qtd_automovel",
+    "qtd_onibus",
+    "qtd_caminhao",
+    "qtd_veic_outros",
+    "qtd_veic_nao_disponivel"
   ),
   gravidade = c(
-    "qtd_gravidade_fatal", "qtd_gravidade_grave", "qtd_gravidade_leve",
-    "qtd_gravidade_ileso", "qtd_gravidade_nao_disponivel"
+    "qtd_gravidade_fatal",
+    "qtd_gravidade_grave",
+    "qtd_gravidade_leve",
+    "qtd_gravidade_ileso",
+    "qtd_gravidade_nao_disponivel"
   )
 )
 
@@ -56,7 +96,9 @@
 # the all-NA rows. `cols` is restricted to those present in `data`.
 .infosiga_fill_count_block <- function(data, cols) {
   cols <- intersect(cols, names(data))
-  if (length(cols) == 0) return(data)
+  if (length(cols) == 0) {
+    return(data)
+  }
   block <- data[cols]
   has_value <- rowSums(!is.na(block)) > 0
   for (col in cols) {
@@ -76,106 +118,109 @@
 # and "null island" 0,0 placeholders) are treated as errors.
 .sp_bbox <- list(lat = c(-25.6, -19.5), lon = c(-53.3, -44.0))
 
-#' Clean and process an INFOSIGA-SP dataset
-#'
-#' Applies the standard processing that [read_infosiga()] performs by default
-#' (`clean = TRUE`). Use this directly only when you imported a dataset with
-#' `clean = FALSE` (the raw version) and want to process it afterwards.
-#'
-#' The processing standardises missing values, fixes source formatting
-#' artefacts and assigns meaningful types to columns whose published
-#' representation is inconvenient (ordinal text, binary flags, year-month
-#' strings). It never renames columns, recodes category labels or drops rows.
-#'
-#' @param data A data frame imported with [read_infosiga()] (typically with
-#'   `clean = FALSE`).
-#' @param dataset Which dataset `data` corresponds to: `"sinistros"`,
-#'   `"pessoas"` or `"veiculos"`. Determines which columns are processed.
-#'
-#' @return A [tibble][tibble::tibble] with the same columns as `data`, with the
-#'   processing described in *Details* applied.
-#'
-#' @details
-#' `clean_infosiga()` applies the following steps, in order. Every step is
-#' idempotent, so calling the function again on an already-processed dataset
-#' changes nothing.
-#'
-#' \enumerate{
-#'   \item **Whitespace.** Trims leading and trailing whitespace from every text
-#'     column. Some source fields are space-padded to a fixed width (for example
-#'     `nacionalidade` is published as `"BRASILEIRA          "`); without
-#'     trimming, comparisons, grouping and joins on those columns silently fail.
-#'   \item **Missing values.** Replaces the literal `"NAO DISPONIVEL"` ("not
-#'     available") marker with `NA` in every text column. Trimming runs first,
-#'     so space-padded markers are also caught.
-#'   \item **Ordered factors.** Ordinal columns become **ordered factors** in
-#'     their natural order.
-#'     \itemize{
-#'       \item `dia_da_semana`: `Domingo` < ... < `Sabado` (the Brazilian week
-#'         starts on Sunday).
-#'       \item `turno`: `MADRUGADA` < `MANHA` < `TARDE` < `NOITE`.
-#'       \item `gravidade_lesao` (in `pessoas`): `LEVE` < `GRAVE` < `FATAL`.
-#'       \item `faixa_etaria_demografica`, `faixa_etaria_legal` (in `pessoas`):
-#'         age bands in increasing order.
-#'     }
-#'   \item **Year-month dates.** Parses the year-month columns
-#'     (`ano_mes_sinistro`, `ano_mes_obito`), published as `"YYYY/MM"` strings,
-#'     to first-of-month `Date` values, matching the `Date` class already used
-#'     for the full-date columns.
-#'   \item **Crash-type flags** (`sinistros`). The binary `tp_sinistro_*`
-#'     columns become **logical** (`TRUE` / `FALSE`). They mark whether a crash
-#'     involved a given event type and are published as `"S"` (yes) or empty
-#'     (no). The categorical `tp_sinistro_primario` (the primary crash type,
-#'     e.g. `"COLISAO"`) is *not* a flag and stays text.
-#'     `tp_sinistro_colisao_traseira` is empty for every record in the source
-#'     and therefore becomes uniformly `FALSE`. That is an unpopulated upstream
-#'     field, not evidence that no rear-end collisions occurred. A crash may
-#'     also set several flags at once, so the flags do not partition the data.
-#'   \item **Count columns** (`sinistros`). The `qtd_*` columns form two
-#'     independent blocks: vehicle counts (`qtd_pedestre`, `qtd_automovel`,
-#'     ...) and victim-severity counts (`qtd_gravidade_*`). A blank entry inside
-#'     a block that is otherwise filled in means *zero* and becomes `0L`. When a
-#'     record carries no breakdown at all, the whole block is blank; those
-#'     blanks are genuinely "not recorded" and stay `NA`. The two blocks are
-#'     handled separately because many records carry one but not the other.
-#'   \item **Days to death** (`pessoas`). `tempo_sinistro_obito`, the number of
-#'     days between the crash and the victim's death (published as a numeric
-#'     string), becomes **integer**.
-#'   \item **Street numbers and kilometre markers** (`sinistros`).
-#'     `numero_logradouro` carries a house number on urban streets but a
-#'     **kilometre marker** on highways, where a fractional part is meaningful
-#'     (`"0.25"` is km 250 m, not a malformed house number). Genuine decimals
-#'     are common on `ESTRADAS E RODOVIAS` rows and rare on `VIAS URBANAS` ones.
-#'     Only a trailing `".0"` from the source export is stripped (`"193.0"` ->
-#'     `"193"`); any other decimal part survives. The column stays character
-#'     because the two meanings are not comparable on a single numeric scale.
-#'   \item **Coordinates** (`sinistros`). Validates `latitude`/`longitude` as a
-#'     pair against the bounding box of the state of Sao Paulo. Points outside
-#'     the box, which are mis-encoded values and `(0, 0)` "null island"
-#'     placeholders, have both coordinates set to `NA`. This affects a few
-#'     percent of records and drops no rows. Use `clean = FALSE` if you need the
-#'     raw coordinates.
-#' }
-#'
-#' Nominal text columns (such as `municipio`, `tipo_via` or `sexo`) stay
-#' character vectors. Well-typed numeric columns, notably `idade` (the victim's
-#' age, in `pessoas`), pass through unchanged and are *not* range-checked.
-#' Missing ages are `NA` and ages of `0` (infants) are kept. The package
-#' enforces no bound on `idade`, so validate it yourself if your analysis is
-#' sensitive to outliers.
-#'
-#' @seealso [read_infosiga()], which calls this function when `clean = TRUE`.
-#'
-#' @examples
-#' # Process the bundled raw sample
-#' raw <- readr::read_delim(
-#'   system.file("extdata", "pessoas_sample.csv", package = "infosigasp"),
-#'   delim = ";", show_col_types = FALSE
-#' )
-#' clean <- clean_infosiga(raw, "pessoas")
-#' levels(clean$gravidade_lesao)
-#' @export
-clean_infosiga <- function(data, dataset = c("sinistros", "pessoas", "veiculos")) {
+# Clean and process an INFOSIGA-SP dataset
+#
+# Applies the standard processing that [read_infosiga()] performs by default
+# (`clean = TRUE`). Use this directly only when you imported a dataset with
+# `clean = FALSE` (the raw version) and want to process it afterwards.
+#
+# The processing standardises missing values, fixes source formatting
+# artefacts and assigns meaningful types to columns whose published
+# representation is inconvenient (ordinal text, binary flags, year-month
+# strings). It never renames columns, recodes category labels or drops rows.
+#
+# @param data A data frame imported with [read_infosiga()] (typically with
+#   `clean = FALSE`).
+# @param dataset Which dataset `data` corresponds to: `"sinistros"`,
+#   `"pessoas"` or `"veiculos"`. Determines which columns are processed.
+#
+# @return A [tibble][tibble::tibble] with the same columns as `data`, with the
+#   processing described in *Details* applied.
+#
+# @details
+# `.infosiga_clean()` applies the following steps, in order. Every step is
+# idempotent, so calling the function again on an already-processed dataset
+# changes nothing.
+#
+# \enumerate{
+#   \item **Whitespace.** Trims leading and trailing whitespace from every text
+#     column. Some source fields are space-padded to a fixed width (for example
+#     `nacionalidade` is published as `"BRASILEIRA          "`); without
+#     trimming, comparisons, grouping and joins on those columns silently fail.
+#   \item **Missing values.** Replaces the literal `"NAO DISPONIVEL"` ("not
+#     available") marker with `NA` in every text column. Trimming runs first,
+#     so space-padded markers are also caught.
+#   \item **Ordered factors.** Ordinal columns become **ordered factors** in
+#     their natural order.
+#     \itemize{
+#       \item `dia_da_semana`: `Domingo` < ... < `Sabado` (the Brazilian week
+#         starts on Sunday).
+#       \item `turno`: `MADRUGADA` < `MANHA` < `TARDE` < `NOITE`.
+#       \item `gravidade_lesao` (in `pessoas`): `LEVE` < `GRAVE` < `FATAL`.
+#       \item `faixa_etaria_demografica`, `faixa_etaria_legal` (in `pessoas`):
+#         age bands in increasing order.
+#     }
+#   \item **Year-month dates.** Parses the year-month columns
+#     (`ano_mes_sinistro`, `ano_mes_obito`), published as `"YYYY/MM"` strings,
+#     to first-of-month `Date` values, matching the `Date` class already used
+#     for the full-date columns.
+#   \item **Crash-type flags** (`sinistros`). The binary `tp_sinistro_*`
+#     columns become **logical** (`TRUE` / `FALSE`). They mark whether a crash
+#     involved a given event type and are published as `"S"` (yes) or empty
+#     (no). The categorical `tp_sinistro_primario` (the primary crash type,
+#     e.g. `"COLISAO"`) is *not* a flag and stays text.
+#     `tp_sinistro_colisao_traseira` is empty for every record in the source
+#     and therefore becomes uniformly `FALSE`. That is an unpopulated upstream
+#     field, not evidence that no rear-end collisions occurred. A crash may
+#     also set several flags at once, so the flags do not partition the data.
+#   \item **Count columns** (`sinistros`). The `qtd_*` columns form two
+#     independent blocks: vehicle counts (`qtd_pedestre`, `qtd_automovel`,
+#     ...) and victim-severity counts (`qtd_gravidade_*`). A blank entry inside
+#     a block that is otherwise filled in means *zero* and becomes `0L`. When a
+#     record carries no breakdown at all, the whole block is blank; those
+#     blanks are genuinely "not recorded" and stay `NA`. The two blocks are
+#     handled separately because many records carry one but not the other.
+#   \item **Days to death** (`pessoas`). `tempo_sinistro_obito`, the number of
+#     days between the crash and the victim's death (published as a numeric
+#     string), becomes **integer**.
+#   \item **Street numbers and kilometre markers** (`sinistros`).
+#     `numero_logradouro` carries a house number on urban streets but a
+#     **kilometre marker** on highways, where a fractional part is meaningful
+#     (`"0.25"` is km 250 m, not a malformed house number). Genuine decimals
+#     are common on `ESTRADAS E RODOVIAS` rows and rare on `VIAS URBANAS` ones.
+#     Only a trailing `".0"` from the source export is stripped (`"193.0"` ->
+#     `"193"`); any other decimal part survives. The column stays character
+#     because the two meanings are not comparable on a single numeric scale.
+#   \item **Coordinates** (`sinistros`). Validates `latitude`/`longitude` as a
+#     pair against the bounding box of the state of Sao Paulo. Points outside
+#     the box, which are mis-encoded values and `(0, 0)` "null island"
+#     placeholders, have both coordinates set to `NA`. This affects a few
+#     percent of records and drops no rows. Use `clean = FALSE` if you need the
+#     raw coordinates.
+# }
+#
+# Nominal text columns (such as `municipio`, `tipo_via` or `sexo`) stay
+# character vectors. Well-typed numeric columns, notably `idade` (the victim's
+# age, in `pessoas`), pass through unchanged and are *not* range-checked.
+# Missing ages are `NA` and ages of `0` (infants) are kept. The package
+# enforces no bound on `idade`, so validate it yourself if your analysis is
+# sensitive to outliers.
+#
+# @seealso [read_infosiga()], which calls this function when `clean = TRUE`.
+#
+# @examples
+# # Process the bundled raw sample
+# raw <- readr::read_delim(
+#   system.file("extdata", "pessoas_sample.csv", package = "infosigasp"),
+#   delim = ";", show_col_types = FALSE
+# )
+# clean <- .infosiga_clean(raw, "pessoas")
+# levels(clean$gravidade_lesao)
+# @export
+.infosiga_clean <- function(
+  data,
+  dataset = c("sinistros", "pessoas", "veiculos")
+) {
   dataset <- match.arg(dataset)
 
   # 1. Trim whitespace, then standardise the "not available" marker to NA, in
@@ -229,8 +274,11 @@ clean_infosiga <- function(data, dataset = c("sinistros", "pessoas", "veiculos")
   }
 
   # 6. tempo_sinistro_obito (days from crash to death) becomes integer.
-  if ("tempo_sinistro_obito" %in% names(data) &&
-    is.character(data$tempo_sinistro_obito)) {
+  if (
+    "tempo_sinistro_obito" %in%
+      names(data) &&
+      is.character(data$tempo_sinistro_obito)
+  ) {
     data$tempo_sinistro_obito <- suppressWarnings(
       as.integer(data$tempo_sinistro_obito)
     )
@@ -241,8 +289,9 @@ clean_infosiga <- function(data, dataset = c("sinistros", "pessoas", "veiculos")
   #    kilometre marker whose decimal part is real ("0.25"), so only an exactly
   #    zero fraction is dropped. The column stays character because a house
   #    number and a kilometre marker are not the same quantity.
-  if ("numero_logradouro" %in% names(data) &&
-    is.character(data$numero_logradouro)) {
+  if (
+    "numero_logradouro" %in% names(data) && is.character(data$numero_logradouro)
+  ) {
     data$numero_logradouro <- sub("\\.0$", "", data$numero_logradouro)
   }
 
@@ -253,9 +302,12 @@ clean_infosiga <- function(data, dataset = c("sinistros", "pessoas", "veiculos")
   if (all(c("latitude", "longitude") %in% names(data))) {
     lat <- data$latitude
     lon <- data$longitude
-    valid <- !is.na(lat) & !is.na(lon) &
-      lat >= .sp_bbox$lat[1] & lat <= .sp_bbox$lat[2] &
-      lon >= .sp_bbox$lon[1] & lon <= .sp_bbox$lon[2]
+    valid <- !is.na(lat) &
+      !is.na(lon) &
+      lat >= .sp_bbox$lat[1] &
+      lat <= .sp_bbox$lat[2] &
+      lon >= .sp_bbox$lon[1] &
+      lon <= .sp_bbox$lon[2]
     data$latitude[!valid] <- NA_real_
     data$longitude[!valid] <- NA_real_
   }

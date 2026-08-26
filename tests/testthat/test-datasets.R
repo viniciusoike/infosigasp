@@ -1,8 +1,8 @@
-test_that("infosiga_datasets lists the three datasets", {
-  ds <- infosiga_datasets()
-  expect_s3_class(ds, "tbl_df")
-  expect_setequal(ds$dataset, c("sinistros", "pessoas", "veiculos"))
-  expect_true(all(c("description", "grain", "keys") %in% names(ds)))
+test_that("the package exports only its reader and dictionary", {
+  expect_setequal(
+    getNamespaceExports("infosigasp"),
+    c("read_infosiga", "dictionary_infosiga")
+  )
 })
 
 test_that("column specs cover the fixture columns exactly", {
@@ -17,8 +17,8 @@ test_that("column specs cover the fixture columns exactly", {
 
 test_that("the documented keys uniquely identify rows", {
   local_infosiga_fixture()
-  # Keys advertised by infosiga_datasets(); verified to hold across the full
-  # upstream data (id_sinistro, id_pessoa and id_sinistro+id_veiculo are
+  # These keys hold across the full upstream data: id_sinistro, id_pessoa and
+  # id_sinistro+id_veiculo are
   # one-per-row with no NAs). This guards the read/row-bind path offline.
   sin <- read_infosiga("sinistros", quiet = TRUE)
   expect_false(anyNA(sin$id_sinistro))

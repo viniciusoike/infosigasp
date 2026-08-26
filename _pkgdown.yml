@@ -12,26 +12,11 @@ home:
     published by DETRAN-SP.
 
 reference:
-- title: Import data
-  desc: Download and read the INFOSIGA-SP datasets.
+- title: Data access
+  desc: Read INFOSIGA-SP data and its official dictionaries.
   contents:
   - read_infosiga
-  - clean_infosiga
-  - infosiga_datasets
-- title: Tidying labels
-  desc: >
-    Opt-in helpers that rewrite the published category labels into a
-    consistent, presentation-ready form.
-  contents:
-  - tidy_infosiga_labels
-  - infosiga_municipios
-- title: Downloads and cache
-  desc: Fetch the source archive and manage the local cache.
-  contents:
-  - infosiga_download
-  - infosiga_check_update
-  - infosiga_cache
-  - infosiga_dictionary
+  - dictionary_infosiga
 - title: Package
   contents:
   - infosigasp-package

@@ -59,7 +59,7 @@ test_that("clean trims whitespace and catches space-padded markers", {
     nacionalidade = c("BRASILEIRA          ", "  HAITIANA", NA),
     tipo_de_vitima = c("NAO DISPONIVEL   ", "PEDESTRE", "  NAO DISPONIVEL")
   )
-  cleaned <- clean_infosiga(raw, "pessoas")
+  cleaned <- .infosiga_clean(raw, "pessoas")
   expect_identical(cleaned$nacionalidade, c("BRASILEIRA", "HAITIANA", NA))
   # A space-padded marker must still map to NA.
   expect_identical(cleaned$tipo_de_vitima, c(NA, "PEDESTRE", NA))
@@ -79,7 +79,7 @@ test_that("clean converts tp_sinistro_* flags to logical, keeping primario", {
     tp_sinistro_atropelamento = c("S", NA),
     tp_sinistro_choque = c(NA, "S")
   )
-  cleaned <- clean_infosiga(raw, "sinistros")
+  cleaned <- .infosiga_clean(raw, "sinistros")
   expect_identical(cleaned$tp_sinistro_atropelamento, c(TRUE, FALSE))
   expect_identical(cleaned$tp_sinistro_choque, c(FALSE, TRUE))
   expect_identical(cleaned$tp_sinistro_primario, c("COLISAO", "CHOQUE"))
@@ -90,30 +90,30 @@ test_that("clean fills blank counts with 0 only within a populated block", {
     # Row 1: vehicle block populated, gravity block fully blank.
     # Row 2: gravity block populated, vehicle block fully blank.
     # Row 3: both blocks fully blank (no breakdown recorded).
-    qtd_automovel       = c(2L, NA, NA),
-    qtd_motocicleta     = c(NA, NA, NA),
-    qtd_gravidade_leve  = c(NA, 1L, NA),
+    qtd_automovel = c(2L, NA, NA),
+    qtd_motocicleta = c(NA, NA, NA),
+    qtd_gravidade_leve = c(NA, 1L, NA),
     qtd_gravidade_fatal = c(NA, NA, NA)
   )
-  cleaned <- clean_infosiga(raw, "sinistros")
+  cleaned <- .infosiga_clean(raw, "sinistros")
 
   # Row 1: vehicle block has a value -> its blanks become 0; gravity block is
   # entirely blank -> left NA (genuinely not recorded).
-  expect_identical(cleaned$qtd_automovel,       c(2L, NA, NA))
-  expect_identical(cleaned$qtd_motocicleta,     c(0L, NA, NA))
+  expect_identical(cleaned$qtd_automovel, c(2L, NA, NA))
+  expect_identical(cleaned$qtd_motocicleta, c(0L, NA, NA))
   # Row 2: gravity block has a value -> its blanks become 0; vehicle block NA.
-  expect_identical(cleaned$qtd_gravidade_leve,  c(NA, 1L, NA))
+  expect_identical(cleaned$qtd_gravidade_leve, c(NA, 1L, NA))
   expect_identical(cleaned$qtd_gravidade_fatal, c(NA, 0L, NA))
 })
 
 test_that("count-block filling is idempotent", {
   raw <- tibble::tibble(
-    qtd_automovel      = c(2L, NA),
-    qtd_motocicleta    = c(NA, NA),
+    qtd_automovel = c(2L, NA),
+    qtd_motocicleta = c(NA, NA),
     qtd_gravidade_leve = c(NA, NA)
   )
-  once  <- clean_infosiga(raw, "sinistros")
-  twice <- clean_infosiga(once, "sinistros")
+  once <- .infosiga_clean(raw, "sinistros")
+  twice <- .infosiga_clean(once, "sinistros")
   expect_identical(once, twice)
 })
 
@@ -127,7 +127,7 @@ test_that("clean strips the trailing '.0' artefact from house numbers", {
   raw <- tibble::tibble(
     numero_logradouro = c("193.0", "35.0", "123A", NA, "SN")
   )
-  cleaned <- clean_infosiga(raw, "sinistros")
+  cleaned <- .infosiga_clean(raw, "sinistros")
   expect_identical(
     cleaned$numero_logradouro,
     c("193", "35", "123A", NA, "SN")
@@ -141,7 +141,7 @@ test_that("clean keeps the fractional part of highway kilometre markers", {
   raw <- tibble::tibble(
     numero_logradouro = c("0.25", "12.5", "0.001", "-1.0", "230.0")
   )
-  cleaned <- clean_infosiga(raw, "sinistros")
+  cleaned <- .infosiga_clean(raw, "sinistros")
   expect_identical(
     cleaned$numero_logradouro,
     c("0.25", "12.5", "0.001", "-1", "230")
@@ -153,7 +153,7 @@ test_that("ano_mes_* strings become first-of-month Dates when cleaning", {
     ano_mes_sinistro = c("2022/01", "2023/12", "", NA),
     ano_mes_obito = c("2022/03", NA, "2024/07", "")
   )
-  cleaned <- clean_infosiga(raw, "pessoas")
+  cleaned <- .infosiga_clean(raw, "pessoas")
   expect_s3_class(cleaned$ano_mes_sinistro, "Date")
   expect_s3_class(cleaned$ano_mes_obito, "Date")
   expect_equal(
@@ -178,7 +178,7 @@ test_that("coordinates outside the Sao Paulo bounding box are dropped", {
       "outside SP"
     )
   )
-  cleaned <- clean_infosiga(raw, "sinistros")
+  cleaned <- .infosiga_clean(raw, "sinistros")
   # Only the genuine Sao Paulo point survives; everything else -> NA in pairs.
   expect_equal(cleaned$latitude, c(-23.5, NA, NA, NA, NA))
   expect_equal(cleaned$longitude, c(-46.6, NA, NA, NA, NA))
@@ -186,16 +186,16 @@ test_that("coordinates outside the Sao Paulo bounding box are dropped", {
 
 test_that("a valid coordinate paired with a bad one is dropped pairwise", {
   raw <- tibble::tibble(latitude = -23.5, longitude = 999)
-  cleaned <- clean_infosiga(raw, "sinistros")
+  cleaned <- .infosiga_clean(raw, "sinistros")
   expect_true(is.na(cleaned$latitude))
   expect_true(is.na(cleaned$longitude))
 })
 
-test_that("clean_infosiga is idempotent on already-clean data", {
+test_that(".infosiga_clean is idempotent on already-clean data", {
   local_infosiga_fixture()
   for (d in c("sinistros", "pessoas", "veiculos")) {
     once <- read_infosiga(d, quiet = TRUE)
-    twice <- clean_infosiga(once, d)
+    twice <- .infosiga_clean(once, d)
     expect_identical(once, twice, info = d)
   }
 })

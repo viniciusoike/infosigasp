@@ -48,19 +48,15 @@ pak::pak("viniciusoike/infosigasp")
 
 ## Datasets
 
-INFOSIGA-SP publishes three linked datasets.
-
-```{r datasets}
-library(infosigasp)
-infosiga_datasets()
-```
+INFOSIGA-SP publishes three linked datasets: `sinistros` (crash events),
+`pessoas` (victims) and `veiculos` (vehicles).
 
 Join the datasets on `id_sinistro`, and on `id_veiculo` where present.
 
 ## Usage
 
-The first call downloads the source archive (~120 MB) into a local cache;
-later calls read straight from disk.
+The first interactive call asks before downloading about 120 MB into your user
+cache; later calls read straight from disk.
 
 ``` r
 library(infosigasp)
@@ -83,7 +79,7 @@ text loses its padding, the `"NAO DISPONIVEL"` ("not available") marker becomes
 `NA`, the binary `tp_sinistro_*` crash-type flags become logical, coordinates
 outside São Paulo state become `NA`, and the ordinal columns become **ordered
 factors** so they sort and plot in their natural order rather than
-alphabetically. `?clean_infosiga` has the full list.
+alphabetically. `?read_infosiga` documents the full processing pipeline.
 
 ``` r
 levels(sinistros$dia_da_semana)
@@ -95,8 +91,7 @@ levels(vitimas$gravidade_lesao)
 ```
 
 Pass `clean = FALSE` to get the data exactly as published (every text column as
-a character vector, markers preserved). You can also process a raw import later
-with `clean_infosiga()`.
+a character vector, markers preserved).
 
 ``` r
 raw <- read_infosiga("sinistros", clean = FALSE)
@@ -104,48 +99,40 @@ raw <- read_infosiga("sinistros", clean = FALSE)
 
 ### Tidying the category labels
 
-`clean_infosiga()` fixes types and source artefacts but leaves category labels
-alone, so anyone reproducing an official DETRAN-SP figure gets exactly the
-categories DETRAN-SP publishes. Those labels are messy. `cor_veiculo` carries
-dozens of values for about sixteen real colours, because two upstream systems
-coexist and disagree on both case and gender agreement (`PRETA`, `Preta`;
-`BRANCA`, `Branco`). Run the opt-in `tidy_infosiga_labels()` when you want
-labels that group, sort and plot sensibly.
+The default processing fixes types and source artefacts but leaves category
+labels alone, so anyone reproducing an official DETRAN-SP figure gets exactly
+the published categories. Those labels are messy. `cor_veiculo`, for example,
+carries dozens of values for about sixteen real colours because two upstream
+systems disagree on case and gender agreement (`PRETA`, `Preta`; `BRANCA`,
+`Branco`). Pass `labels = TRUE` when you want labels that group, sort and plot
+sensibly.
 
 ``` r
-veiculos <- read_infosiga("veiculos") |>
-  tidy_infosiga_labels("veiculos")
+veiculos <- read_infosiga("veiculos", labels = TRUE)
 ```
 
-It also gives `municipio` and `regiao_administrativa` their official IBGE
-spellings, Title Cases `profissao`, and splits route codes out of `conservacao`
-into a new `conservacao_codigo` column. The bundled `infosiga_municipios`
-lookup pairs each spelling with `cod_ibge`, the key that joins INFOSIGA-SP to
-census and population data.
-
-``` r
-head(infosiga_municipios, 3)
-```
+This also gives `municipio` and `regiao_administrativa` their official IBGE
+spellings, title-cases `profissao`, and splits route codes out of `conservacao`
+into a new `conservacao_codigo` column.
 
 The getting-started vignette covers both passes in full.
 
-### Managing the cache
+### Updating the local data
 
-```r
-infosiga_cache_dir()      # where files are stored
-infosiga_cache_list()     # what is currently cached
-infosiga_check_update()   # is the mirror holding newer data than your copy?
-infosiga_download(overwrite = TRUE)  # force a refresh after a monthly update
-infosiga_cache_clear()    # delete cached files
+DETRAN-SP updates the data monthly. Download the latest available copy and
+replace the one in your user cache with:
+
+``` r
+sinistros <- read_infosiga("sinistros", refresh = TRUE)
 ```
 
 ### Data dictionary
 
-`infosiga_dictionary()` downloads the official field-by-field documentation
+`dictionary_infosiga()` downloads the official field-by-field documentation
 (PDF, in Portuguese).
 
 ``` r
-infosiga_dictionary()
+dictionary_infosiga()
 ```
 
 ## Example

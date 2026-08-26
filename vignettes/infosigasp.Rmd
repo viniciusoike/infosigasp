@@ -44,10 +44,6 @@ library(infosigasp)
 
 INFOSIGA-SP organises its data into three linked tables.
 
-```{r datasets}
-infosiga_datasets()
-```
-
 - **`sinistros`** — crash *events*. One row per recorded event, with the
   date, time, location (including latitude/longitude), road attributes and a
   breakdown of how many vehicles and victims were involved, by type and
@@ -65,7 +61,8 @@ All three share the `id_sinistro` key, so they can be joined together;
 
 The main entry point is `read_infosiga()`. The first call downloads the
 source archive (about 120 MB) into a per-user cache; subsequent calls read
-from that cache, so you only pay the download cost once.
+from that cache, so you only pay the download cost once. In interactive use,
+the package asks for confirmation before that first download.
 
 ```{r read, eval = isTRUE(getOption("infosigasp.run_live"))}
 sinistros <- read_infosiga("sinistros")
@@ -83,8 +80,8 @@ recent <- read_infosiga("sinistros", year = 2022:2025)
 
 By default `read_infosiga()` returns a **processed** dataset (`clean = TRUE`).
 The processing never renames columns, recodes category labels or drops rows. It
-only fixes types and source artefacts. The full, ordered list of steps lives in
-`?clean_infosiga`; the main ones are below.
+only fixes types and source artefacts. The full pipeline is documented in
+`?read_infosiga`; the main steps are below.
 
 - **Dates and times.** Full dates are parsed to `Date` and times to `hms` (in
   both modes), and the `ano_mes_*` year-month columns (published as `"YYYY/MM"`)
@@ -132,22 +129,15 @@ source's whitespace padding preserved verbatim.
 raw <- read_infosiga("sinistros", clean = FALSE)
 ```
 
-`clean_infosiga()` applies the same processing to a raw import after the fact.
-
-```{r clean-fn, eval = isTRUE(getOption("infosigasp.run_live"))}
-processed <- clean_infosiga(raw, "sinistros")
-```
-
 ### Tidying the category labels
 
-`clean_infosiga()` fixes types and source artefacts but never touches category
+The default cleaning fixes types and source artefacts but never touches category
 *labels*, so that anyone reproducing an official DETRAN-SP figure gets exactly
 the categories DETRAN-SP publishes. Those labels are, however, genuinely messy.
-For your own analysis, run the opt-in second pass `tidy_infosiga_labels()`.
+For your own analysis, opt in with `labels = TRUE`.
 
 ```{r tidy-labels, eval = isTRUE(getOption("infosigasp.run_live"))}
-veiculos <- read_infosiga("veiculos") |>
-  tidy_infosiga_labels("veiculos")
+veiculos <- read_infosiga("veiculos", labels = TRUE)
 
 sort(table(veiculos$cor_veiculo), decreasing = TRUE)
 ```
@@ -185,13 +175,6 @@ brand acronyms (`SPMAR`, `TEBE`, `CART`) that Title Case would corrupt into
 `Spmar` and `Tebe`.
 
 ### Joining to other Brazilian data
-
-The `infosiga_municipios` lookup ships with the package and maps `cod_ibge` to
-both spellings of each of the 645 municipalities.
-
-```{r municipios}
-head(infosiga_municipios, 4)
-```
 
 Always join on `cod_ibge`, never on the name. IBGE and INFOSIGA-SP spell nine
 municipalities differently. Eight contain an apostrophe that INFOSIGA-SP renders
@@ -318,34 +301,14 @@ read_infosiga("pessoas") |>
 crash locations directly or aggregate them by municipality
 (`municipio` / `cod_ibge`).
 
-## Managing the cache
+## Updating the data
 
-The download lives in an operating-system specific cache directory.
-
-```{r cache}
-infosiga_cache_dir()
-infosiga_cache_list()
-```
-
-DETRAN-SP refreshes the archive monthly. `infosiga_check_update()` compares
-your cached copy against the mirror the package publishes, which a weekly job
-re-fetches from DETRAN-SP, so it answers whether a newer archive exists without
-downloading one.
-
-```{r check-update, eval = isTRUE(getOption("infosigasp.run_live"))}
-infosiga_check_update()
-```
-
-Force a re-download to pull the latest version.
+The package stores one local copy in the operating-system user cache. DETRAN-SP
+updates the archive monthly. Use `refresh = TRUE` to replace your local copy
+with the latest available version and return the requested dataset.
 
 ```{r refresh, eval = isTRUE(getOption("infosigasp.run_live"))}
-infosiga_download(overwrite = TRUE)
-```
-
-Clear the cache to reclaim disk space.
-
-```{r clear, eval = isTRUE(getOption("infosigasp.run_live"))}
-infosiga_cache_clear()
+sinistros <- read_infosiga("sinistros", refresh = TRUE)
 ```
 
 You can point the cache somewhere else for a session (or permanently via your
@@ -358,11 +321,11 @@ options(infosigasp.cache_dir = "~/data/infosiga")
 ## The official data dictionary
 
 INFOSIGA-SP distributes a field-by-field data dictionary (PDF, in Portuguese).
-`infosiga_dictionary()` downloads it and returns the paths to the extracted
+`dictionary_infosiga()` downloads it and returns the paths to the extracted
 files.
 
 ```{r dictionary, eval = isTRUE(getOption("infosigasp.run_live"))}
-pdfs <- infosiga_dictionary()
+pdfs <- dictionary_infosiga()
 basename(pdfs)
 ```
 
