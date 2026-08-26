@@ -21,7 +21,7 @@ read_infosiga(
 
 - dataset:
 
-  Which dataset to import. One of:
+  Which dataset to import.
 
   `"sinistros"`
 
@@ -37,13 +37,13 @@ read_infosiga(
 
 - clean:
 
-  Logical. If `TRUE` (default), return a processed dataset: text is
-  trimmed, the `"NAO DISPONIVEL"` marker becomes `NA`, ordinal columns
-  become ordered factors, crash-type flags become logical, and
-  impossible coordinates become `NA` (see
+  Logical. If `TRUE` (default), return a processed dataset. The
+  processing trims text, maps the `"NAO DISPONIVEL"` marker to `NA`,
+  makes ordinal columns ordered factors, makes the crash-type flags
+  logical and voids impossible coordinates; see
   [`clean_infosiga()`](https://viniciusoike.github.io/infosigasp/reference/clean_infosiga.md)
-  for the full list of steps). If `FALSE`, return the raw data exactly
-  as published, with all text columns as character vectors.
+  for the full list of steps. If `FALSE`, return the raw data exactly as
+  published, with all text columns as character vectors.
 
 - year:
 

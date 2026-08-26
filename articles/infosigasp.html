@@ -77,19 +77,18 @@
 São Paulo State Traffic Accident Information and Management System,
 maintained by DETRAN-SP. It publishes, as open data, detailed records of
 every traffic crash in the state of São Paulo from 2015 onward.</p>
-<p>The <code>infosigasp</code> package wraps the download and import of
-those records. It handles what makes the raw files awkward to read
-directly.</p>
+<p><code>infosigasp</code> downloads and imports those records. It
+handles what makes the raw files awkward to read directly.</p>
 <ul>
-<li>the files are encoded in <strong>Latin-1</strong> (ISO-8859-1), not
-UTF-8;</li>
-<li>fields are separated by <strong>semicolons</strong>
-(<code>;</code>);</li>
-<li>decimal numbers (such as coordinates) use a <strong>comma</strong>
-decimal mark;</li>
-<li>dates are formatted <strong><code>DD/MM/YYYY</code></strong>;</li>
-<li>each dataset is split across <strong>two files</strong> (2015–2021
-and 2022 onward).</li>
+<li>The files use <strong>Latin-1</strong> (ISO-8859-1), not UTF-8.</li>
+<li>
+<strong>Semicolons</strong> (<code>;</code>) separate the
+fields.</li>
+<li>Decimal numbers, such as coordinates, use a <strong>comma</strong>
+decimal mark.</li>
+<li>Dates follow <strong><code>DD/MM/YYYY</code></strong>.</li>
+<li>Each dataset spans <strong>two files</strong> (2015–2021 and 2022
+onward).</li>
 </ul>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/viniciusoike/infosigasp" class="external-link">infosigasp</a></span><span class="op">)</span></span></code></pre></div>
@@ -330,7 +329,7 @@ Those are the denominators that turn crash counts into crash
 <em>rates</em>.</p>
 </div>
 <div class="section level3">
-<h3 id="a-peek-at-the-structure-without-downloading">A peek at the structure without downloading<a class="anchor" aria-label="anchor" href="#a-peek-at-the-structure-without-downloading"></a>
+<h3 id="inspecting-the-structure-without-downloading">Inspecting the structure without downloading<a class="anchor" aria-label="anchor" href="#inspecting-the-structure-without-downloading"></a>
 </h3>
 <p>The package ships a small sample of each dataset so you can inspect
 the columns without any network access.</p>
@@ -428,8 +427,8 @@ fatalities</strong>.</p>
 <span><span class="fu"><a href="../reference/read_infosiga.html">read_infosiga</a></span><span class="op">(</span><span class="st">"sinistros"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">tipo_registro</span> <span class="op">==</span> <span class="st">"SINISTRO FATAL"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/count.html" class="external-link">count</a></span><span class="op">(</span><span class="va">ano_sinistro</span><span class="op">)</span></span></code></pre></div>
-<p>Otherwise, start the series in 2019 with
-<code>read_infosiga("sinistros", year = 2019:2026)</code>.</p>
+<p>Otherwise, start the series in 2019 by passing a <code>year</code>
+range to <code><a href="../reference/read_infosiga.html">read_infosiga()</a></code>.</p>
 </div>
 <div class="section level3">
 <h3 id="a-third-of-sinistros-rows-are-notifications">A third of <code>sinistros</code> rows are notifications<a class="anchor" aria-label="anchor" href="#a-third-of-sinistros-rows-are-notifications"></a>
@@ -447,7 +446,7 @@ two of any release is also incomplete. Drop the tail of the series
 before reading anything into a recent trend.</p>
 </div>
 <div class="section level3">
-<h3 id="others-worth-knowing">Others worth knowing<a class="anchor" aria-label="anchor" href="#others-worth-knowing"></a>
+<h3 id="smaller-caveats">Smaller caveats<a class="anchor" aria-label="anchor" href="#smaller-caveats"></a>
 </h3>
 <ul>
 <li>

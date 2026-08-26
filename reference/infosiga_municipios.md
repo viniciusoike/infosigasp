@@ -80,25 +80,35 @@ head(infosiga_municipios)
 #> 6 3500550  Águas de Santa Bárbara AGUAS DE SANTA BARBARA Sorocaba             
 #> # ℹ 1 more variable: regiao_administrativa_infosiga <chr>
 
-# The nine municipalities whose names differ between the two sources
-folded <- gsub("'", " ", toupper(infosiga_municipios$municipio))
+# The nine municipalities whose names differ by more than accents and case.
+# chartr() rather than iconv(to = "ASCII//TRANSLIT"), which is locale- and
+# platform-dependent; the accented letters are built with intToUtf8().
+accented <- intToUtf8(c(
+  0x00c1, 0x00c0, 0x00c2, 0x00c3, 0x00c9, 0x00ca,
+  0x00cd, 0x00d3, 0x00d4, 0x00d5, 0x00da, 0x00c7,
+  0x00e1, 0x00e0, 0x00e2, 0x00e3, 0x00e9, 0x00ea,
+  0x00ed, 0x00f3, 0x00f4, 0x00f5, 0x00fa, 0x00e7
+))
+folded <- toupper(chartr(
+  accented,
+  "AAAAEEIOOOUCaaaaeeiooouc",
+  infosiga_municipios$municipio
+))
 subset(
   infosiga_municipios,
-  iconv(folded, "UTF-8", "ASCII", sub = "?") != municipio_infosiga,
+  folded != municipio_infosiga,
   select = c(cod_ibge, municipio, municipio_infosiga)
 )
-#> # A tibble: 274 × 3
-#>    cod_ibge municipio              municipio_infosiga    
-#>    <chr>    <chr>                  <chr>                 
-#>  1 3500303  Aguaí                  AGUAI                 
-#>  2 3500402  Águas da Prata         AGUAS DA PRATA        
-#>  3 3500501  Águas de Lindóia       AGUAS DE LINDOIA      
-#>  4 3500550  Águas de Santa Bárbara AGUAS DE SANTA BARBARA
-#>  5 3500600  Águas de São Pedro     AGUAS DE SAO PEDRO    
-#>  6 3501004  Altinópolis            ALTINOPOLIS           
-#>  7 3501152  Alumínio               ALUMINIO              
-#>  8 3501202  Álvares Florence       ALVARES FLORENCE      
-#>  9 3501301  Álvares Machado        ALVARES MACHADO       
-#> 10 3501400  Álvaro de Carvalho     ALVARO DE CARVALHO    
-#> # ℹ 264 more rows
+#> # A tibble: 9 × 3
+#>   cod_ibge municipio              municipio_infosiga    
+#>   <chr>    <chr>                  <chr>                 
+#> 1 3502606  Aparecida d'Oeste      APARECIDA D OESTE     
+#> 2 3515202  Estrela d'Oeste        ESTRELA D OESTE       
+#> 3 3518008  Guarani d'Oeste        GUARANI D OESTE       
+#> 4 3535200  Palmeira d'Oeste       PALMEIRA D OESTE      
+#> 5 3545803  Santa Bárbara d'Oeste  SANTA BARBARA D OESTE 
+#> 6 3546108  Santa Clara d'Oeste    SANTA CLARA D OESTE   
+#> 7 3547403  Santa Rita d'Oeste     SANTA RITA D OESTE    
+#> 8 3549300  São João do Pau d'Alho SAO JOAO DO PAU D ALHO
+#> 9 3550001  São Luiz do Paraitinga SAO LUIS DO PARAITINGA
 ```

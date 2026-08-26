@@ -64,7 +64,7 @@ triggers a download and subsequent calls read from disk.</p>
 
 
 <dl><dt id="arg-dataset">dataset<a class="anchor" aria-label="anchor" href="#arg-dataset"></a></dt>
-<dd><p>Which dataset to import. One of:</p><dl><dt><code>"sinistros"</code></dt>
+<dd><p>Which dataset to import.</p><dl><dt><code>"sinistros"</code></dt>
 <dd><p>Crash events (one row per event).</p></dd>
 
 <dt><code>"pessoas"</code></dt>
@@ -78,12 +78,12 @@ triggers a download and subsequent calls read from disk.</p>
 
 
 <dt id="arg-clean">clean<a class="anchor" aria-label="anchor" href="#arg-clean"></a></dt>
-<dd><p>Logical. If <code>TRUE</code> (default), return a processed dataset:
-text is trimmed, the <code>"NAO DISPONIVEL"</code> marker becomes <code>NA</code>, ordinal
-columns become ordered factors, crash-type flags become logical, and
-impossible coordinates become <code>NA</code> (see <code><a href="clean_infosiga.html">clean_infosiga()</a></code> for the full
-list of steps). If <code>FALSE</code>, return the raw data exactly as published, with
-all text columns as character vectors.</p></dd>
+<dd><p>Logical. If <code>TRUE</code> (default), return a processed dataset. The
+processing trims text, maps the <code>"NAO DISPONIVEL"</code> marker to <code>NA</code>, makes
+ordinal columns ordered factors, makes the crash-type flags logical and
+voids impossible coordinates; see <code><a href="clean_infosiga.html">clean_infosiga()</a></code> for the full list of
+steps. If <code>FALSE</code>, return the raw data exactly as published, with all text
+columns as character vectors.</p></dd>
 
 
 <dt id="arg-year">year<a class="anchor" aria-label="anchor" href="#arg-year"></a></dt>

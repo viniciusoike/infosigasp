@@ -34,15 +34,40 @@ The three datasets can be linked through the `id_sinistro` key (and
 
   Download (if needed) and import a dataset as a tibble.
 
+- [`clean_infosiga()`](https://viniciusoike.github.io/infosigasp/reference/clean_infosiga.md):
+
+  Apply the processing
+  [`read_infosiga()`](https://viniciusoike.github.io/infosigasp/reference/read_infosiga.md)
+  performs by default, for datasets imported with `clean = FALSE`.
+
+- [`infosiga_datasets()`](https://viniciusoike.github.io/infosigasp/reference/infosiga_datasets.md):
+
+  List the datasets, their grain and their keys.
+
+- [`tidy_infosiga_labels()`](https://viniciusoike.github.io/infosigasp/reference/tidy_infosiga_labels.md):
+
+  Opt-in second pass that rewrites the published category labels; see
+  also
+  [infosiga_municipios](https://viniciusoike.github.io/infosigasp/reference/infosiga_municipios.md).
+
 - [`infosiga_download()`](https://viniciusoike.github.io/infosigasp/reference/infosiga_download.md):
 
   Download the raw source archive to the local cache.
+
+- [`infosiga_check_update()`](https://viniciusoike.github.io/infosigasp/reference/infosiga_check_update.md):
+
+  Report whether the package mirror holds a newer archive than the
+  cached copy.
 
 - [`infosiga_cache_dir()`](https://viniciusoike.github.io/infosigasp/reference/infosiga_cache.md),
   [`infosiga_cache_list()`](https://viniciusoike.github.io/infosigasp/reference/infosiga_cache.md),
   [`infosiga_cache_clear()`](https://viniciusoike.github.io/infosigasp/reference/infosiga_cache.md):
 
   Manage the on-disk cache.
+
+- [`infosiga_dictionary()`](https://viniciusoike.github.io/infosigasp/reference/infosiga_dictionary.md):
+
+  Download the official data dictionary.
 
 ## Data source and licence
 

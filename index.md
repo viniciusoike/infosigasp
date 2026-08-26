@@ -13,11 +13,11 @@ covers every traffic crash recorded in the state of São Paulo from
 
 ## Installation
 
-Install the released version from CRAN.
+The package is not on CRAN yet. Install it from R-universe.
 
 ``` r
 
-install.packages("infosigasp")
+install.packages("infosigasp", repos = "https://viniciusoike.r-universe.dev")
 ```
 
 The development version lives on GitHub.
@@ -44,8 +44,7 @@ infosiga_datasets()
 #> 3 veiculos  Vehicles involved in traffic crashes.                    one ~ id_v~
 ```
 
-The datasets can be joined through `id_sinistro` (and `id_veiculo`,
-where present).
+Join the datasets on `id_sinistro`, and on `id_veiculo` where present.
 
 ## Usage
 
@@ -59,7 +58,7 @@ library(infosigasp)
 # Crash events (one row per event)
 sinistros <- read_infosiga("sinistros")
 
-# Victims, restricted to recent years
+# Victims, restricted to a range of crash years
 vitimas <- read_infosiga("pessoas", year = 2022:2025)
 
 # Vehicles involved
@@ -99,6 +98,37 @@ raw import later with
 
 raw <- read_infosiga("sinistros", clean = FALSE)
 ```
+
+### Tidying the category labels
+
+[`clean_infosiga()`](https://viniciusoike.github.io/infosigasp/reference/clean_infosiga.md)
+fixes types and source artefacts but leaves category labels alone, so
+anyone reproducing an official DETRAN-SP figure gets exactly the
+categories DETRAN-SP publishes. Those labels are messy. `cor_veiculo`
+carries dozens of values for about sixteen real colours, because two
+upstream systems coexist and disagree on both case and gender agreement
+(`PRETA`, `Preta`; `BRANCA`, `Branco`). Run the opt-in
+[`tidy_infosiga_labels()`](https://viniciusoike.github.io/infosigasp/reference/tidy_infosiga_labels.md)
+when you want labels that group, sort and plot sensibly.
+
+``` r
+
+veiculos <- read_infosiga("veiculos") |>
+  tidy_infosiga_labels("veiculos")
+```
+
+It also gives `municipio` and `regiao_administrativa` their official
+IBGE spellings, Title Cases `profissao`, and splits route codes out of
+`conservacao` into a new `conservacao_codigo` column. The bundled
+`infosiga_municipios` lookup pairs each spelling with `cod_ibge`, the
+key that joins INFOSIGA-SP to census and population data.
+
+``` r
+
+head(infosiga_municipios, 3)
+```
+
+The getting-started vignette covers both passes in full.
 
 ### Managing the cache
 

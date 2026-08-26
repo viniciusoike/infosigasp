@@ -121,27 +121,37 @@ nine.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">6</span> 3500550  Águas de Santa Bárbara AGUAS DE SANTA BARBARA Sorocaba             </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># ℹ 1 more variable: regiao_administrativa_infosiga &lt;chr&gt;</span></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># The nine municipalities whose names differ between the two sources</span></span></span>
-<span class="r-in"><span><span class="va">folded</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">gsub</a></span><span class="op">(</span><span class="st">"'"</span>, <span class="st">" "</span>, <span class="fu"><a href="https://rdrr.io/r/base/chartr.html" class="external-link">toupper</a></span><span class="op">(</span><span class="va">infosiga_municipios</span><span class="op">$</span><span class="va">municipio</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="co"># The nine municipalities whose names differ by more than accents and case.</span></span></span>
+<span class="r-in"><span><span class="co"># chartr() rather than iconv(to = "ASCII//TRANSLIT"), which is locale- and</span></span></span>
+<span class="r-in"><span><span class="co"># platform-dependent; the accented letters are built with intToUtf8().</span></span></span>
+<span class="r-in"><span><span class="va">accented</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/utf8Conversion.html" class="external-link">intToUtf8</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="fl">0x00c1</span>, <span class="fl">0x00c0</span>, <span class="fl">0x00c2</span>, <span class="fl">0x00c3</span>, <span class="fl">0x00c9</span>, <span class="fl">0x00ca</span>,</span></span>
+<span class="r-in"><span>  <span class="fl">0x00cd</span>, <span class="fl">0x00d3</span>, <span class="fl">0x00d4</span>, <span class="fl">0x00d5</span>, <span class="fl">0x00da</span>, <span class="fl">0x00c7</span>,</span></span>
+<span class="r-in"><span>  <span class="fl">0x00e1</span>, <span class="fl">0x00e0</span>, <span class="fl">0x00e2</span>, <span class="fl">0x00e3</span>, <span class="fl">0x00e9</span>, <span class="fl">0x00ea</span>,</span></span>
+<span class="r-in"><span>  <span class="fl">0x00ed</span>, <span class="fl">0x00f3</span>, <span class="fl">0x00f4</span>, <span class="fl">0x00f5</span>, <span class="fl">0x00fa</span>, <span class="fl">0x00e7</span></span></span>
+<span class="r-in"><span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">folded</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/chartr.html" class="external-link">toupper</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/chartr.html" class="external-link">chartr</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="va">accented</span>,</span></span>
+<span class="r-in"><span>  <span class="st">"AAAAEEIOOOUCaaaaeeiooouc"</span>,</span></span>
+<span class="r-in"><span>  <span class="va">infosiga_municipios</span><span class="op">$</span><span class="va">municipio</span></span></span>
+<span class="r-in"><span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/subset.html" class="external-link">subset</a></span><span class="op">(</span></span></span>
 <span class="r-in"><span>  <span class="va">infosiga_municipios</span>,</span></span>
-<span class="r-in"><span>  <span class="fu"><a href="https://rdrr.io/r/base/iconv.html" class="external-link">iconv</a></span><span class="op">(</span><span class="va">folded</span>, <span class="st">"UTF-8"</span>, <span class="st">"ASCII"</span>, sub <span class="op">=</span> <span class="st">"?"</span><span class="op">)</span> <span class="op">!=</span> <span class="va">municipio_infosiga</span>,</span></span>
+<span class="r-in"><span>  <span class="va">folded</span> <span class="op">!=</span> <span class="va">municipio_infosiga</span>,</span></span>
 <span class="r-in"><span>  select <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">cod_ibge</span>, <span class="va">municipio</span>, <span class="va">municipio_infosiga</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 274 × 3</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    cod_ibge municipio              municipio_infosiga    </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                  <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 1</span> 3500303  Aguaí                  AGUAI                 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 2</span> 3500402  Águas da Prata         AGUAS DA PRATA        </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 3</span> 3500501  Águas de Lindóia       AGUAS DE LINDOIA      </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 4</span> 3500550  Águas de Santa Bárbara AGUAS DE SANTA BARBARA</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 5</span> 3500600  Águas de São Pedro     AGUAS DE SAO PEDRO    </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 6</span> 3501004  Altinópolis            ALTINOPOLIS           </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 7</span> 3501152  Alumínio               ALUMINIO              </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 8</span> 3501202  Álvares Florence       ALVARES FLORENCE      </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 9</span> 3501301  Álvares Machado        ALVARES MACHADO       </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">10</span> 3501400  Álvaro de Carvalho     ALVARO DE CARVALHO    </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># ℹ 264 more rows</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 9 × 3</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   cod_ibge municipio              municipio_infosiga    </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                  <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span> 3502606  Aparecida d'Oeste      APARECIDA D OESTE     </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span> 3515202  Estrela d'Oeste        ESTRELA D OESTE       </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">3</span> 3518008  Guarani d'Oeste        GUARANI D OESTE       </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">4</span> 3535200  Palmeira d'Oeste       PALMEIRA D OESTE      </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">5</span> 3545803  Santa Bárbara d'Oeste  SANTA BARBARA D OESTE </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">6</span> 3546108  Santa Clara d'Oeste    SANTA CLARA D OESTE   </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">7</span> 3547403  Santa Rita d'Oeste     SANTA RITA D OESTE    </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">8</span> 3549300  São João do Pau d'Alho SAO JOAO DO PAU D ALHO</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">9</span> 3550001  São Luiz do Paraitinga SAO LUIS DO PARAITINGA</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
