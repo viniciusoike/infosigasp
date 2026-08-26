@@ -85,23 +85,14 @@
 <div class="section level2">
 <h2 id="datasets">Datasets<a class="anchor" aria-label="anchor" href="#datasets"></a>
 </h2>
-<p>INFOSIGA-SP publishes three linked datasets.</p>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/viniciusoike/infosigasp" class="external-link">infosigasp</a></span><span class="op">)</span></span>
-<span><span class="fu"><a href="reference/infosiga_datasets.html">infosiga_datasets</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt; # A tibble: 3 x 4</span></span>
-<span><span class="co">#&gt;   dataset   description                                              grain keys </span></span>
-<span><span class="co">#&gt;   &lt;chr&gt;     &lt;chr&gt;                                                    &lt;chr&gt; &lt;chr&gt;</span></span>
-<span><span class="co">#&gt; 1 sinistros Traffic crash events recorded in the state of Sao Paulo. one ~ id_s~</span></span>
-<span><span class="co">#&gt; 2 pessoas   People (victims) involved in traffic crashes.            one ~ id_p~</span></span>
-<span><span class="co">#&gt; 3 veiculos  Vehicles involved in traffic crashes.                    one ~ id_v~</span></span></code></pre></div>
+<p>INFOSIGA-SP publishes three linked datasets: <code>sinistros</code> (crash events), <code>pessoas</code> (victims) and <code>veiculos</code> (vehicles).</p>
 <p>Join the datasets on <code>id_sinistro</code>, and on <code>id_veiculo</code> where present.</p>
 </div>
 <div class="section level2">
 <h2 id="usage">Usage<a class="anchor" aria-label="anchor" href="#usage"></a>
 </h2>
-<p>The first call downloads the source archive (~120 MB) into a local cache; later calls read straight from disk.</p>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<p>The first interactive call asks before downloading about 120 MB into your user cache; later calls read straight from disk.</p>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/viniciusoike/infosigasp" class="external-link">infosigasp</a></span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Crash events (one row per event)</span></span>
@@ -115,53 +106,47 @@
 <div class="section level3">
 <h3 id="processed-by-default-raw-on-demand">Processed by default, raw on demand<a class="anchor" aria-label="anchor" href="#processed-by-default-raw-on-demand"></a>
 </h3>
-<p>By default <code><a href="reference/read_infosiga.html">read_infosiga()</a></code> returns a <strong>processed</strong> dataset. Dates parse to <code>Date</code> (including the <code>ano_mes_*</code> year-month columns, as first-of-month dates), text loses its padding, the <code>"NAO DISPONIVEL"</code> (“not available”) marker becomes <code>NA</code>, the binary <code>tp_sinistro_*</code> crash-type flags become logical, coordinates outside São Paulo state become <code>NA</code>, and the ordinal columns become <strong>ordered factors</strong> so they sort and plot in their natural order rather than alphabetically. <code><a href="reference/clean_infosiga.html">?clean_infosiga</a></code> has the full list.</p>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<p>By default <code><a href="reference/read_infosiga.html">read_infosiga()</a></code> returns a <strong>processed</strong> dataset. Dates parse to <code>Date</code> (including the <code>ano_mes_*</code> year-month columns, as first-of-month dates), text loses its padding, the <code>"NAO DISPONIVEL"</code> (“not available”) marker becomes <code>NA</code>, the binary <code>tp_sinistro_*</code> crash-type flags become logical, coordinates outside São Paulo state become <code>NA</code>, and the ordinal columns become <strong>ordered factors</strong> so they sort and plot in their natural order rather than alphabetically. <code><a href="reference/read_infosiga.html">?read_infosiga</a></code> documents the full processing pipeline.</p>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/levels.html" class="external-link">levels</a></span><span class="op">(</span><span class="va">sinistros</span><span class="op">$</span><span class="va">dia_da_semana</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] "Domingo"       "Segunda-feira" "Terça-feira"   "Quarta-feira"</span></span>
 <span><span class="co">#&gt; [5] "Quinta-feira"  "Sexta-feira"   "Sábado"</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/levels.html" class="external-link">levels</a></span><span class="op">(</span><span class="va">vitimas</span><span class="op">$</span><span class="va">gravidade_lesao</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] "LEVE"  "GRAVE" "FATAL"</span></span></code></pre></div>
-<p>Pass <code>clean = FALSE</code> to get the data exactly as published (every text column as a character vector, markers preserved). You can also process a raw import later with <code><a href="reference/clean_infosiga.html">clean_infosiga()</a></code>.</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<p>Pass <code>clean = FALSE</code> to get the data exactly as published (every text column as a character vector, markers preserved).</p>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">raw</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/read_infosiga.html">read_infosiga</a></span><span class="op">(</span><span class="st">"sinistros"</span>, clean <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="tidying-the-category-labels">Tidying the category labels<a class="anchor" aria-label="anchor" href="#tidying-the-category-labels"></a>
 </h3>
-<p><code><a href="reference/clean_infosiga.html">clean_infosiga()</a></code> fixes types and source artefacts but leaves category labels alone, so anyone reproducing an official DETRAN-SP figure gets exactly the categories DETRAN-SP publishes. Those labels are messy. <code>cor_veiculo</code> carries dozens of values for about sixteen real colours, because two upstream systems coexist and disagree on both case and gender agreement (<code>PRETA</code>, <code>Preta</code>; <code>BRANCA</code>, <code>Branco</code>). Run the opt-in <code><a href="reference/tidy_infosiga_labels.html">tidy_infosiga_labels()</a></code> when you want labels that group, sort and plot sensibly.</p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">veiculos</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/read_infosiga.html">read_infosiga</a></span><span class="op">(</span><span class="st">"veiculos"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="reference/tidy_infosiga_labels.html">tidy_infosiga_labels</a></span><span class="op">(</span><span class="st">"veiculos"</span><span class="op">)</span></span></code></pre></div>
-<p>It also gives <code>municipio</code> and <code>regiao_administrativa</code> their official IBGE spellings, Title Cases <code>profissao</code>, and splits route codes out of <code>conservacao</code> into a new <code>conservacao_codigo</code> column. The bundled <code>infosiga_municipios</code> lookup pairs each spelling with <code>cod_ibge</code>, the key that joins INFOSIGA-SP to census and population data.</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">infosiga_municipios</span>, <span class="fl">3</span><span class="op">)</span></span></code></pre></div>
+<p>The default processing fixes types and source artefacts but leaves category labels alone, so anyone reproducing an official DETRAN-SP figure gets exactly the published categories. Those labels are messy. <code>cor_veiculo</code>, for example, carries dozens of values for about sixteen real colours because two upstream systems disagree on case and gender agreement (<code>PRETA</code>, <code>Preta</code>; <code>BRANCA</code>, <code>Branco</code>). Pass <code>labels = TRUE</code> when you want labels that group, sort and plot sensibly.</p>
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">veiculos</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/read_infosiga.html">read_infosiga</a></span><span class="op">(</span><span class="st">"veiculos"</span>, labels <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
+<p>This also gives <code>municipio</code> and <code>regiao_administrativa</code> their official IBGE spellings, title-cases <code>profissao</code>, and splits route codes out of <code>conservacao</code> into a new <code>conservacao_codigo</code> column.</p>
 <p>The getting-started vignette covers both passes in full.</p>
 </div>
 <div class="section level3">
-<h3 id="managing-the-cache">Managing the cache<a class="anchor" aria-label="anchor" href="#managing-the-cache"></a>
+<h3 id="updating-the-local-data">Updating the local data<a class="anchor" aria-label="anchor" href="#updating-the-local-data"></a>
 </h3>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="reference/infosiga_cache.html">infosiga_cache_dir</a></span><span class="op">(</span><span class="op">)</span>      <span class="co"># where files are stored</span></span>
-<span><span class="fu"><a href="reference/infosiga_cache.html">infosiga_cache_list</a></span><span class="op">(</span><span class="op">)</span>     <span class="co"># what is currently cached</span></span>
-<span><span class="fu"><a href="reference/infosiga_check_update.html">infosiga_check_update</a></span><span class="op">(</span><span class="op">)</span>   <span class="co"># is the mirror holding newer data than your copy?</span></span>
-<span><span class="fu"><a href="reference/infosiga_download.html">infosiga_download</a></span><span class="op">(</span>overwrite <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>  <span class="co"># force a refresh after a monthly update</span></span>
-<span><span class="fu"><a href="reference/infosiga_cache.html">infosiga_cache_clear</a></span><span class="op">(</span><span class="op">)</span>    <span class="co"># delete cached files</span></span></code></pre></div>
+<p>DETRAN-SP updates the data monthly. Download the latest available copy and replace the one in your user cache with:</p>
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">sinistros</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/read_infosiga.html">read_infosiga</a></span><span class="op">(</span><span class="st">"sinistros"</span>, refresh <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="data-dictionary">Data dictionary<a class="anchor" aria-label="anchor" href="#data-dictionary"></a>
 </h3>
-<p><code><a href="reference/infosiga_dictionary.html">infosiga_dictionary()</a></code> downloads the official field-by-field documentation (PDF, in Portuguese).</p>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="reference/infosiga_dictionary.html">infosiga_dictionary</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
+<p><code><a href="reference/dictionary_infosiga.html">dictionary_infosiga()</a></code> downloads the official field-by-field documentation (PDF, in Portuguese).</p>
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="reference/dictionary_infosiga.html">dictionary_infosiga</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 </div>
 </div>
 <div class="section level2">
 <h2 id="example">Example<a class="anchor" aria-label="anchor" href="#example"></a>
 </h2>
 <p>The victims dataset gives a fatality count per year.</p>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://dplyr.tidyverse.org" class="external-link">dplyr</a></span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="reference/read_infosiga.html">read_infosiga</a></span><span class="op">(</span><span class="st">"pessoas"</span><span class="op">)</span> <span class="op">|&gt;</span></span>

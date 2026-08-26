@@ -65,7 +65,7 @@
       <img src="../logo.png" class="logo" alt=""><h1>Data dictionary</h1>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/viniciusoike/infosigasp/blob/main/vignettes/articles/data-dictionary.Rmd" class="external-link"><code>vignettes/articles/data-dictionary.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/viniciusoike/infosigasp/blob/refactor/simplify-public-api/vignettes/articles/data-dictionary.Rmd" class="external-link"><code>vignettes/articles/data-dictionary.Rmd</code></a></small>
       <div class="d-none name"><code>data-dictionary.Rmd</code></div>
     </div>
 
@@ -76,7 +76,7 @@
 three datasets returned by <code><a href="../reference/read_infosiga.html">read_infosiga()</a></code>:
 <code>sinistros</code> (crash events), <code>pessoas</code> (victims)
 and <code>veiculos</code> (vehicles). Field names, descriptions and
-allowed values appear here verbatim; <code><a href="../reference/infosiga_dictionary.html">infosiga_dictionary()</a></code>
+allowed values appear here verbatim; <code><a href="../reference/dictionary_infosiga.html">dictionary_infosiga()</a></code>
 downloads the original PDFs, which are in Portuguese.</p>
 <p>Three notes on reading the tables.</p>
 <ul>
@@ -90,8 +90,8 @@ describe the files <em>as published</em>, i.e. what you get with
 <code>clean = TRUE</code>, some columns change class: dates and times
 are parsed, the <code>tp_sinistro_*</code> flags become logical, ordinal
 columns become ordered factors and the <code>NAO DISPONIVEL</code>
-marker becomes <code>NA</code> (see <code><a href="../reference/clean_infosiga.html">clean_infosiga()</a></code> for
-the full list).</li>
+marker becomes <code>NA</code> (see <code><a href="../reference/read_infosiga.html">?read_infosiga</a></code> for the
+full list).</li>
 <li>In the <em>Source</em> field, <strong>PC</strong>,
 <strong>PM</strong> and <strong>PRF</strong> stand for Polícia Civil,
 Polícia Militar and Polícia Rodoviária Federal;
@@ -219,9 +219,9 @@ itself.</li>
 </h2>
 <p>DETRAN-SP, <em>Dicionário de dados</em> v1.5 (2026-06-16),
 distributed with the INFOSIGA-SP open data at <a href="https://infosiga.detran.sp.gov.br/" class="external-link uri">https://infosiga.detran.sp.gov.br/</a>.
-<code><a href="../reference/infosiga_dictionary.html">infosiga_dictionary()</a></code> retrieves the official PDFs.</p>
+<code><a href="../reference/dictionary_infosiga.html">dictionary_infosiga()</a></code> retrieves the official PDFs.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu">infosigasp</span><span class="fu">::</span><span class="fu"><a href="../reference/infosiga_dictionary.html">infosiga_dictionary</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu">infosigasp</span><span class="fu">::</span><span class="fu"><a href="../reference/dictionary_infosiga.html">dictionary_infosiga</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>

@@ -30,26 +30,15 @@ pak::pak("viniciusoike/infosigasp")
 
 ## Datasets
 
-INFOSIGA-SP publishes three linked datasets.
-
-``` r
-
-library(infosigasp)
-infosiga_datasets()
-#> # A tibble: 3 x 4
-#>   dataset   description                                              grain keys 
-#>   <chr>     <chr>                                                    <chr> <chr>
-#> 1 sinistros Traffic crash events recorded in the state of Sao Paulo. one ~ id_s~
-#> 2 pessoas   People (victims) involved in traffic crashes.            one ~ id_p~
-#> 3 veiculos  Vehicles involved in traffic crashes.                    one ~ id_v~
-```
+INFOSIGA-SP publishes three linked datasets: `sinistros` (crash events),
+`pessoas` (victims) and `veiculos` (vehicles).
 
 Join the datasets on `id_sinistro`, and on `id_veiculo` where present.
 
 ## Usage
 
-The first call downloads the source archive (~120 MB) into a local
-cache; later calls read straight from disk.
+The first interactive call asks before downloading about 120 MB into
+your user cache; later calls read straight from disk.
 
 ``` r
 
@@ -76,8 +65,8 @@ the binary `tp_sinistro_*` crash-type flags become logical, coordinates
 outside São Paulo state become `NA`, and the ordinal columns become
 **ordered factors** so they sort and plot in their natural order rather
 than alphabetically.
-[`?clean_infosiga`](https://viniciusoike.github.io/infosigasp/reference/clean_infosiga.md)
-has the full list.
+[`?read_infosiga`](https://viniciusoike.github.io/infosigasp/reference/read_infosiga.md)
+documents the full processing pipeline.
 
 ``` r
 
@@ -90,9 +79,7 @@ levels(vitimas$gravidade_lesao)
 ```
 
 Pass `clean = FALSE` to get the data exactly as published (every text
-column as a character vector, markers preserved). You can also process a
-raw import later with
-[`clean_infosiga()`](https://viniciusoike.github.io/infosigasp/reference/clean_infosiga.md).
+column as a character vector, markers preserved).
 
 ``` r
 
@@ -101,55 +88,44 @@ raw <- read_infosiga("sinistros", clean = FALSE)
 
 ### Tidying the category labels
 
-[`clean_infosiga()`](https://viniciusoike.github.io/infosigasp/reference/clean_infosiga.md)
-fixes types and source artefacts but leaves category labels alone, so
-anyone reproducing an official DETRAN-SP figure gets exactly the
-categories DETRAN-SP publishes. Those labels are messy. `cor_veiculo`
-carries dozens of values for about sixteen real colours, because two
-upstream systems coexist and disagree on both case and gender agreement
-(`PRETA`, `Preta`; `BRANCA`, `Branco`). Run the opt-in
-[`tidy_infosiga_labels()`](https://viniciusoike.github.io/infosigasp/reference/tidy_infosiga_labels.md)
+The default processing fixes types and source artefacts but leaves
+category labels alone, so anyone reproducing an official DETRAN-SP
+figure gets exactly the published categories. Those labels are messy.
+`cor_veiculo`, for example, carries dozens of values for about sixteen
+real colours because two upstream systems disagree on case and gender
+agreement (`PRETA`, `Preta`; `BRANCA`, `Branco`). Pass `labels = TRUE`
 when you want labels that group, sort and plot sensibly.
 
 ``` r
 
-veiculos <- read_infosiga("veiculos") |>
-  tidy_infosiga_labels("veiculos")
+veiculos <- read_infosiga("veiculos", labels = TRUE)
 ```
 
-It also gives `municipio` and `regiao_administrativa` their official
-IBGE spellings, Title Cases `profissao`, and splits route codes out of
-`conservacao` into a new `conservacao_codigo` column. The bundled
-`infosiga_municipios` lookup pairs each spelling with `cod_ibge`, the
-key that joins INFOSIGA-SP to census and population data.
-
-``` r
-
-head(infosiga_municipios, 3)
-```
+This also gives `municipio` and `regiao_administrativa` their official
+IBGE spellings, title-cases `profissao`, and splits route codes out of
+`conservacao` into a new `conservacao_codigo` column.
 
 The getting-started vignette covers both passes in full.
 
-### Managing the cache
+### Updating the local data
+
+DETRAN-SP updates the data monthly. Download the latest available copy
+and replace the one in your user cache with:
 
 ``` r
 
-infosiga_cache_dir()      # where files are stored
-infosiga_cache_list()     # what is currently cached
-infosiga_check_update()   # is the mirror holding newer data than your copy?
-infosiga_download(overwrite = TRUE)  # force a refresh after a monthly update
-infosiga_cache_clear()    # delete cached files
+sinistros <- read_infosiga("sinistros", refresh = TRUE)
 ```
 
 ### Data dictionary
 
-[`infosiga_dictionary()`](https://viniciusoike.github.io/infosigasp/reference/infosiga_dictionary.md)
+[`dictionary_infosiga()`](https://viniciusoike.github.io/infosigasp/reference/dictionary_infosiga.md)
 downloads the official field-by-field documentation (PDF, in
 Portuguese).
 
 ``` r
 
-infosiga_dictionary()
+dictionary_infosiga()
 ```
 
 ## Example
@@ -179,41 +155,13 @@ Paulo.
 
 # Package index
 
-## Import data
+## Data access
 
-Download and read the INFOSIGA-SP datasets.
+Read INFOSIGA-SP data and its official dictionaries.
 
 - [`read_infosiga()`](https://viniciusoike.github.io/infosigasp/reference/read_infosiga.md)
   : Import an INFOSIGA-SP dataset
-- [`clean_infosiga()`](https://viniciusoike.github.io/infosigasp/reference/clean_infosiga.md)
-  : Clean and process an INFOSIGA-SP dataset
-- [`infosiga_datasets()`](https://viniciusoike.github.io/infosigasp/reference/infosiga_datasets.md)
-  : List the available INFOSIGA-SP datasets
-
-## Tidying labels
-
-Opt-in helpers that rewrite the published category labels into a
-consistent, presentation-ready form.
-
-- [`tidy_infosiga_labels()`](https://viniciusoike.github.io/infosigasp/reference/tidy_infosiga_labels.md)
-  : Tidy the category labels of an INFOSIGA-SP dataset
-- [`infosiga_municipios`](https://viniciusoike.github.io/infosigasp/reference/infosiga_municipios.md)
-  : Municipalities of Sao Paulo state, as named by IBGE and by
-  INFOSIGA-SP
-
-## Downloads and cache
-
-Fetch the source archive and manage the local cache.
-
-- [`infosiga_download()`](https://viniciusoike.github.io/infosigasp/reference/infosiga_download.md)
-  : Download the INFOSIGA-SP source archive
-- [`infosiga_check_update()`](https://viniciusoike.github.io/infosigasp/reference/infosiga_check_update.md)
-  : Check the cached archive against the package mirror
-- [`infosiga_cache_dir()`](https://viniciusoike.github.io/infosigasp/reference/infosiga_cache.md)
-  [`infosiga_cache_list()`](https://viniciusoike.github.io/infosigasp/reference/infosiga_cache.md)
-  [`infosiga_cache_clear()`](https://viniciusoike.github.io/infosigasp/reference/infosiga_cache.md)
-  : Manage the infosigasp on-disk cache
-- [`infosiga_dictionary()`](https://viniciusoike.github.io/infosigasp/reference/infosiga_dictionary.md)
+- [`dictionary_infosiga()`](https://viniciusoike.github.io/infosigasp/reference/dictionary_infosiga.md)
   : Download the INFOSIGA-SP data dictionary
 
 ## Package

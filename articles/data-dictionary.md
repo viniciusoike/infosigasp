@@ -7,7 +7,7 @@ returned by
 `sinistros` (crash events), `pessoas` (victims) and `veiculos`
 (vehicles). Field names, descriptions and allowed values appear here
 verbatim;
-[`infosiga_dictionary()`](https://viniciusoike.github.io/infosigasp/reference/infosiga_dictionary.md)
+[`dictionary_infosiga()`](https://viniciusoike.github.io/infosigasp/reference/dictionary_infosiga.md)
 downloads the original PDFs, which are in Portuguese.
 
 Three notes on reading the tables.
@@ -21,7 +21,7 @@ Three notes on reading the tables.
   parsed, the `tp_sinistro_*` flags become logical, ordinal columns
   become ordered factors and the `NAO DISPONIVEL` marker becomes `NA`
   (see
-  [`clean_infosiga()`](https://viniciusoike.github.io/infosigasp/reference/clean_infosiga.md)
+  [`?read_infosiga`](https://viniciusoike.github.io/infosigasp/reference/read_infosiga.md)
   for the full list).
 - In the *Source* field, **PC**, **PM** and **PRF** stand for Polícia
   Civil, Polícia Militar and Polícia Rodoviária Federal; **DETRAN-SP**
@@ -45,10 +45,10 @@ linked to the events by `id_sinistro` (12 variables).
 
 DETRAN-SP, *Dicionário de dados* v1.5 (2026-06-16), distributed with the
 INFOSIGA-SP open data at <https://infosiga.detran.sp.gov.br/>.
-[`infosiga_dictionary()`](https://viniciusoike.github.io/infosigasp/reference/infosiga_dictionary.md)
+[`dictionary_infosiga()`](https://viniciusoike.github.io/infosigasp/reference/dictionary_infosiga.md)
 retrieves the official PDFs.
 
 ``` r
 
-infosigasp::infosiga_dictionary()
+infosigasp::dictionary_infosiga()
 ```

@@ -1,19 +1,20 @@
 # Import an INFOSIGA-SP dataset
 
 Downloads (if necessary) and imports one of the three INFOSIGA-SP
-datasets as a tidy tibble. The source archive is cached locally, so the
-first call triggers a download and subsequent calls read from disk.
+datasets as a tidy tibble. The first interactive call asks before
+downloading about 120 MB to the user's local cache; subsequent calls
+read from disk.
 
 ## Usage
 
 ``` r
 read_infosiga(
   dataset = c("sinistros", "pessoas", "veiculos"),
-  clean = TRUE,
   year = NULL,
-  download_if_missing = TRUE,
-  quiet = FALSE,
-  ...
+  clean = TRUE,
+  labels = FALSE,
+  refresh = FALSE,
+  quiet = FALSE
 )
 ```
 
@@ -35,44 +36,44 @@ read_infosiga(
 
   :   Vehicles involved (one row per vehicle).
 
-- clean:
-
-  Logical. If `TRUE` (default), return a processed dataset. The
-  processing trims text, maps the `"NAO DISPONIVEL"` marker to `NA`,
-  makes ordinal columns ordered factors, makes the crash-type flags
-  logical and voids impossible coordinates; see
-  [`clean_infosiga()`](https://viniciusoike.github.io/infosigasp/reference/clean_infosiga.md)
-  for the full list of steps. If `FALSE`, return the raw data exactly as
-  published, with all text columns as character vectors.
-
 - year:
 
   Optional integer vector used to filter rows by year of the crash
   (`ano_sinistro`). If `NULL` (default), all available years are
   returned. For example, `year = 2020:2023`.
 
-- download_if_missing:
+- clean:
 
-  Logical. If `TRUE` (default), download the archive when it is not
-  already cached. If `FALSE` and the archive is missing, an informative
-  error is raised.
+  Logical. If `TRUE` (default), return a processed dataset: text is
+  trimmed, the `"NAO DISPONIVEL"` marker becomes `NA`, ordinal columns
+  become ordered factors, crash-type flags become logical, and
+  impossible coordinates become `NA`. If `FALSE`, return the raw data
+  exactly as published, with all text columns as character vectors.
+
+- labels:
+
+  Logical. If `TRUE`, additionally standardise category labels for
+  analysis and presentation. This restores authoritative place-name
+  spellings, applies consistent title case, merges duplicate
+  vehicle-colour categories and separates road-maintenance codes.
+  Requires `clean = TRUE`.
+
+- refresh:
+
+  Logical. If `TRUE`, download the latest available source data before
+  reading. If `FALSE` (default), reuse the copy in the local
+  `infosigasp` cache, downloading it only when it is missing.
 
 - quiet:
 
   Logical. If `FALSE` (default), report progress.
-
-- ...:
-
-  Additional arguments passed to
-  [`infosiga_download()`](https://viniciusoike.github.io/infosigasp/reference/infosiga_download.md)
-  (for example `overwrite = TRUE` to force a refresh).
 
 ## Value
 
 A [tibble](https://tibble.tidyverse.org/reference/tibble.html) with one
 row per record. The columns keep the original INFOSIGA-SP names (in
 Portuguese); see the package data dictionary via
-[`infosiga_dictionary()`](https://viniciusoike.github.io/infosigasp/reference/infosiga_dictionary.md).
+[`dictionary_infosiga()`](https://viniciusoike.github.io/infosigasp/reference/dictionary_infosiga.md).
 The three datasets can be joined on `id_sinistro` (and `id_veiculo`,
 where present).
 
@@ -85,18 +86,16 @@ columns and numeric coordinates. Each dataset is distributed across two
 period files inside the archive (2015-2021 and 2022 onward); they are
 read and row-bound transparently.
 
-By default (`clean = TRUE`) the result is then processed by
-[`clean_infosiga()`](https://viniciusoike.github.io/infosigasp/reference/clean_infosiga.md):
-text columns are whitespace-trimmed, the `"NAO DISPONIVEL"` ("not
-available") marker becomes `NA`, ordinal columns (`dia_da_semana`,
-`turno`, `gravidade_lesao`, the age bands) become **ordered factors**,
-the `ano_mes_*` year-month strings are parsed to first-of-month `Date`s,
-the binary `tp_sinistro_*` crash-type flags become **logical**, blank
-`qtd_*` counts inside an otherwise-filled block become `0`,
-`tempo_sinistro_obito` becomes **integer**, and `latitude`/`longitude`
-values outside the bounding box of Sao Paulo state become `NA`. See
-[`clean_infosiga()`](https://viniciusoike.github.io/infosigasp/reference/clean_infosiga.md)
-for the complete, ordered list. Pass `clean = FALSE` to obtain the raw
+By default (`clean = TRUE`) the result is then processed by the
+package's internal cleaning step: text columns are whitespace-trimmed,
+the `"NAO DISPONIVEL"` ("not available") marker becomes `NA`, ordinal
+columns (`dia_da_semana`, `turno`, `gravidade_lesao`, the age bands)
+become **ordered factors**, the `ano_mes_*` year-month strings are
+parsed to first-of-month `Date`s, the binary `tp_sinistro_*` crash-type
+flags become **logical**, blank `qtd_*` counts inside an
+otherwise-filled block become `0`, `tempo_sinistro_obito` becomes
+**integer**, and `latitude`/`longitude` values outside the bounding box
+of Sao Paulo state become `NA`. Pass `clean = FALSE` to obtain the raw
 data exactly as published, with every text column kept as a character
 vector and `"NAO DISPONIVEL"` and the source's fixed-width whitespace
 padding preserved verbatim.
@@ -164,12 +163,10 @@ do, however, invalidate a number of otherwise reasonable analyses.
 
 - **Coordinate availability varies sharply by year.**:
 
-  After the bounding-box validation described in
-  [`clean_infosiga()`](https://viniciusoike.github.io/infosigasp/reference/clean_infosiga.md),
-  nearly every crash in the middle years of the series has usable
-  coordinates, against a materially smaller share in the earliest and
-  the most recent years. Mapped subsets are therefore not a uniform
-  sample over time.
+  After the bounding-box validation described above, nearly every crash
+  in the middle years of the series has usable coordinates, against a
+  materially smaller share in the earliest and the most recent years.
+  Mapped subsets are therefore not a uniform sample over time.
 
 - **Not every crash has victim or vehicle rows.**:
 
@@ -182,9 +179,7 @@ DETRAN-SP revises the data; the structural points do not.
 
 ## See also
 
-[`infosiga_download()`](https://viniciusoike.github.io/infosigasp/reference/infosiga_download.md),
-[`infosiga_cache_dir()`](https://viniciusoike.github.io/infosigasp/reference/infosiga_cache.md),
-[`infosiga_dictionary()`](https://viniciusoike.github.io/infosigasp/reference/infosiga_dictionary.md).
+[`dictionary_infosiga()`](https://viniciusoike.github.io/infosigasp/reference/dictionary_infosiga.md).
 
 ## Examples
 

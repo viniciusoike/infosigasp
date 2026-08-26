@@ -39,7 +39,7 @@ Vehicles (DETRAN-SP)."><meta property="og:image" content="https://viniciusoike.g
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>infosigasp: Download and Import Traffic Crash Data from INFOSIGA-SP</h1>
-      <small class="dont-index">Source: <a href="https://github.com/viniciusoike/infosigasp/blob/main/R/infosigasp-package.R" class="external-link"><code>R/infosigasp-package.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/viniciusoike/infosigasp/blob/refactor/simplify-public-api/R/infosigasp-package.R" class="external-link"><code>R/infosigasp-package.R</code></a></small>
       <div class="d-none name"><code>infosigasp-package.Rd</code></div>
     </div>
 
@@ -79,32 +79,9 @@ model, year and type.</p></dd>
 <dd><p>Download (if needed) and import a dataset as a
 tibble.</p></dd>
 
-<dt><code><a href="clean_infosiga.html">clean_infosiga()</a></code></dt>
-<dd><p>Apply the processing <code><a href="read_infosiga.html">read_infosiga()</a></code> performs
-by default, for datasets imported with <code>clean = FALSE</code>.</p></dd>
-
-<dt><code><a href="infosiga_datasets.html">infosiga_datasets()</a></code></dt>
-<dd><p>List the datasets, their grain and their
-keys.</p></dd>
-
-<dt><code><a href="tidy_infosiga_labels.html">tidy_infosiga_labels()</a></code></dt>
-<dd><p>Opt-in second pass that rewrites the
-published category labels; see also <a href="infosiga_municipios.html">infosiga_municipios</a>.</p></dd>
-
-<dt><code><a href="infosiga_download.html">infosiga_download()</a></code></dt>
-<dd><p>Download the raw source archive to the local
-cache.</p></dd>
-
-<dt><code><a href="infosiga_check_update.html">infosiga_check_update()</a></code></dt>
-<dd><p>Report whether the package mirror holds a
-newer archive than the cached copy.</p></dd>
-
-<dt><code><a href="infosiga_cache.html">infosiga_cache_dir()</a></code>, <code><a href="infosiga_cache.html">infosiga_cache_list()</a></code>,
-<code><a href="infosiga_cache.html">infosiga_cache_clear()</a></code></dt>
-<dd><p>Manage the on-disk cache.</p></dd>
-
-<dt><code><a href="infosiga_dictionary.html">infosiga_dictionary()</a></code></dt>
-<dd><p>Download the official data dictionary.</p></dd>
+<dt><code><a href="dictionary_infosiga.html">dictionary_infosiga()</a></code></dt>
+<dd><p>Download and locate the official data
+dictionaries.</p></dd>
 
 
 </dl></div>

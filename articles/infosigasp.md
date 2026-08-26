@@ -25,17 +25,6 @@ library(infosigasp)
 
 INFOSIGA-SP organises its data into three linked tables.
 
-``` r
-
-infosiga_datasets()
-#> # A tibble: 3 × 4
-#>   dataset   description                                              grain keys 
-#>   <chr>     <chr>                                                    <chr> <chr>
-#> 1 sinistros Traffic crash events recorded in the state of Sao Paulo. one … id_s…
-#> 2 pessoas   People (victims) involved in traffic crashes.            one … id_p…
-#> 3 veiculos  Vehicles involved in traffic crashes.                    one … id_v…
-```
-
 - **`sinistros`** — crash *events*. One row per recorded event, with the
   date, time, location (including latitude/longitude), road attributes
   and a breakdown of how many vehicles and victims were involved, by
@@ -55,7 +44,8 @@ The main entry point is
 [`read_infosiga()`](https://viniciusoike.github.io/infosigasp/reference/read_infosiga.md).
 The first call downloads the source archive (about 120 MB) into a
 per-user cache; subsequent calls read from that cache, so you only pay
-the download cost once.
+the download cost once. In interactive use, the package asks for
+confirmation before that first download.
 
 ``` r
 
@@ -77,9 +67,9 @@ By default
 [`read_infosiga()`](https://viniciusoike.github.io/infosigasp/reference/read_infosiga.md)
 returns a **processed** dataset (`clean = TRUE`). The processing never
 renames columns, recodes category labels or drops rows. It only fixes
-types and source artefacts. The full, ordered list of steps lives in
-[`?clean_infosiga`](https://viniciusoike.github.io/infosigasp/reference/clean_infosiga.md);
-the main ones are below.
+types and source artefacts. The full pipeline is documented in
+[`?read_infosiga`](https://viniciusoike.github.io/infosigasp/reference/read_infosiga.md);
+the main steps are below.
 
 - **Dates and times.** Full dates are parsed to `Date` and times to
   `hms` (in both modes), and the `ano_mes_*` year-month columns
@@ -135,27 +125,17 @@ verbatim.
 raw <- read_infosiga("sinistros", clean = FALSE)
 ```
 
-[`clean_infosiga()`](https://viniciusoike.github.io/infosigasp/reference/clean_infosiga.md)
-applies the same processing to a raw import after the fact.
-
-``` r
-
-processed <- clean_infosiga(raw, "sinistros")
-```
-
 ### Tidying the category labels
 
-[`clean_infosiga()`](https://viniciusoike.github.io/infosigasp/reference/clean_infosiga.md)
-fixes types and source artefacts but never touches category *labels*, so
-that anyone reproducing an official DETRAN-SP figure gets exactly the
-categories DETRAN-SP publishes. Those labels are, however, genuinely
-messy. For your own analysis, run the opt-in second pass
-[`tidy_infosiga_labels()`](https://viniciusoike.github.io/infosigasp/reference/tidy_infosiga_labels.md).
+The default cleaning fixes types and source artefacts but never touches
+category *labels*, so that anyone reproducing an official DETRAN-SP
+figure gets exactly the categories DETRAN-SP publishes. Those labels
+are, however, genuinely messy. For your own analysis, opt in with
+`labels = TRUE`.
 
 ``` r
 
-veiculos <- read_infosiga("veiculos") |>
-  tidy_infosiga_labels("veiculos")
+veiculos <- read_infosiga("veiculos", labels = TRUE)
 
 sort(table(veiculos$cor_veiculo), decreasing = TRUE)
 ```
@@ -195,22 +175,6 @@ capitalisation, because most are brand acronyms (`SPMAR`, `TEBE`,
 `CART`) that Title Case would corrupt into `Spmar` and `Tebe`.
 
 ### Joining to other Brazilian data
-
-The `infosiga_municipios` lookup ships with the package and maps
-`cod_ibge` to both spellings of each of the 645 municipalities.
-
-``` r
-
-head(infosiga_municipios, 4)
-#> # A tibble: 4 × 5
-#>   cod_ibge municipio      municipio_infosiga regiao_administrativa
-#>   <chr>    <chr>          <chr>              <chr>                
-#> 1 3500105  Adamantina     ADAMANTINA         Presidente Prudente  
-#> 2 3500204  Adolfo         ADOLFO             São José do Rio Preto
-#> 3 3500303  Aguaí          AGUAI              Campinas             
-#> 4 3500402  Águas da Prata AGUAS DA PRATA     Campinas             
-#> # ℹ 1 more variable: regiao_administrativa_infosiga <chr>
-```
 
 Always join on `cod_ibge`, never on the name. IBGE and INFOSIGA-SP spell
 nine municipalities differently. Eight contain an apostrophe that
@@ -374,41 +338,16 @@ read_infosiga("pessoas") |>
 can map crash locations directly or aggregate them by municipality
 (`municipio` / `cod_ibge`).
 
-## Managing the cache
+## Updating the data
 
-The download lives in an operating-system specific cache directory.
-
-``` r
-
-infosiga_cache_dir()
-#> [1] "/home/runner/.cache/R/infosigasp"
-infosiga_cache_list()
-#> character(0)
-```
-
-DETRAN-SP refreshes the archive monthly.
-[`infosiga_check_update()`](https://viniciusoike.github.io/infosigasp/reference/infosiga_check_update.md)
-compares your cached copy against the mirror the package publishes,
-which a weekly job re-fetches from DETRAN-SP, so it answers whether a
-newer archive exists without downloading one.
+The package stores one local copy in the operating-system user cache.
+DETRAN-SP updates the archive monthly. Use `refresh = TRUE` to replace
+your local copy with the latest available version and return the
+requested dataset.
 
 ``` r
 
-infosiga_check_update()
-```
-
-Force a re-download to pull the latest version.
-
-``` r
-
-infosiga_download(overwrite = TRUE)
-```
-
-Clear the cache to reclaim disk space.
-
-``` r
-
-infosiga_cache_clear()
+sinistros <- read_infosiga("sinistros", refresh = TRUE)
 ```
 
 You can point the cache somewhere else for a session (or permanently via
@@ -423,12 +362,12 @@ options(infosigasp.cache_dir = "~/data/infosiga")
 
 INFOSIGA-SP distributes a field-by-field data dictionary (PDF, in
 Portuguese).
-[`infosiga_dictionary()`](https://viniciusoike.github.io/infosigasp/reference/infosiga_dictionary.md)
+[`dictionary_infosiga()`](https://viniciusoike.github.io/infosigasp/reference/dictionary_infosiga.md)
 downloads it and returns the paths to the extracted files.
 
 ``` r
 
-pdfs <- infosiga_dictionary()
+pdfs <- dictionary_infosiga()
 basename(pdfs)
 ```
 

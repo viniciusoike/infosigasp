@@ -64,7 +64,7 @@
       <img src="../logo.png" class="logo" alt=""><h1>Getting started with infosigasp</h1>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/viniciusoike/infosigasp/blob/main/vignettes/infosigasp.Rmd" class="external-link"><code>vignettes/infosigasp.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/viniciusoike/infosigasp/blob/refactor/simplify-public-api/vignettes/infosigasp.Rmd" class="external-link"><code>vignettes/infosigasp.Rmd</code></a></small>
       <div class="d-none name"><code>infosigasp.Rmd</code></div>
     </div>
 
@@ -97,14 +97,6 @@ onward).</li>
 <h2 id="the-three-datasets">The three datasets<a class="anchor" aria-label="anchor" href="#the-three-datasets"></a>
 </h2>
 <p>INFOSIGA-SP organises its data into three linked tables.</p>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/infosiga_datasets.html">infosiga_datasets</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 3 × 4</span></span></span>
-<span><span class="co">#&gt;   dataset   description                                              grain keys </span></span>
-<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                                                    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> sinistros Traffic crash events recorded in the state of Sao Paulo. one … id_s…</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> pessoas   People (victims) involved in traffic crashes.            one … id_p…</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> veiculos  Vehicles involved in traffic crashes.                    one … id_v…</span></span></code></pre></div>
 <ul>
 <li>
 <strong><code>sinistros</code></strong> — crash <em>events</em>. One
@@ -130,14 +122,15 @@ additionally share <code>id_veiculo</code>.</p>
 <p>The main entry point is <code><a href="../reference/read_infosiga.html">read_infosiga()</a></code>. The first call
 downloads the source archive (about 120 MB) into a per-user cache;
 subsequent calls read from that cache, so you only pay the download cost
-once.</p>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+once. In interactive use, the package asks for confirmation before that
+first download.</p>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">sinistros</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/read_infosiga.html">read_infosiga</a></span><span class="op">(</span><span class="st">"sinistros"</span><span class="op">)</span></span>
 <span><span class="va">sinistros</span></span></code></pre></div>
 <p>The <code>year</code> argument restricts the import to specific
 years, filtering on the year of the crash
 (<code>ano_sinistro</code>).</p>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">recent</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/read_infosiga.html">read_infosiga</a></span><span class="op">(</span><span class="st">"sinistros"</span>, year <span class="op">=</span> <span class="fl">2022</span><span class="op">:</span><span class="fl">2025</span><span class="op">)</span></span></code></pre></div>
 <div class="section level3">
 <h3 id="processed-vs--raw-data">Processed vs. raw data<a class="anchor" aria-label="anchor" href="#processed-vs--raw-data"></a>
@@ -145,9 +138,8 @@ years, filtering on the year of the crash
 <p>By default <code><a href="../reference/read_infosiga.html">read_infosiga()</a></code> returns a
 <strong>processed</strong> dataset (<code>clean = TRUE</code>). The
 processing never renames columns, recodes category labels or drops rows.
-It only fixes types and source artefacts. The full, ordered list of
-steps lives in <code><a href="../reference/clean_infosiga.html">?clean_infosiga</a></code>; the main ones are
-below.</p>
+It only fixes types and source artefacts. The full pipeline is
+documented in <code><a href="../reference/read_infosiga.html">?read_infosiga</a></code>; the main steps are below.</p>
 <ul>
 <li>
 <strong>Dates and times.</strong> Full dates are parsed to
@@ -202,36 +194,30 @@ values and <code>(0, 0)</code> placeholders, a few percent of records.
 No rows are dropped; pass <code>clean = FALSE</code> for the raw
 coordinates.</li>
 </ul>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">sinistros</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/read_infosiga.html">read_infosiga</a></span><span class="op">(</span><span class="st">"sinistros"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/levels.html" class="external-link">levels</a></span><span class="op">(</span><span class="va">sinistros</span><span class="op">$</span><span class="va">dia_da_semana</span><span class="op">)</span></span></code></pre></div>
 <p><code>dia_da_semana</code> is an ordered factor, so a weekday
 tabulation comes out in calendar order rather than alphabetically.</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/table.html" class="external-link">table</a></span><span class="op">(</span><span class="va">sinistros</span><span class="op">$</span><span class="va">dia_da_semana</span><span class="op">)</span></span></code></pre></div>
 <p>Pass <code>clean = FALSE</code> if you would rather have the data
 exactly as published, with every text column a character vector and
 <code>"NAO DISPONIVEL"</code> and the source’s whitespace padding
 preserved verbatim.</p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">raw</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/read_infosiga.html">read_infosiga</a></span><span class="op">(</span><span class="st">"sinistros"</span>, clean <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
-<p><code><a href="../reference/clean_infosiga.html">clean_infosiga()</a></code> applies the same processing to a raw
-import after the fact.</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">processed</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/clean_infosiga.html">clean_infosiga</a></span><span class="op">(</span><span class="va">raw</span>, <span class="st">"sinistros"</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="tidying-the-category-labels">Tidying the category labels<a class="anchor" aria-label="anchor" href="#tidying-the-category-labels"></a>
 </h3>
-<p><code><a href="../reference/clean_infosiga.html">clean_infosiga()</a></code> fixes types and source artefacts but
-never touches category <em>labels</em>, so that anyone reproducing an
-official DETRAN-SP figure gets exactly the categories DETRAN-SP
-publishes. Those labels are, however, genuinely messy. For your own
-analysis, run the opt-in second pass
-<code><a href="../reference/tidy_infosiga_labels.html">tidy_infosiga_labels()</a></code>.</p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">veiculos</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/read_infosiga.html">read_infosiga</a></span><span class="op">(</span><span class="st">"veiculos"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="../reference/tidy_infosiga_labels.html">tidy_infosiga_labels</a></span><span class="op">(</span><span class="st">"veiculos"</span><span class="op">)</span></span>
+<p>The default cleaning fixes types and source artefacts but never
+touches category <em>labels</em>, so that anyone reproducing an official
+DETRAN-SP figure gets exactly the categories DETRAN-SP publishes. Those
+labels are, however, genuinely messy. For your own analysis, opt in with
+<code>labels = TRUE</code>.</p>
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">veiculos</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/read_infosiga.html">read_infosiga</a></span><span class="op">(</span><span class="st">"veiculos"</span>, labels <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/sort.html" class="external-link">sort</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/table.html" class="external-link">table</a></span><span class="op">(</span><span class="va">veiculos</span><span class="op">$</span><span class="va">cor_veiculo</span><span class="op">)</span>, decreasing <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
 <p>Vehicle colour is the clearest case. The source carries dozens of
@@ -303,19 +289,6 @@ and <code>Tebe</code>.</p>
 <div class="section level3">
 <h3 id="joining-to-other-brazilian-data">Joining to other Brazilian data<a class="anchor" aria-label="anchor" href="#joining-to-other-brazilian-data"></a>
 </h3>
-<p>The <code>infosiga_municipios</code> lookup ships with the package
-and maps <code>cod_ibge</code> to both spellings of each of the 645
-municipalities.</p>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">infosiga_municipios</span>, <span class="fl">4</span><span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 4 × 5</span></span></span>
-<span><span class="co">#&gt;   cod_ibge municipio      municipio_infosiga regiao_administrativa</span></span>
-<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>              <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> 3500105  Adamantina     ADAMANTINA         Presidente Prudente  </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> 3500204  Adolfo         ADOLFO             São José do Rio Preto</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> 3500303  Aguaí          AGUAI              Campinas             </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span> 3500402  Águas da Prata AGUAS DA PRATA     Campinas             </span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 1 more variable: regiao_administrativa_infosiga &lt;chr&gt;</span></span></span></code></pre></div>
 <p>Always join on <code>cod_ibge</code>, never on the name. IBGE and
 INFOSIGA-SP spell nine municipalities differently. Eight contain an
 apostrophe that INFOSIGA-SP renders as a space
@@ -333,7 +306,7 @@ Those are the denominators that turn crash counts into crash
 </h3>
 <p>The package ships a small sample of each dataset so you can inspect
 the columns without any network access.</p>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">sample_path</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>, <span class="st">"sinistros_sample.csv"</span>, package <span class="op">=</span> <span class="st">"infosigasp"</span><span class="op">)</span></span>
 <span><span class="va">sample</span> <span class="op">&lt;-</span> <span class="fu">readr</span><span class="fu">::</span><span class="fu"><a href="https://readr.tidyverse.org/reference/read_delim.html" class="external-link">read_delim</a></span><span class="op">(</span></span>
 <span>  <span class="va">sample_path</span>,</span>
@@ -421,7 +394,7 @@ the data. The break in 2019 does not move. The same break appears in
 injury levels simply do not occur before 2019.</p>
 <p>So for any trend that reaches back before 2019, <strong>restrict to
 fatalities</strong>.</p>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://dplyr.tidyverse.org" class="external-link">dplyr</a></span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="../reference/read_infosiga.html">read_infosiga</a></span><span class="op">(</span><span class="st">"sinistros"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
@@ -437,7 +410,7 @@ range to <code><a href="../reference/read_infosiga.html">read_infosiga()</a></co
 <code>"NOTIFICACAO"</code>, a reported event not yet confirmed as a
 crash. Notifications are about a third of all rows, so treating every
 row as a crash overstates the total considerably.</p>
-<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/read_infosiga.html">read_infosiga</a></span><span class="op">(</span><span class="st">"sinistros"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/count.html" class="external-link">count</a></span><span class="op">(</span><span class="va">tipo_registro</span>, sort <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
 <p>DETRAN-SP reclassifies records as it validates them, so the newest
@@ -474,7 +447,7 @@ row.</strong> Use a left join to keep them.</li>
 <p>The imported data are ordinary tibbles, so any tidyverse (or base R)
 workflow applies. Here is a count of traffic fatalities per year from
 the victims dataset.</p>
-<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://dplyr.tidyverse.org" class="external-link">dplyr</a></span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">deaths_by_year</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/read_infosiga.html">read_infosiga</a></span><span class="op">(</span><span class="st">"pessoas"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
@@ -487,7 +460,7 @@ the victims dataset.</p>
 fatalities, the one thing collected consistently since 2015.</p>
 <p>Fatalities also break down by the type of victim (driver, passenger,
 pedestrian).</p>
-<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/read_infosiga.html">read_infosiga</a></span><span class="op">(</span><span class="st">"pessoas"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">gravidade_lesao</span> <span class="op">==</span> <span class="st">"FATAL"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/count.html" class="external-link">count</a></span><span class="op">(</span><span class="va">tipo_de_vitima</span>, sort <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
@@ -496,42 +469,28 @@ columns, so you can map crash locations directly or aggregate them by
 municipality (<code>municipio</code> / <code>cod_ibge</code>).</p>
 </div>
 <div class="section level2">
-<h2 id="managing-the-cache">Managing the cache<a class="anchor" aria-label="anchor" href="#managing-the-cache"></a>
+<h2 id="updating-the-data">Updating the data<a class="anchor" aria-label="anchor" href="#updating-the-data"></a>
 </h2>
-<p>The download lives in an operating-system specific cache
-directory.</p>
-<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/infosiga_cache.html">infosiga_cache_dir</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] "/home/runner/.cache/R/infosigasp"</span></span>
-<span><span class="fu"><a href="../reference/infosiga_cache.html">infosiga_cache_list</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt; character(0)</span></span></code></pre></div>
-<p>DETRAN-SP refreshes the archive monthly.
-<code><a href="../reference/infosiga_check_update.html">infosiga_check_update()</a></code> compares your cached copy against
-the mirror the package publishes, which a weekly job re-fetches from
-DETRAN-SP, so it answers whether a newer archive exists without
-downloading one.</p>
-<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/infosiga_check_update.html">infosiga_check_update</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
-<p>Force a re-download to pull the latest version.</p>
-<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/infosiga_download.html">infosiga_download</a></span><span class="op">(</span>overwrite <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
-<p>Clear the cache to reclaim disk space.</p>
-<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/infosiga_cache.html">infosiga_cache_clear</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
+<p>The package stores one local copy in the operating-system user cache.
+DETRAN-SP updates the archive monthly. Use <code>refresh = TRUE</code>
+to replace your local copy with the latest available version and return
+the requested dataset.</p>
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">sinistros</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/read_infosiga.html">read_infosiga</a></span><span class="op">(</span><span class="st">"sinistros"</span>, refresh <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
 <p>You can point the cache somewhere else for a session (or permanently
 via your <code>.Rprofile</code>) with the
 <code>infosigasp.cache_dir</code> option.</p>
-<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">options</a></span><span class="op">(</span>infosigasp.cache_dir <span class="op">=</span> <span class="st">"~/data/infosiga"</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="the-official-data-dictionary">The official data dictionary<a class="anchor" aria-label="anchor" href="#the-official-data-dictionary"></a>
 </h2>
 <p>INFOSIGA-SP distributes a field-by-field data dictionary (PDF, in
-Portuguese). <code><a href="../reference/infosiga_dictionary.html">infosiga_dictionary()</a></code> downloads it and returns
+Portuguese). <code><a href="../reference/dictionary_infosiga.html">dictionary_infosiga()</a></code> downloads it and returns
 the paths to the extracted files.</p>
-<div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">pdfs</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/infosiga_dictionary.html">infosiga_dictionary</a></span><span class="op">(</span><span class="op">)</span></span>
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">pdfs</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/dictionary_infosiga.html">dictionary_infosiga</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/basename.html" class="external-link">basename</a></span><span class="op">(</span><span class="va">pdfs</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
