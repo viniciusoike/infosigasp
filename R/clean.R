@@ -96,20 +96,29 @@
 # the all-NA rows. `cols` is restricted to those present in `data`.
 .infosiga_fill_count_block <- function(data, cols) {
   cols <- intersect(cols, names(data))
+
   if (length(cols) == 0) {
     return(data)
   }
-  block <- data[cols]
-  has_value <- rowSums(!is.na(block)) > 0
-  for (col in cols) {
-    v <- data[[col]]
-    fill <- has_value & is.na(v)
-    if (any(fill)) {
-      v[fill] <- 0L
-      data[[col]] <- v
-    }
-  }
-  data
+
+  has_count <- data |>
+    dplyr::transmute(
+      has_count = dplyr::if_any(dplyr::all_of(cols), \(x) !is.na(x))
+    ) |>
+    dplyr::pull("has_count")
+
+  data |>
+    dplyr::mutate(
+      dplyr::across(
+        dplyr::all_of(cols),
+        function(x) {
+          dplyr::replace_when(
+            as.integer(x),
+            has_count & is.na(x) ~ 0L
+          )
+        }
+      )
+    )
 }
 
 # Bounding box of the state of Sao Paulo, with a small margin so genuine
@@ -227,51 +236,70 @@
   #    every text column. Some source fields are space-padded to a fixed width
   #    (e.g. nacionalidade); trimming first ensures padded "NAO DISPONIVEL"
   #    markers are caught and that grouping/joins on those columns behave.
-  char_cols <- names(data)[vapply(data, is.character, logical(1))]
-  for (col in char_cols) {
-    v <- trimws(data[[col]])
-    v[v == "NAO DISPONIVEL"] <- NA
-    data[[col]] <- v
-  }
+  data <- data |>
+    dplyr::mutate(
+      dplyr::across(
+        dplyr::where(is.character),
+        function(x) {
+          x |>
+            stringr::str_trim() |>
+            dplyr::replace_values("NAO DISPONIVEL" ~ NA_character_)
+        }
+      )
+    )
 
   # 2. Ordinal columns become ordered factors. Values outside the known levels
   #    (e.g. the just-removed marker) map to NA.
-  for (col in names(.infosiga_factor_levels)) {
-    if (col %in% names(data)) {
-      data[[col]] <- factor(
-        data[[col]],
-        levels = .infosiga_factor_levels[[col]],
-        ordered = TRUE
+  factor_cols <- intersect(names(.infosiga_factor_levels), names(data))
+
+  data <- data |>
+    dplyr::mutate(
+      dplyr::across(
+        dplyr::all_of(factor_cols),
+        function(x) {
+          factor(
+            x,
+            levels = .infosiga_factor_levels[[dplyr::cur_column()]],
+            ordered = TRUE
+          )
+        }
       )
-    }
-  }
+    )
 
   # 3. Year-month columns ("YYYY/MM") become first-of-month Dates, matching
   #    the Date class already used for the full-date columns. The is.character
   #    guard keeps the step idempotent (parsed Dates are left untouched).
-  ano_mes_cols <- grep("^ano_mes_", names(data), value = TRUE)
-  for (col in ano_mes_cols) {
-    if (is.character(data[[col]])) data[[col]] <- .parse_ano_mes(data[[col]])
-  }
+  ano_mes_cols <- data |>
+    dplyr::select(
+      dplyr::starts_with("ano_mes_") & dplyr::where(is.character)
+    ) |>
+    names()
+
+  data <- data |>
+    dplyr::mutate(
+      dplyr::across(dplyr::all_of(ano_mes_cols), .parse_ano_mes)
+    )
 
   # 4. Crash-type flags ("S"/empty) become logical. tp_sinistro_primario is a
   #    categorical column, not a flag, so it is excluded.
-  flag_cols <- setdiff(
-    grep("^tp_sinistro_", names(data), value = TRUE),
-    "tp_sinistro_primario"
-  )
-  for (col in flag_cols) {
-    v <- data[[col]]
-    if (is.character(v)) data[[col]] <- !is.na(v) & v == "S"
-  }
+  flag_cols <- data |>
+    dplyr::select(
+      dplyr::starts_with("tp_sinistro_") & dplyr::where(is.character),
+      -dplyr::any_of("tp_sinistro_primario")
+    ) |>
+    names()
+
+  data <- data |>
+    dplyr::mutate(
+      dplyr::across(dplyr::all_of(flag_cols), \(x) !is.na(x) & x == "S")
+    )
 
   # 5. Count columns (sinistros). A blank entry inside a populated count block
   #    means zero, so NA -> 0L on rows that carry any count in that block; rows
   #    with the whole block blank record no breakdown and are left NA. The two
   #    blocks (vehicle counts, gravity counts) are filled independently.
-  for (cols in .infosiga_qtd_blocks) {
-    data <- .infosiga_fill_count_block(data, cols)
-  }
+  data <- .infosiga_fill_count_block(data, .infosiga_qtd_blocks$veiculos)
+  data <- .infosiga_fill_count_block(data, .infosiga_qtd_blocks$gravidade)
 
   # 6. tempo_sinistro_obito (days from crash to death) becomes integer.
   if (
@@ -279,9 +307,12 @@
       names(data) &&
       is.character(data$tempo_sinistro_obito)
   ) {
-    data$tempo_sinistro_obito <- suppressWarnings(
-      as.integer(data$tempo_sinistro_obito)
-    )
+    data <- data |>
+      dplyr::mutate(
+        tempo_sinistro_obito = suppressWarnings(as.integer(
+          data$tempo_sinistro_obito
+        ))
+      )
   }
 
   # 7. Strip the spurious trailing ".0" the source export appends ("193.0" ->
@@ -292,7 +323,13 @@
   if (
     "numero_logradouro" %in% names(data) && is.character(data$numero_logradouro)
   ) {
-    data$numero_logradouro <- sub("\\.0$", "", data$numero_logradouro)
+    data <- data |>
+      dplyr::mutate(
+        numero_logradouro = stringr::str_remove(
+          data$numero_logradouro,
+          "\\.0$"
+        )
+      )
   }
 
   # 8. Coordinates are validated as a pair against the Sao Paulo bounding box.
@@ -300,16 +337,26 @@
   #    inside the box; otherwise both are set to NA. This drops mis-encoded
   #    values and "null island" (0, 0) placeholders.
   if (all(c("latitude", "longitude") %in% names(data))) {
-    lat <- data$latitude
-    lon <- data$longitude
-    valid <- !is.na(lat) &
-      !is.na(lon) &
-      lat >= .sp_bbox$lat[1] &
-      lat <= .sp_bbox$lat[2] &
-      lon >= .sp_bbox$lon[1] &
-      lon <= .sp_bbox$lon[2]
-    data$latitude[!valid] <- NA_real_
-    data$longitude[!valid] <- NA_real_
+    valid_coordinates <- !is.na(data$latitude) &
+      !is.na(data$longitude) &
+      dplyr::between(
+        data$latitude,
+        .sp_bbox$lat[1],
+        .sp_bbox$lat[2]
+      ) &
+      dplyr::between(
+        data$longitude,
+        .sp_bbox$lon[1],
+        .sp_bbox$lon[2]
+      )
+
+    data <- data |>
+      dplyr::mutate(
+        dplyr::across(
+          dplyr::all_of(c("latitude", "longitude")),
+          \(x) dplyr::replace_when(x, !valid_coordinates ~ NA_real_)
+        )
+      )
   }
 
   tibble::as_tibble(data)

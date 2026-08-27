@@ -180,13 +180,14 @@ names(.cor_veiculo_map)[length(.cor_veiculo_map) - 1:0] <- c(
 # compared case- and accent-insensitively.
 .matches_na_marker <- function(x) {
   !is.na(x) &
-    .ascii_fold(toupper(trimws(x))) %in% .ascii_fold(.extra_na_markers)
+    .ascii_fold(stringr::str_to_upper(stringr::str_trim(x))) %in%
+      .ascii_fold(.extra_na_markers)
 }
 
 # A conservacao value that is only digits and dots is a route code ("10.03"),
 # not the name of the body that maintains the road.
 .is_route_code <- function(x) {
-  !is.na(x) & grepl("^[0-9]+(\\.[0-9]+)?$", x)
+  !is.na(x) & stringr::str_detect(x, "^[0-9]+(\\.[0-9]+)?$")
 }
 
 # Tidy the category labels of an INFOSIGA-SP dataset
@@ -282,46 +283,81 @@ names(.cor_veiculo_map)[length(.cor_veiculo_map) - 1:0] <- c(
   # code is missing or unknown keep whatever they already had.
   if ("cod_ibge" %in% names(data)) {
     lookup <- infosiga_municipios
-    idx <- match(data$cod_ibge, lookup$cod_ibge)
-    ok <- !is.na(idx)
-    for (col in intersect(
+    place_cols <- intersect(
       c("municipio", "regiao_administrativa"),
       names(data)
-    )) {
-      data[[col]][ok] <- lookup[[col]][idx[ok]]
+    )
+
+    if (length(place_cols) > 0) {
+      lookup <- lookup |>
+        dplyr::select(dplyr::all_of(c("cod_ibge", place_cols)))
+
+      data <- dplyr::rows_update(
+        data,
+        lookup,
+        by = "cod_ibge",
+        unmatched = "ignore"
+      )
     }
   }
 
   if (dataset == "veiculos" && "cor_veiculo" %in% names(data)) {
-    v <- data$cor_veiculo
-    hit <- !is.na(v) & v %in% names(.cor_veiculo_map)
-    v[hit] <- unname(.cor_veiculo_map[v[hit]])
-    data$cor_veiculo <- v
+    data <- data |>
+      dplyr::mutate(
+        cor_veiculo = dplyr::replace_values(
+          data$cor_veiculo,
+          from = names(.cor_veiculo_map),
+          to = unname(.cor_veiculo_map)
+        )
+      )
   }
 
   if (dataset == "pessoas" && "profissao" %in% names(data)) {
-    v <- data$profissao
-    v[.matches_na_marker(v)] <- NA_character_
-    data$profissao <- .pt_title_case(v)
+    data <- data |>
+      dplyr::mutate(
+        profissao = dplyr::replace_when(
+          data$profissao,
+          .matches_na_marker(data$profissao) ~ NA_character_
+        )
+      )
+
+    data <- data |>
+      dplyr::mutate(
+        profissao = .pt_title_case(data$profissao)
+      )
   }
 
   if (dataset == "sinistros" && "conservacao" %in% names(data)) {
-    v <- data$conservacao
-    v[.matches_na_marker(v)] <- NA_character_
-    is_code <- .is_route_code(v)
-    code <- ifelse(is_code, v, NA_character_)
-    v[is_code] <- NA_character_
-    # On a second call the codes have already moved out, so `code` would be all
-    # NA; fall back to the existing column to keep the split idempotent.
-    if ("conservacao_codigo" %in% names(data)) {
-      code <- ifelse(is.na(code), data$conservacao_codigo, code)
+    if (!"conservacao_codigo" %in% names(data)) {
+      data <- data |>
+        dplyr::mutate(conservacao_codigo = NA_character_)
     }
-    data$conservacao <- v
-    data$conservacao_codigo <- code
-    # Keep the new column immediately after the one it was split out of.
-    before <- names(data)[seq_len(match("conservacao", names(data)))]
-    rest <- setdiff(names(data), c(before, "conservacao_codigo"))
-    data <- data[c(before, "conservacao_codigo", rest)]
+
+    data <- data |>
+      dplyr::mutate(
+        conservacao = dplyr::replace_when(
+          data$conservacao,
+          .matches_na_marker(data$conservacao) ~ NA_character_
+        )
+      )
+
+    is_route_code <- .is_route_code(data$conservacao)
+
+    data <- data |>
+      dplyr::mutate(
+        conservacao_codigo = dplyr::replace_when(
+          data$conservacao_codigo,
+          is_route_code ~ data$conservacao
+        ),
+        conservacao = dplyr::replace_when(
+          data$conservacao,
+          is_route_code ~ NA_character_
+        )
+      ) |>
+      dplyr::relocate(
+        dplyr::all_of("conservacao_codigo"),
+        .after = dplyr::all_of("conservacao")
+      )
   }
 
   tibble::as_tibble(data)

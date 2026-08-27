@@ -19,47 +19,12 @@
   tmp <- tempfile(fileext = ".zip")
   on.exit(unlink(tmp), add = TRUE)
 
-  # Try each source in turn, falling back to the next mirror on any failure
-  # (download error, or a response that is not a valid ZIP archive) until one
-  # yields a usable archive.
-  ok <- FALSE
-  for (i in seq_along(urls)) {
-    url <- urls[[i]]
-    if (!quiet && i > 1L) {
-      cli::cli_alert_info("Trying an INFOSIGA-SP mirror at {.url {url}}.")
-    }
-
-    downloaded <- tryCatch(
-      {
-        utils::download.file(url, destfile = tmp, mode = "wb", quiet = quiet)
-        TRUE
-      },
-      error = function(e) {
-        if (!quiet) {
-          cli::cli_alert_warning(
-            "Source {.url {url}} failed: {conditionMessage(e)}"
-          )
-        }
-        FALSE
-      }
-    )
-
-    # An unreachable mirror or an error page (e.g. an HTML "503" served with a
-    # 200 status) downloads as a non-empty file that is not a ZIP. Validate the
-    # archive's magic bytes so such responses fall through to the next mirror
-    # instead of poisoning the cache.
-    if (isTRUE(downloaded) && .infosiga_is_zip(tmp)) {
-      ok <- TRUE
-      break
-    }
-    if (isTRUE(downloaded) && !quiet) {
-      cli::cli_alert_warning(
-        "Source {.url {url}} did not return a valid ZIP archive."
-      )
-    }
-    # Discard any partial, empty or non-ZIP file before trying the next source.
-    unlink(tmp)
-  }
+  ok <- .infosiga_try_zip_sources(
+    urls,
+    destfile = tmp,
+    quiet = quiet,
+    fallback_action = "Trying an INFOSIGA-SP mirror at"
+  )
 
   if (!ok) {
     cli::cli_abort(c(
@@ -110,4 +75,57 @@
   on.exit(close(con), add = TRUE)
   magic <- readBin(con, "raw", n = 4L)
   identical(magic, as.raw(c(0x50, 0x4b, 0x03, 0x04)))
+}
+
+# Try ZIP sources in order, leaving the first valid archive at `destfile`.
+# Download errors and non-ZIP responses fall through to the next source.
+.infosiga_try_zip_sources <- function(
+  urls,
+  destfile,
+  quiet,
+  first_action = NULL,
+  fallback_action = "Previous source failed; trying mirror"
+) {
+  for (i in seq_along(urls)) {
+    url <- urls[[i]]
+    action <- if (i == 1L) first_action else fallback_action
+
+    if (!quiet && !is.null(action)) {
+      cli::cli_alert_info("{action} {.url {url}}")
+    }
+
+    downloaded <- tryCatch(
+      {
+        utils::download.file(
+          url,
+          destfile = destfile,
+          mode = "wb",
+          quiet = quiet
+        )
+        TRUE
+      },
+      error = function(error) {
+        if (!quiet) {
+          cli::cli_alert_warning(
+            "Source {.url {url}} failed: {conditionMessage(error)}"
+          )
+        }
+        FALSE
+      }
+    )
+
+    if (isTRUE(downloaded) && .infosiga_is_zip(destfile)) {
+      return(TRUE)
+    }
+
+    if (isTRUE(downloaded) && !quiet) {
+      cli::cli_alert_warning(
+        "Source {.url {url}} did not return a valid ZIP archive."
+      )
+    }
+
+    unlink(destfile)
+  }
+
+  FALSE
 }
