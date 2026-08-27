@@ -9,7 +9,7 @@ test_that("place names are replaced with the official IBGE spelling", {
       "SAO JOSE DOS CAMPOS"
     )
   )
-  out <- .infosiga_tidy_labels(raw, "sinistros")
+  out <- .infosiga_standardize(raw, "sinistros")
 
   expect_identical(
     out$municipio,
@@ -32,7 +32,7 @@ test_that("unknown or missing cod_ibge leaves place names untouched", {
     cod_ibge = c("9999999", NA),
     municipio = c("ALGURES", "OUTRO LUGAR")
   )
-  out <- .infosiga_tidy_labels(raw, "sinistros")
+  out <- .infosiga_standardize(raw, "sinistros")
   expect_identical(out$municipio, c("ALGURES", "OUTRO LUGAR"))
 })
 
@@ -42,7 +42,7 @@ test_that("place-name updates preserve duplicate observation keys", {
     municipio = c("SAO PAULO", "SAO PAULO", "ALGURES", "OUTRO LUGAR")
   )
 
-  out <- .infosiga_tidy_labels(raw, "sinistros")
+  out <- .infosiga_standardize(raw, "sinistros")
 
   expect_identical(nrow(out), nrow(raw))
   expect_identical(out$municipio[1:2], c("São Paulo", "São Paulo"))
@@ -60,14 +60,14 @@ test_that("cor_veiculo merges the case and gender duplicate spellings", {
       "Vermelho"
     )
   )
-  out <- .infosiga_tidy_labels(raw, "veiculos")
+  out <- .infosiga_standardize(raw, "veiculos")
   expect_identical(
     out$cor_veiculo,
     c("Preta", "Preta", "Branca", "Branca", "Vermelha", "Vermelha")
   )
 })
 
-test_that("cor_veiculo folds liveries and flags multi-tone values", {
+test_that("cor_veiculo preserves detailed and multi-tone source values", {
   raw <- tibble::tibble(
     cor_veiculo = c(
       "BRANCA (PADRAO PM)",
@@ -77,16 +77,16 @@ test_that("cor_veiculo folds liveries and flags multi-tone values", {
       "CAMUFLADO URBANO"
     )
   )
-  out <- .infosiga_tidy_labels(raw, "veiculos")
+  out <- .infosiga_standardize(raw, "veiculos")
   expect_identical(
     out$cor_veiculo,
-    c("Branca", "Cinza", "Multicor", "Multicor", "Camuflada")
+    raw$cor_veiculo
   )
 })
 
 test_that("cor_veiculo passes unrecognised values through unchanged", {
   raw <- tibble::tibble(cor_veiculo = c("PRETA", "COR NOVA DO DETRAN", NA))
-  out <- .infosiga_tidy_labels(raw, "veiculos")
+  out <- .infosiga_standardize(raw, "veiculos")
   expect_identical(out$cor_veiculo, c("Preta", "COR NOVA DO DETRAN", NA))
 })
 
@@ -100,7 +100,7 @@ test_that("profissao is title cased with Portuguese connectives lowered", {
       "AEROVIARIO/AERONAUTA"
     )
   )
-  out <- .infosiga_tidy_labels(raw, "pessoas")
+  out <- .infosiga_standardize(raw, "pessoas")
   expect_identical(
     out$profissao,
     c(
@@ -118,47 +118,19 @@ test_that("profissao maps the source's other missing markers to NA", {
   raw <- tibble::tibble(
     profissao = c("NAO INFORMADA", "Nao informada", "PEDREIRO")
   )
-  out <- .infosiga_tidy_labels(raw, "pessoas")
+  out <- .infosiga_standardize(raw, "pessoas")
   expect_identical(out$profissao, c(NA, NA, "Pedreiro"))
 })
 
-test_that("conservacao route codes are split into their own column", {
+test_that("standardisation does not reshape conservacao", {
   raw <- tibble::tibble(
     conservacao = c("PREFEITURA", "10.03", "NOVADUTRA", "01.02", NA)
   )
-  out <- .infosiga_tidy_labels(raw, "sinistros")
-
-  expect_identical(
-    out$conservacao,
-    c("PREFEITURA", NA, "NOVADUTRA", NA, NA)
-  )
-  expect_identical(
-    out$conservacao_codigo,
-    c(NA, "10.03", NA, "01.02", NA)
-  )
+  out <- .infosiga_standardize(raw, "sinistros")
+  expect_identical(out, raw)
 })
 
-test_that("conservacao names keep their source capitalisation", {
-  # Most are brand acronyms that Title Case would corrupt into "Spmar".
-  raw <- tibble::tibble(conservacao = c("SPMAR", "TEBE", "AUTOBAN", "DNIT"))
-  out <- .infosiga_tidy_labels(raw, "sinistros")
-  expect_identical(out$conservacao, c("SPMAR", "TEBE", "AUTOBAN", "DNIT"))
-})
-
-test_that("conservacao_codigo lands immediately after conservacao", {
-  raw <- tibble::tibble(
-    administracao = "DER",
-    conservacao = "10.03",
-    circunscricao = "ESTADUAL"
-  )
-  out <- .infosiga_tidy_labels(raw, "sinistros")
-  expect_identical(
-    names(out),
-    c("administracao", "conservacao", "conservacao_codigo", "circunscricao")
-  )
-})
-
-test_that(".infosiga_tidy_labels is idempotent", {
+test_that(".infosiga_standardize is idempotent", {
   sinistros <- tibble::tibble(
     cod_ibge = c("3550308", "3543402"),
     municipio = c("SAO PAULO", "RIBEIRAO PRETO"),
@@ -173,16 +145,45 @@ test_that(".infosiga_tidy_labels is idempotent", {
     list(pessoas, "pessoas"),
     list(veiculos, "veiculos")
   )) {
-    once <- .infosiga_tidy_labels(case[[1]], case[[2]])
-    twice <- .infosiga_tidy_labels(once, case[[2]])
+    once <- .infosiga_standardize(case[[1]], case[[2]])
+    twice <- .infosiga_standardize(once, case[[2]])
     expect_identical(once, twice)
   }
 })
 
-test_that(".infosiga_tidy_labels preserves row count and rejects bad datasets", {
+test_that(".infosiga_standardize preserves dimensions and validates choices", {
   raw <- tibble::tibble(cor_veiculo = c("PRETA", "Branco", NA, "AZUL"))
-  expect_identical(nrow(.infosiga_tidy_labels(raw, "veiculos")), 4L)
-  expect_error(.infosiga_tidy_labels(raw, "carros"))
+  out <- .infosiga_standardize(raw, "veiculos")
+  expect_identical(dim(out), dim(raw))
+  expect_snapshot(.infosiga_standardize(raw, "carros"), error = TRUE)
+  expect_snapshot(
+    .infosiga_standardize(raw, "veiculos", "municipios"),
+    error = TRUE
+  )
+  expect_snapshot(
+    .infosiga_standardize(raw, "veiculos", "desconhecido"),
+    error = TRUE
+  )
+  expect_snapshot(
+    .infosiga_standardize(raw, "veiculos", c("all", "cores")),
+    error = TRUE
+  )
+})
+
+test_that("standardisations can be selected independently", {
+  raw <- tibble::tibble(
+    cod_ibge = "3550308",
+    municipio = "SAO PAULO",
+    profissao = "ADMINISTRADOR DE EMPRESAS"
+  )
+
+  municipios <- .infosiga_standardize(raw, "pessoas", "municipios")
+  profissoes <- .infosiga_standardize(raw, "pessoas", "profissoes")
+
+  expect_identical(municipios$municipio, "São Paulo")
+  expect_identical(municipios$profissao, raw$profissao)
+  expect_identical(profissoes$municipio, raw$municipio)
+  expect_identical(profissoes$profissao, "Administrador de Empresas")
 })
 
 test_that("infosiga_municipios covers every municipality exactly once", {

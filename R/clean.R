@@ -62,6 +62,59 @@
   as.Date(paste0(x, "/01"), format = "%Y/%m/%d")
 }
 
+# Warn about values outside a documented source domain. Callers preserve the
+# original column when this returns FALSE, rather than silently losing values
+# through coercion.
+.infosiga_has_known_values <- function(x, known, column) {
+  unexpected <- setdiff(unique(as.character(stats::na.omit(x))), known)
+
+  if (length(unexpected) == 0) {
+    return(TRUE)
+  }
+
+  cli::cli_warn(c(
+    "Column {.field {column}} contains unexpected source values and was left unchanged.",
+    "i" = "Expected: {.val {known}}.",
+    "i" = "Found: {.val {unexpected}}."
+  ))
+  FALSE
+}
+
+.infosiga_as_ordered <- function(x, levels, column) {
+  if (!.infosiga_has_known_values(x, levels, column)) {
+    return(x)
+  }
+
+  factor(x, levels = levels, ordered = TRUE)
+}
+
+.infosiga_as_flag <- function(x, column) {
+  if (!.infosiga_has_known_values(x, "S", column)) {
+    return(x)
+  }
+
+  !is.na(x)
+}
+
+.infosiga_as_integer <- function(x, column) {
+  has_integer_format <- is.na(x) | stringr::str_detect(x, "^[+-]?[0-9]+$")
+  converted <- suppressWarnings(as.integer(x))
+  is_representable <- is.na(x) | !is.na(converted)
+  is_valid <- has_integer_format & is_representable
+
+  if (!all(is_valid)) {
+    unexpected <- unique(x[!is_valid])
+    cli::cli_warn(c(
+      "Column {.field {column}} contains unexpected source values and was left unchanged.",
+      "i" = "Expected integer strings.",
+      "i" = "Found: {.val {unexpected}}."
+    ))
+    return(x)
+  }
+
+  converted
+}
+
 # The sinistros count columns form two independent blocks: a vehicle-count
 # block (how many of each vehicle type were involved) and a gravity-count
 # block (how many victims of each severity). Within a record a blank entry in
@@ -130,16 +183,15 @@
 # Clean and process an INFOSIGA-SP dataset
 #
 # Applies the standard processing that [read_infosiga()] performs by default
-# (`clean = TRUE`). Use this directly only when you imported a dataset with
-# `clean = FALSE` (the raw version) and want to process it afterwards.
+# (`processing = "clean"`). It receives the typed representation created by
+# [read_infosiga()] before the optional standardisation layer.
 #
 # The processing standardises missing values, fixes source formatting
 # artefacts and assigns meaningful types to columns whose published
 # representation is inconvenient (ordinal text, binary flags, year-month
 # strings). It never renames columns, recodes category labels or drops rows.
 #
-# @param data A data frame imported with [read_infosiga()] (typically with
-#   `clean = FALSE`).
+# @param data A typed INFOSIGA-SP data frame.
 # @param dataset Which dataset `data` corresponds to: `"sinistros"`,
 #   `"pessoas"` or `"veiculos"`. Determines which columns are processed.
 #
@@ -204,8 +256,8 @@
 #     pair against the bounding box of the state of Sao Paulo. Points outside
 #     the box, which are mis-encoded values and `(0, 0)` "null island"
 #     placeholders, have both coordinates set to `NA`. This affects a few
-#     percent of records and drops no rows. Use `clean = FALSE` if you need the
-#     raw coordinates.
+#     percent of records and drops no rows. Use `processing = "typed"` or
+#     `"raw"` if you need the coordinates before this validation.
 # }
 #
 # Nominal text columns (such as `municipio`, `tipo_via` or `sexo`) stay
@@ -215,7 +267,7 @@
 # enforces no bound on `idade`, so validate it yourself if your analysis is
 # sensitive to outliers.
 #
-# @seealso [read_infosiga()], which calls this function when `clean = TRUE`.
+# @seealso [read_infosiga()], which calls this function in `"clean"` mode.
 #
 # @examples
 # # Process the bundled raw sample
@@ -248,8 +300,9 @@
       )
     )
 
-  # 2. Ordinal columns become ordered factors. Values outside the known levels
-  #    (e.g. the just-removed marker) map to NA.
+  # 2. Ordinal columns become ordered factors. If the source introduces an
+  #    unexpected value, preserve that entire column and warn rather than
+  #    silently converting the new value to NA.
   factor_cols <- intersect(names(.infosiga_factor_levels), names(data))
 
   data <- data |>
@@ -257,10 +310,10 @@
       dplyr::across(
         dplyr::all_of(factor_cols),
         function(x) {
-          factor(
+          .infosiga_as_ordered(
             x,
             levels = .infosiga_factor_levels[[dplyr::cur_column()]],
-            ordered = TRUE
+            column = dplyr::cur_column()
           )
         }
       )
@@ -280,8 +333,9 @@
       dplyr::across(dplyr::all_of(ano_mes_cols), .parse_ano_mes)
     )
 
-  # 4. Crash-type flags ("S"/empty) become logical. tp_sinistro_primario is a
-  #    categorical column, not a flag, so it is excluded.
+  # 4. Crash-type flags ("S"/empty) become logical. Unexpected non-missing
+  #    tokens leave the entire column unchanged and produce a warning.
+  #    tp_sinistro_primario is categorical, not a flag, so it is excluded.
   flag_cols <- data |>
     dplyr::select(
       dplyr::starts_with("tp_sinistro_") & dplyr::where(is.character),
@@ -291,7 +345,10 @@
 
   data <- data |>
     dplyr::mutate(
-      dplyr::across(dplyr::all_of(flag_cols), \(x) !is.na(x) & x == "S")
+      dplyr::across(
+        dplyr::all_of(flag_cols),
+        \(x) .infosiga_as_flag(x, dplyr::cur_column())
+      )
     )
 
   # 5. Count columns (sinistros). A blank entry inside a populated count block
@@ -301,7 +358,8 @@
   data <- .infosiga_fill_count_block(data, .infosiga_qtd_blocks$veiculos)
   data <- .infosiga_fill_count_block(data, .infosiga_qtd_blocks$gravidade)
 
-  # 6. tempo_sinistro_obito (days from crash to death) becomes integer.
+  # 6. tempo_sinistro_obito (days from crash to death) becomes integer. Preserve
+  #    the source column and warn if any non-missing value is not an integer.
   if (
     "tempo_sinistro_obito" %in%
       names(data) &&
@@ -309,9 +367,10 @@
   ) {
     data <- data |>
       dplyr::mutate(
-        tempo_sinistro_obito = suppressWarnings(as.integer(
-          data$tempo_sinistro_obito
-        ))
+        tempo_sinistro_obito = .infosiga_as_integer(
+          data$tempo_sinistro_obito,
+          "tempo_sinistro_obito"
+        )
       )
   }
 

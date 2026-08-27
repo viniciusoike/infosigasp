@@ -1,10 +1,10 @@
-# Opinionated label tidying -----------------------------------------------
+# Label harmonisation -----------------------------------------------------
 #
-# Everything in this file is *opt-in* and deliberately separate from
+# Everything in this file is opt-in and deliberately separate from
 # .infosiga_clean(), which stays faithful to the published categories. Users
 # reproducing a DETRAN-SP figure need the source labels verbatim; users doing
-# their own analysis usually want labels that group and plot correctly. These
-# helpers serve the second case only.
+# their own analysis usually want equivalent labels to group correctly. These
+# helpers perform conservative harmonisation without analytical recoding.
 #
 # Accented literals are built with intToUtf8() so the source file stays pure
 # ASCII and portable, matching the convention in clean.R.
@@ -60,10 +60,9 @@
 
 # Canonical vehicle colours. The source carries the same colour under two
 # spellings (an upper-case stream and a title-case one, with inconsistent
-# gender: "PRETA" alongside "Preta", "BRANCA" alongside "Branco"), plus a tail
-# of fleet liveries. Solid-colour liveries fold into their base colour, since
-# the column answers "what colour was the vehicle"; genuinely two- or
-# three-tone values become "Multicor".
+# gender: "PRETA" alongside "Preta", "BRANCA" alongside "Branco"). Fleet
+# liveries and multi-tone values pass through unchanged: grouping them would be
+# an analytical recode rather than label harmonisation.
 .cor_veiculo_map <- c(
   "AMARELA" = "Amarela",
   "Amarelo" = "Amarela",
@@ -97,21 +96,6 @@
   "Verde" = "Verde",
   "VERMELHA" = "Vermelha",
   "Vermelho" = "Vermelha",
-  # Single-colour official liveries -> the underlying colour.
-  "BRANCA (PADRAO CPAMB" = "Branca",
-  "BRANCA (PADRAO CPRV)" = "Branca",
-  "BRANCA (PADRAO PM)" = "Branca",
-  "BRANCA PADRAO CPTRAN" = "Branca",
-  "CINZA BANDEIRANTE" = "Cinza",
-  "CINZA PM (PADRAO ROT" = "Cinza",
-  # Multi-tone liveries and camouflage.
-  "BRANCA/CINZA BANDEIR" = "Multicor",
-  "BRANCA/CINZA ESCURO" = "Multicor",
-  "BRANCA/VERMELHA" = "Multicor",
-  "CIN/VER/PRE" = "Multicor",
-  "VERMELHA/PRETA" = "Multicor",
-  "CAMUFLADO RURAL" = "Camuflada",
-  "CAMUFLADO URBANO" = "Camuflada",
   # Markers the source spells differently from "NAO DISPONIVEL". Built with
   # intToUtf8() so this file stays ASCII: 0x00c7 is C-cedilla, 0x00c3 A-tilde,
   # 0x00e3 a-tilde.
@@ -123,10 +107,11 @@ names(.cor_veiculo_map)[length(.cor_veiculo_map) - 1:0] <- c(
   paste0("N", intToUtf8(0x00e3), "o Informado")
 )
 
-# Missing-value markers that .infosiga_clean() leaves alone because they are not
-# the documented "NAO DISPONIVEL" sentinel. Compared after accent folding, so
-# only one spelling of each is needed here.
-.extra_na_markers <- c(
+# Missing-value markers observed specifically in profissao. Keeping this rule
+# column-specific avoids treating the same literal as missing in another domain
+# without evidence. Compared after accent folding, so only one spelling of each
+# is needed here.
+.profissao_na_markers <- c(
   "NAO INFORMADO",
   "NAO INFORMADA",
   "NAO IDENTIFICADO",
@@ -178,48 +163,44 @@ names(.cor_veiculo_map)[length(.cor_veiculo_map) - 1:0] <- c(
 
 # TRUE where a value is one of the source's assorted missing-value markers,
 # compared case- and accent-insensitively.
-.matches_na_marker <- function(x) {
+.matches_profissao_na_marker <- function(x) {
   !is.na(x) &
     .ascii_fold(stringr::str_to_upper(stringr::str_trim(x))) %in%
-      .ascii_fold(.extra_na_markers)
+      .ascii_fold(.profissao_na_markers)
 }
 
-# A conservacao value that is only digits and dots is a route code ("10.03"),
-# not the name of the body that maintains the road.
-.is_route_code <- function(x) {
-  !is.na(x) & stringr::str_detect(x, "^[0-9]+(\\.[0-9]+)?$")
-}
-
-# Tidy the category labels of an INFOSIGA-SP dataset
+# Standardise selected labels in an INFOSIGA-SP dataset
 #
-# An **opt-in** companion to [.infosiga_clean()] that rewrites category labels
-# into a consistent, presentation-ready form: Title Case, accents restored
-# where an authoritative spelling exists, duplicate categories merged, and the
-# source's assorted "not informed" strings mapped to `NA`.
+# An opt-in companion to [.infosiga_clean()] that rewrites selected labels
+# into a consistent form: Title Case, accents restored where an authoritative
+# spelling exists, duplicate categories merged, and known "not informed"
+# strings mapped to `NA`. It does not aggregate categories or reshape fields.
 #
 # It stays separate from [.infosiga_clean()], which never touches labels. Use
-# `.infosiga_clean()` (or `read_infosiga(clean = TRUE)`) when you need
+# `.infosiga_clean()` (or `read_infosiga(processing = "clean")`) when you need
 # categories exactly as DETRAN-SP publishes them, for example to reproduce an
-# official figure. Use `.infosiga_tidy_labels()` on top of that when you are
-# doing your own analysis and want labels that group, sort and plot sensibly.
+# official figure. Use `.infosiga_standardize()` on top of that when you need
+# equivalent labels to group consistently.
 #
 # @param data A data frame from [read_infosiga()] or [.infosiga_clean()].
 # @param dataset Which dataset `data` corresponds to: `"sinistros"`,
 #   `"pessoas"` or `"veiculos"`. Determines which columns are rewritten.
+# @param standardize Character vector selecting the harmonisations to apply, or
+#   `"all"` for every harmonisation applicable to `dataset`.
 #
-# @return A [tibble][tibble::tibble] with the same rows as `data`. Columns are
-#   unchanged except as described in *Details*; `sinistros` additionally gains
-#   a `conservacao_codigo` column.
+# @return A [tibble][tibble::tibble] with the same rows and columns as `data`,
+#   with the label changes described in *Details*.
 #
 # @details
 # \subsection{Place names (sinistros, pessoas)}{
 # The source publishes `municipio` unaccented and upper case (`"SAO PAULO"`)
 # but `regiao_administrativa` with its accents intact, so neither can be
-# joined to other Brazilian data as published. Both take the official IBGE
-# spelling, matched on `cod_ibge` and never on the name. Nine municipalities
-# differ between the two sources: eight apostrophes that INFOSIGA renders as
-# spaces (`"SANTA BARBARA D OESTE"`), plus one genuine spelling difference,
-# IBGE's authoritative `"Sao Luiz do Paraitinga"` against INFOSIGA's
+# joined to other Brazilian data as published. Municipality names take the
+# official IBGE spelling, matched on `cod_ibge` and never on the name;
+# administrative-region names retain INFOSIGA's classification with consistent
+# accents and case. Nine municipality names differ between INFOSIGA and IBGE:
+# eight apostrophes that INFOSIGA renders as spaces (`"SANTA BARBARA D OESTE"`),
+# plus IBGE's authoritative `"Sao Luiz do Paraitinga"` against INFOSIGA's
 # `"SAO LUIS DO PARAITINGA"`. See [infosiga_municipios].
 # }
 #
@@ -228,11 +209,10 @@ names(.cor_veiculo_map)[length(.cor_veiculo_map) - 1:0] <- c(
 # colours, because two upstream systems coexist in every year: an upper-case
 # stream (`"PRETA"`, `"BRANCA"`) and a title-case one with different gender
 # agreement (`"Preta"`, `"Branco"`). Note that `toupper()` alone will *not*
-# merge these. Values map onto a canonical set. Single-colour official liveries
-# (`"BRANCA (PADRAO PM)"`) fold into the base colour, two- and three-tone
-# values (`"CIN/VER/PRE"`) become `"Multicor"`, and camouflage becomes
-# `"Camuflada"`. Unrecognised values pass through unchanged, so a colour the
-# mapping does not know is never dropped.
+# merge these. Values map onto a canonical set only when they identify a basic
+# colour.
+# Liveries, multi-tone colours and unrecognised values pass through unchanged,
+# so harmonisation never discards a more detailed source category.
 # }
 #
 # \subsection{Occupation (pessoas)}{
@@ -244,19 +224,8 @@ names(.cor_veiculo_map)[length(.cor_veiculo_map) - 1:0] <- c(
 # remain.
 # }
 #
-# \subsection{Road maintenance (sinistros)}{
-# `conservacao` mixes two vocabularies: the name of the body that maintains
-# the road (`"PREFEITURA"`, `"NOVADUTRA"`) and bare route codes (`"10.03"`),
-# the latter covering tens of thousands of rows. The codes move into a new
-# `conservacao_codigo` column, so `conservacao` holds names only.
-#
-# Those names keep their source capitalisation, unlike every other column here.
-# Most are brands or acronyms (`"SPMAR"`, `"TEBE"`, `"CART"`, `"AUTOBAN"`,
-# `"DNIT"`), and Title Case would corrupt them into `"Spmar"` and `"Tebe"`.
-# }
-#
-# Every step is idempotent: calling `.infosiga_tidy_labels()` on an
-# already-tidied dataset changes nothing.
+# Every step is idempotent: calling `.infosiga_standardize()` on an
+# already-standardised dataset changes nothing.
 #
 # @seealso [.infosiga_clean()] for the faithful processing this builds on, and
 #   [infosiga_municipios] for the municipality lookup.
@@ -266,22 +235,67 @@ names(.cor_veiculo_map)[length(.cor_veiculo_map) - 1:0] <- c(
 #   system.file("extdata", "veiculos_sample.csv", package = "infosigasp"),
 #   delim = ";", show_col_types = FALSE
 # )
-# tidied <- tidy_infosiga_labels(.infosiga_clean(raw, "veiculos"), "veiculos")
-# sort(unique(tidied$cor_veiculo))
-# @export
-.infosiga_tidy_labels <- function(
+# standardised <- .infosiga_standardize(
+#   .infosiga_clean(raw, "veiculos"),
+#   "veiculos",
+#   "cores"
+# )
+# sort(unique(standardised$cor_veiculo))
+.infosiga_standardize <- function(
   data,
   dataset = c(
     "sinistros",
     "pessoas",
     "veiculos"
-  )
+  ),
+  standardize = "all"
 ) {
   dataset <- match.arg(dataset)
+  applicable <- list(
+    sinistros = "municipios",
+    pessoas = c("municipios", "profissoes"),
+    veiculos = "cores"
+  )
+  allowed <- unique(unlist(applicable, use.names = FALSE))
+
+  if (
+    !is.character(standardize) || length(standardize) == 0 || anyNA(standardize)
+  ) {
+    cli::cli_abort(
+      "{.arg standardize} must be a non-empty character vector or {.val all}."
+    )
+  }
+
+  unknown <- setdiff(standardize, c(allowed, "all"))
+  if (length(unknown) > 0) {
+    cli::cli_abort(c(
+      "Unknown {.arg standardize} value{?s}: {.val {unknown}}.",
+      "i" = "Choose from {.val {allowed}} or {.val all}."
+    ))
+  }
+
+  if ("all" %in% standardize && length(unique(standardize)) > 1) {
+    cli::cli_abort(
+      "{.val all} cannot be combined with individual {.arg standardize} values."
+    )
+  }
+
+  if ("all" %in% standardize) {
+    standardize <- applicable[[dataset]]
+  }
+
+  unavailable <- setdiff(standardize, applicable[[dataset]])
+  if (length(unavailable) > 0) {
+    cli::cli_abort(c(
+      "Some requested standardisations are not available for {.val {dataset}}: {.val {unavailable}}.",
+      "i" = "Available for this dataset: {.val {applicable[[dataset]]}}."
+    ))
+  }
+  standardize <- unique(standardize)
 
   # Place names, matched on cod_ibge rather than on the name itself. Rows whose
   # code is missing or unknown keep whatever they already had.
-  if ("cod_ibge" %in% names(data)) {
+  if ("municipios" %in% standardize && "cod_ibge" %in% names(data)) {
     lookup <- infosiga_municipios
     place_cols <- intersect(
       c("municipio", "regiao_administrativa"),
@@ -301,7 +315,7 @@ names(.cor_veiculo_map)[length(.cor_veiculo_map) - 1:0] <- c(
     }
   }
 
-  if (dataset == "veiculos" && "cor_veiculo" %in% names(data)) {
+  if ("cores" %in% standardize && "cor_veiculo" %in% names(data)) {
     data <- data |>
       dplyr::mutate(
         cor_veiculo = dplyr::replace_values(
@@ -312,51 +326,18 @@ names(.cor_veiculo_map)[length(.cor_veiculo_map) - 1:0] <- c(
       )
   }
 
-  if (dataset == "pessoas" && "profissao" %in% names(data)) {
+  if ("profissoes" %in% standardize && "profissao" %in% names(data)) {
     data <- data |>
       dplyr::mutate(
         profissao = dplyr::replace_when(
           data$profissao,
-          .matches_na_marker(data$profissao) ~ NA_character_
+          .matches_profissao_na_marker(data$profissao) ~ NA_character_
         )
       )
 
     data <- data |>
       dplyr::mutate(
         profissao = .pt_title_case(data$profissao)
-      )
-  }
-
-  if (dataset == "sinistros" && "conservacao" %in% names(data)) {
-    if (!"conservacao_codigo" %in% names(data)) {
-      data <- data |>
-        dplyr::mutate(conservacao_codigo = NA_character_)
-    }
-
-    data <- data |>
-      dplyr::mutate(
-        conservacao = dplyr::replace_when(
-          data$conservacao,
-          .matches_na_marker(data$conservacao) ~ NA_character_
-        )
-      )
-
-    is_route_code <- .is_route_code(data$conservacao)
-
-    data <- data |>
-      dplyr::mutate(
-        conservacao_codigo = dplyr::replace_when(
-          data$conservacao_codigo,
-          is_route_code ~ data$conservacao
-        ),
-        conservacao = dplyr::replace_when(
-          data$conservacao,
-          is_route_code ~ NA_character_
-        )
-      ) |>
-      dplyr::relocate(
-        dplyr::all_of("conservacao_codigo"),
-        .after = dplyr::all_of("conservacao")
       )
   }
 

@@ -1,4 +1,4 @@
-test_that("clean = TRUE produces ordered factors with the correct order", {
+test_that("clean processing produces ordered factors with the correct order", {
   local_infosiga_fixture()
 
   sin <- read_infosiga("sinistros", quiet = TRUE)
@@ -33,10 +33,10 @@ test_that("ordering is semantically meaningful, not alphabetical", {
   expect_true(max(peo$gravidade_lesao, na.rm = TRUE) == "FATAL")
 })
 
-test_that("clean = TRUE maps the 'NAO DISPONIVEL' marker to NA", {
+test_that("clean processing maps the 'NAO DISPONIVEL' marker to NA", {
   local_infosiga_fixture()
   clean <- read_infosiga("pessoas", quiet = TRUE)
-  raw <- read_infosiga("pessoas", clean = FALSE, quiet = TRUE)
+  raw <- read_infosiga("pessoas", processing = "raw", quiet = TRUE)
 
   # The raw fixture contains the marker; the cleaned version must not.
   expect_true(any(raw$gravidade_lesao == "NAO DISPONIVEL"))
@@ -45,13 +45,14 @@ test_that("clean = TRUE maps the 'NAO DISPONIVEL' marker to NA", {
   ))
 })
 
-test_that("clean = FALSE returns raw character columns", {
+test_that("raw processing preserves source text and empty fields", {
   local_infosiga_fixture()
-  raw <- read_infosiga("sinistros", clean = FALSE, quiet = TRUE)
-  expect_type(raw$dia_da_semana, "character")
-  expect_type(raw$turno, "character")
-  expect_type(raw$ano_mes_sinistro, "character")
-  expect_type(raw$tp_sinistro_atropelamento, "character")
+  raw <- read_infosiga("pessoas", processing = "raw", quiet = TRUE)
+
+  expect_identical(all(vapply(raw, is.character, logical(1))), TRUE)
+  expect_gt(sum(raw == "", na.rm = TRUE), 0)
+  expect_identical(any(grepl(" $", raw$nacionalidade)), TRUE)
+  expect_identical(any(raw$gravidade_lesao == "NAO DISPONIVEL"), TRUE)
 })
 
 test_that("clean trims whitespace and catches space-padded markers", {
@@ -121,6 +122,29 @@ test_that("clean converts tempo_sinistro_obito to integer", {
   local_infosiga_fixture()
   peo <- read_infosiga("pessoas", quiet = TRUE)
   expect_type(peo$tempo_sinistro_obito, "integer")
+})
+
+test_that("unexpected ordinal values are preserved with a warning", {
+  raw <- tibble::tibble(turno = c("MANHA", "NOVO TURNO"))
+
+  expect_snapshot(out <- .infosiga_clean(raw, "sinistros"))
+  expect_identical(out$turno, raw$turno)
+})
+
+test_that("unexpected flag values are preserved with a warning", {
+  raw <- tibble::tibble(tp_sinistro_choque = c("S", "VALOR NOVO", NA))
+
+  expect_snapshot(out <- .infosiga_clean(raw, "sinistros"))
+  expect_identical(out$tp_sinistro_choque, raw$tp_sinistro_choque)
+})
+
+test_that("invalid integer strings are preserved with a warning", {
+  raw <- tibble::tibble(
+    tempo_sinistro_obito = c("1", "1.5", "ERRO", "999999999999", NA)
+  )
+
+  expect_snapshot(out <- .infosiga_clean(raw, "pessoas"))
+  expect_identical(out$tempo_sinistro_obito, raw$tempo_sinistro_obito)
 })
 
 test_that("clean strips the trailing '.0' artefact from house numbers", {

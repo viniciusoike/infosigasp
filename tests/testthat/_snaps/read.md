@@ -1,3 +1,36 @@
+# invalid arguments are rejected
+
+    Code
+      read_infosiga("foo", quiet = TRUE)
+    Condition
+      Error in `match.arg()`:
+      ! 'arg' should be one of "sinistros", "pessoas", "veiculos"
+
+---
+
+    Code
+      read_infosiga("sinistros", processing = "other", quiet = TRUE)
+    Condition
+      Error in `match.arg()`:
+      ! 'arg' should be one of "clean", "typed", "raw"
+
+---
+
+    Code
+      read_infosiga("sinistros", refresh = NA, quiet = TRUE)
+    Condition
+      Error in `read_infosiga()`:
+      ! `refresh` must be `TRUE` or `FALSE`.
+
+---
+
+    Code
+      read_infosiga("sinistros", processing = "typed", standardize = "municipios",
+        quiet = TRUE)
+    Condition
+      Error in `read_infosiga()`:
+      ! `standardize` requires the "clean" processing mode.
+
 # the first interactive download asks for confirmation
 
     Code
