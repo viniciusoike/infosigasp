@@ -8,10 +8,10 @@ knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
 
 This article reproduces the official INFOSIGA-SP data dictionary
 (**v1.5, 2026-06-16**), published by DETRAN-SP, for the three datasets
-returned by `read_infosiga()`: `sinistros` (crash events), `pessoas`
-(victims) and `veiculos` (vehicles). Field names, descriptions and allowed
-values appear here verbatim; `dictionary_infosiga()` downloads the original
-PDFs, which are in Portuguese.
+returned by `read_infosiga()`: `sinistros` (confirmed crashes and
+notifications), `pessoas` (victims) and `veiculos` (vehicles). Field names,
+descriptions and allowed values appear here verbatim; `dictionary_infosiga()`
+downloads the original PDFs, which are in Portuguese.
 
 Three notes on reading the tables.
 
@@ -246,9 +246,9 @@ dict_table <- function(dict) {
 }
 ```
 
-## Sinistros (crash events)
+## Sinistros (occurrence records)
 
-One row per recorded crash event, keyed by `id_sinistro`
+One row per confirmed crash or notification, keyed by `id_sinistro`
 (`r nrow(dict_sinistros)` variables).
 
 ```{r sinistros}

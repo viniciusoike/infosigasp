@@ -44,6 +44,8 @@ INFOSIGA-SP publishes three datasets: `sinistros` (occurrence records),
 `pessoas` (victims) and `veiculos` (vehicles).
 
 Join the datasets on `id_sinistro`, and on `id_veiculo` where present.
+`read_infosiga()` imports all available years; filter `ano_sinistro`
+after import when you need a shorter period.
 
 ## Usage
 
@@ -77,11 +79,13 @@ Raw mode is a lossless **tabular** import, not a byte-for-byte copy: the
 package still decodes Latin-1 to UTF-8, parses the CSV structure and
 combines the period files.
 
-Clean mode trims text, maps `"NAO DISPONIVEL"` to `NA`, orders ordinal
-columns, converts crash-type flags to logical, fills blank `qtd_*`
-entries with zero inside populated count blocks, and validates
-coordinate pairs against a bounding box around São Paulo state.
-`?read_infosiga` documents the complete pipeline.
+Clean mode trims text, maps `"NAO DISPONIVEL"` to `NA`, parses
+`ano_mes_*` as first-of-month dates, orders ordinal columns, converts
+crash-type flags to logical, fills blank `qtd_*` entries with zero
+inside populated count blocks, removes export-only trailing `".0"`
+values from `numero_logradouro`, and validates coordinate pairs against
+a bounding box around São Paulo state. It does not rename columns,
+harmonize nominal labels or drop rows.
 
 ``` r
 levels(sinistros$dia_da_semana)
@@ -96,6 +100,11 @@ levels(vitimas$gravidade_lesao)
 raw <- read_infosiga("sinistros", processing = "raw")
 typed <- read_infosiga("sinistros", processing = "typed")
 ```
+
+Use `"raw"` to audit the source representation, `"typed"` when you want
+useful classes without the cleaning rules, and the default `"clean"`
+mode for most analysis. Parsing issues are available in
+`attr(x, "problems")` in every mode.
 
 Before converting a closed-domain column, clean mode checks its observed
 values. If it encounters a new ordinal level, flag token or integer
@@ -138,10 +147,12 @@ sinistros <- read_infosiga("sinistros", refresh = TRUE)
 ### Data dictionary
 
 `dictionary_infosiga()` downloads the official field-by-field
-documentation (PDF, in Portuguese).
+documentation (one PDF per dataset, in Portuguese) and returns the local
+file paths. Supply a dataset name to retrieve only its dictionary.
 
 ``` r
 dictionary_infosiga()
+dictionary_infosiga("sinistros")
 ```
 
 ## Example

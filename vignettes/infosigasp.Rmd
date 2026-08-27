@@ -23,7 +23,7 @@ knitr::opts_chunk$set(
 ## Overview
 
 [INFOSIGA-SP](https://infosiga.detran.sp.gov.br/) is the São Paulo State
-Traffic Accident Information and Management System, maintained by DETRAN-SP.
+Traffic Incident Information and Management System, maintained by DETRAN-SP.
 It publishes open occurrence records from 2015 onward. Coverage and definitions
 vary over time: 2015--2018 covers fatal crashes only, and the events table also
 contains notifications that have not yet been confirmed as crashes.
@@ -85,6 +85,13 @@ Every mode decodes Latin-1 to UTF-8, parses the CSV structure and combines the
 period files. Raw mode is therefore a lossless tabular representation rather
 than a byte-for-byte copy of the source archive.
 
+Choose the mode according to the task: use `"raw"` to audit source values,
+`"typed"` to parse documented classes while retaining source labels and
+padding, and the default `"clean"` mode for most analysis. All modes retain
+import diagnostics in `attr(x, "problems")`; typed and clean modes replace
+values that fail their declared parser with `NA`, while raw mode preserves the
+field text.
+
 ```{r processing, eval = isTRUE(getOption("infosigasp.run_live"))}
 raw <- read_infosiga("sinistros", processing = "raw")
 typed <- read_infosiga("sinistros", processing = "typed")
@@ -130,6 +137,10 @@ Before converting an ordinal, flag or integer column, clean mode validates its
 observed representations. If it finds an unexpected value, it preserves the
 entire column and warns; the class can therefore remain character after an
 upstream change.
+
+These safeguards apply to closed-domain conversions, not to every parsed
+column. For example, a malformed numeric coordinate can become `NA` during the
+typed import and will be listed in `attr(x, "problems")`.
 
 ```{r clean, eval = isTRUE(getOption("infosigasp.run_live"))}
 sinistros <- read_infosiga("sinistros")
@@ -321,6 +332,14 @@ with the latest available version and return the requested dataset.
 sinistros <- read_infosiga("sinistros", refresh = TRUE)
 ```
 
+`read_infosiga()` always imports every available year. Filter the returned
+tibble when you need a shorter period.
+
+```{r filter-years, eval = isTRUE(getOption("infosigasp.run_live"))}
+recent <- read_infosiga("sinistros") |>
+  filter(ano_sinistro >= 2022)
+```
+
 You can point the cache somewhere else for a session (or permanently via your
 `.Rprofile`) with the `infosigasp.cache_dir` option.
 
@@ -332,11 +351,13 @@ options(infosigasp.cache_dir = "~/data/infosiga")
 
 INFOSIGA-SP distributes a field-by-field data dictionary (PDF, in Portuguese).
 `dictionary_infosiga()` downloads it and returns the paths to the extracted
-files.
+files. Pass `"sinistros"`, `"pessoas"` or `"veiculos"` to return one PDF.
 
 ```{r dictionary, eval = isTRUE(getOption("infosigasp.run_live"))}
 pdfs <- dictionary_infosiga()
 basename(pdfs)
+
+sinistros_pdf <- dictionary_infosiga("sinistros")
 ```
 
 ## Citing the data
