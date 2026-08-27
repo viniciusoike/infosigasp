@@ -36,6 +36,19 @@ test_that("unknown or missing cod_ibge leaves place names untouched", {
   expect_identical(out$municipio, c("ALGURES", "OUTRO LUGAR"))
 })
 
+test_that("place-name updates preserve duplicate observation keys", {
+  raw <- tibble::tibble(
+    cod_ibge = c("3550308", "3550308", "9999999", NA),
+    municipio = c("SAO PAULO", "SAO PAULO", "ALGURES", "OUTRO LUGAR")
+  )
+
+  out <- .infosiga_tidy_labels(raw, "sinistros")
+
+  expect_identical(nrow(out), nrow(raw))
+  expect_identical(out$municipio[1:2], c("São Paulo", "São Paulo"))
+  expect_identical(out$municipio[3:4], raw$municipio[3:4])
+})
+
 test_that("cor_veiculo merges the case and gender duplicate spellings", {
   raw <- tibble::tibble(
     cor_veiculo = c(

@@ -25,12 +25,13 @@ Depends:
     R (>= 4.1.0)
 Imports:
     cli,
+    dplyr (>= 1.2.0),
     readr (>= 2.0.0),
+    stringr,
     tibble,
     tools,
     utils
 Suggests:
-    dplyr,
     ggplot2,
     knitr,
     rmarkdown,

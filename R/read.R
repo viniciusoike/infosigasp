@@ -220,10 +220,11 @@ read_infosiga <- function(
     )
   })
 
-  out <- if (length(parts) == 1) parts[[1]] else do.call(rbind, parts)
+  out <- dplyr::bind_rows(parts)
 
   if (!is.null(year) && "ano_sinistro" %in% names(out)) {
-    out <- out[out$ano_sinistro %in% year, , drop = FALSE]
+    out <- out |>
+      dplyr::filter(out$ano_sinistro %in% year)
   }
 
   out <- tibble::as_tibble(out)
@@ -275,5 +276,5 @@ read_infosiga <- function(
 .archive_members <- function(zip_path, dataset) {
   listing <- utils::unzip(zip_path, list = TRUE)
   pattern <- .infosiga_members(dataset)
-  grep(pattern, listing$Name, value = TRUE)
+  stringr::str_subset(listing$Name, pattern)
 }

@@ -52,48 +52,12 @@ dictionary_infosiga <- function(
   tmp <- tempfile(fileext = ".zip")
   on.exit(unlink(tmp), add = TRUE)
 
-  # Download to a tempfile and validate the archive's ZIP magic bytes before
-  # extracting, mirroring the data-archive downloader. A portal that serves an
-  # HTML error page (with a 200 status), or an unreachable mirror, then falls
-  # through to the next source instead of leaving junk in the cache directory.
-  ok <- FALSE
-  for (i in seq_along(urls)) {
-    url <- urls[[i]]
-    if (!quiet) {
-      action <- if (i == 1L) {
-        "Downloading data dictionary from"
-      } else {
-        "Previous source failed; trying mirror"
-      }
-      cli::cli_alert_info("{action} {.url {url}}")
-    }
-
-    downloaded <- tryCatch(
-      {
-        utils::download.file(url, destfile = tmp, mode = "wb", quiet = quiet)
-        TRUE
-      },
-      error = function(e) {
-        if (!quiet) {
-          cli::cli_alert_warning(
-            "Source {.url {url}} failed: {conditionMessage(e)}"
-          )
-        }
-        FALSE
-      }
-    )
-
-    if (isTRUE(downloaded) && .infosiga_is_zip(tmp)) {
-      ok <- TRUE
-      break
-    }
-    if (isTRUE(downloaded) && !quiet) {
-      cli::cli_alert_warning(
-        "Source {.url {url}} did not return a valid ZIP archive."
-      )
-    }
-    unlink(tmp)
-  }
+  ok <- .infosiga_try_zip_sources(
+    urls,
+    destfile = tmp,
+    quiet = quiet,
+    first_action = "Downloading data dictionary from"
+  )
 
   if (!ok) {
     cli::cli_abort(c(
