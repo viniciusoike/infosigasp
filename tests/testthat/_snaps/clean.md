@@ -36,3 +36,4 @@
       ! Column tempo_sinistro_obito contains unexpected source values and was left unchanged.
       i Expected integer strings.
       i Found: "1.5", "ERRO", and "999999999999".
+

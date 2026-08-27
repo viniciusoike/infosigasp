@@ -31,3 +31,4 @@
     Condition
       Error in `.infosiga_standardize()`:
       ! "all" cannot be combined with individual `standardize` values.
+
