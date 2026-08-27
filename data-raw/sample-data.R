@@ -9,7 +9,7 @@
 
 library(infosigasp)
 
-zip_path <- infosiga_download(overwrite = TRUE)
+zip_path <- .infosiga_download(refresh = TRUE)
 
 work <- tempfile("infosiga_raw_")
 dir.create(work)
@@ -29,7 +29,11 @@ for (d in datasets) {
 
   # UTF-8 sample of the most recent period file for inst/extdata (100 rows).
   recent <- sort(members, decreasing = TRUE)[1]
-  recent_lines <- readLines(file.path(work, recent), n = 101, encoding = "latin1")
+  recent_lines <- readLines(
+    file.path(work, recent),
+    n = 101,
+    encoding = "latin1"
+  )
   recent_utf8 <- iconv(recent_lines, from = "latin1", to = "UTF-8")
   writeLines(recent_utf8, file.path(extdata, paste0(d, "_sample.csv")))
 

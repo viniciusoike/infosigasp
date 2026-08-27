@@ -1,8 +1,8 @@
 #' Import an INFOSIGA-SP dataset
 #'
 #' Downloads (if necessary) and imports one of the three INFOSIGA-SP datasets
-#' as a tidy tibble. The source archive is cached locally, so the first call
-#' triggers a download and subsequent calls read from disk.
+#' as a tidy tibble. The first interactive call asks before downloading about
+#' 120 MB to the user's local cache; subsequent calls read from disk.
 #'
 #' @param dataset Which dataset to import.
 #'   \describe{
@@ -10,25 +10,26 @@
 #'     \item{`"pessoas"`}{Victims / people involved (one row per person).}
 #'     \item{`"veiculos"`}{Vehicles involved (one row per vehicle).}
 #'   }
-#' @param clean Logical. If `TRUE` (default), return a processed dataset. The
-#'   processing trims text, maps the `"NAO DISPONIVEL"` marker to `NA`, makes
-#'   ordinal columns ordered factors, makes the crash-type flags logical and
-#'   voids impossible coordinates; see [clean_infosiga()] for the full list of
-#'   steps. If `FALSE`, return the raw data exactly as published, with all text
-#'   columns as character vectors.
 #' @param year Optional integer vector used to filter rows by year of the
 #'   crash (`ano_sinistro`). If `NULL` (default), all available years are
 #'   returned. For example, `year = 2020:2023`.
-#' @param download_if_missing Logical. If `TRUE` (default), download the
-#'   archive when it is not already cached. If `FALSE` and the archive is
-#'   missing, an informative error is raised.
+#' @param clean Logical. If `TRUE` (default), return a processed dataset:
+#'   text is trimmed, the `"NAO DISPONIVEL"` marker becomes `NA`, ordinal
+#'   columns become ordered factors, crash-type flags become logical, and
+#'   impossible coordinates become `NA`. If `FALSE`, return the raw data
+#'   exactly as published, with all text columns as character vectors.
+#' @param labels Logical. If `TRUE`, additionally standardise category labels
+#'   for analysis and presentation. This restores authoritative place-name
+#'   spellings, applies consistent title case, merges duplicate vehicle-colour
+#'   categories and separates road-maintenance codes. Requires `clean = TRUE`.
+#' @param refresh Logical. If `TRUE`, download the latest available source data
+#'   before reading. If `FALSE` (default), reuse the copy in the local
+#'   `infosigasp` cache, downloading it only when it is missing.
 #' @param quiet Logical. If `FALSE` (default), report progress.
-#' @param ... Additional arguments passed to [infosiga_download()] (for
-#'   example `overwrite = TRUE` to force a refresh).
 #'
 #' @return A [tibble][tibble::tibble] with one row per record. The columns
 #'   keep the original INFOSIGA-SP names (in Portuguese); see the package data
-#'   dictionary via [infosiga_dictionary()]. The three datasets can be joined
+#'   dictionary via [dictionary_infosiga()]. The three datasets can be joined
 #'   on `id_sinistro` (and `id_veiculo`, where present).
 #'
 #' @details
@@ -39,8 +40,8 @@
 #' archive (2015-2021 and 2022 onward); they are read and row-bound
 #' transparently.
 #'
-#' By default (`clean = TRUE`) the result is then processed by
-#' [clean_infosiga()]: text columns are whitespace-trimmed, the
+#' By default (`clean = TRUE`) the result is then processed by the package's
+#' internal cleaning step: text columns are whitespace-trimmed, the
 #' `"NAO DISPONIVEL"` ("not available") marker becomes `NA`, ordinal columns
 #' (`dia_da_semana`, `turno`, `gravidade_lesao`, the age bands) become
 #' **ordered factors**, the `ano_mes_*` year-month strings are parsed to
@@ -48,9 +49,9 @@
 #' **logical**, blank `qtd_*` counts inside an otherwise-filled block become
 #' `0`, `tempo_sinistro_obito` becomes **integer**, and
 #' `latitude`/`longitude` values outside the bounding box of Sao Paulo state
-#' become `NA`. See [clean_infosiga()] for the complete, ordered list. Pass
-#' `clean = FALSE` to obtain the raw data exactly as published, with every text
-#' column kept as a character vector and `"NAO DISPONIVEL"` and the source's
+#' become `NA`. Pass `clean = FALSE` to obtain the raw data exactly as
+#' published, with every text column kept as a character vector and
+#' `"NAO DISPONIVEL"` and the source's
 #' fixed-width whitespace padding preserved verbatim.
 #'
 #' A small fraction of rows in the source contain data-quality issues (for
@@ -103,7 +104,7 @@
 #'     answers; pick one and state it. The `qtd_gravidade_*` columns, by
 #'     contrast, agree with the `pessoas` row counts for every crash.}
 #'   \item{**Coordinate availability varies sharply by year.**}{After the
-#'     bounding-box validation described in [clean_infosiga()], nearly every
+#'     bounding-box validation described above, nearly every
 #'     crash in the middle years of the series has usable coordinates, against a
 #'     materially smaller share in the earliest and the most recent years.
 #'     Mapped subsets are therefore not a uniform sample over time.}
@@ -115,8 +116,7 @@
 #' The figures above describe the 2026 releases and shift slightly as
 #' DETRAN-SP revises the data; the structural points do not.
 #'
-#' @seealso [infosiga_download()], [infosiga_cache_dir()],
-#'   [infosiga_dictionary()].
+#' @seealso [dictionary_infosiga()].
 #'
 #' @examples
 #' \dontrun{
@@ -139,13 +139,22 @@
 #' if (nzchar(sample_path)) head(readr::read_delim(sample_path, ";"))
 #'
 #' @export
-read_infosiga <- function(dataset = c("sinistros", "pessoas", "veiculos"),
-                          clean = TRUE,
-                          year = NULL,
-                          download_if_missing = TRUE,
-                          quiet = FALSE,
-                          ...) {
+read_infosiga <- function(
+  dataset = c("sinistros", "pessoas", "veiculos"),
+  year = NULL,
+  clean = TRUE,
+  labels = FALSE,
+  refresh = FALSE,
+  quiet = FALSE
+) {
   dataset <- match.arg(dataset)
+
+  if (!is.logical(refresh) || length(refresh) != 1L || is.na(refresh)) {
+    cli::cli_abort("{.arg refresh} must be `TRUE` or `FALSE`.")
+  }
+  if (isTRUE(labels) && !isTRUE(clean)) {
+    cli::cli_abort("{.arg labels = TRUE} requires {.arg clean = TRUE}.")
+  }
 
   if (!is.null(year)) {
     year <- suppressWarnings(as.integer(year))
@@ -154,26 +163,34 @@ read_infosiga <- function(dataset = c("sinistros", "pessoas", "veiculos"),
     }
   }
 
-  zip_path <- file.path(infosiga_cache_dir(), .infosiga_zip_name)
-  if (!file.exists(zip_path) && !download_if_missing) {
-    cli::cli_abort(c(
-      "The INFOSIGA-SP archive is not cached.",
-      "i" = "Call {.run infosigasp::infosiga_download()} first, or set {.arg download_if_missing = TRUE}."
-    ))
+  zip_path <- .infosiga_archive_path()
+  cached <- file.exists(zip_path) && !refresh
+  if (!file.exists(zip_path) && !refresh) {
+    .infosiga_confirm_download()
   }
-  # Delegate to infosiga_download(), which handles every case consistently: a
-  # cache hit (returned as-is, with a staleness check), an `overwrite = TRUE`
-  # refresh passed through `...`, and the actual download when the archive is
-  # missing. Routing through it here is what makes `...` (e.g. overwrite) take
-  # effect even when a cached archive already exists.
-  zip_path <- infosiga_download(quiet = quiet, ...)
+  zip_path <- .infosiga_download(refresh = refresh, quiet = quiet)
 
   members <- .archive_members(zip_path, dataset)
   if (length(members) == 0) {
     cli::cli_abort(c(
       "No {.val {dataset}} files were found inside the cached archive.",
-      "i" = "The archive may be corrupted; try {.code infosiga_download(overwrite = TRUE)}."
+      "i" = "The local copy may be corrupted; try {.code read_infosiga(refresh = TRUE)}."
     ))
+  }
+
+  if (!quiet) {
+    data_date <- .infosiga_archive_date(zip_path)
+    dated <- if (is.na(data_date)) {
+      ""
+    } else {
+      paste0(" (data dated ", format(data_date, "%Y-%m-%d"), ")")
+    }
+    source <- if (cached) "the local infosigasp cache" else "downloaded data"
+    n_files <- length(members)
+    cli::cli_alert_info(
+      "Reading {.val {dataset}} from {source}{dated} \
+       ({n_files} source file{?s})."
+    )
   }
 
   exdir <- tempfile("infosiga_")
@@ -187,12 +204,6 @@ read_infosiga <- function(dataset = c("sinistros", "pessoas", "veiculos"),
     decimal_mark = ",",
     grouping_mark = "."
   )
-
-  if (!quiet) {
-    cli::cli_alert_info(
-      "Reading {length(members)} {.val {dataset}} file{?s} from the archive."
-    )
-  }
 
   parts <- lapply(file.path(exdir, members), function(f) {
     readr::read_delim(
@@ -218,16 +229,45 @@ read_infosiga <- function(dataset = c("sinistros", "pessoas", "veiculos"),
   out <- tibble::as_tibble(out)
 
   if (isTRUE(clean)) {
-    out <- clean_infosiga(out, dataset)
+    out <- .infosiga_clean(out, dataset)
+  }
+
+  if (isTRUE(labels)) {
+    out <- .infosiga_tidy_labels(out, dataset)
   }
 
   if (!quiet) {
-    mode <- if (isTRUE(clean)) "processed" else "raw"
+    mode <- if (!isTRUE(clean)) {
+      "raw"
+    } else if (isTRUE(labels)) {
+      "processed and labelled"
+    } else {
+      "processed"
+    }
     cli::cli_alert_success(
       "Imported {nrow(out)} row{?s} and {ncol(out)} columns of {mode} {.val {dataset}}."
     )
   }
   out
+}
+
+.infosiga_confirm_download <- function(
+  is_interactive = interactive(),
+  ask = utils::askYesNo
+) {
+  if (!is_interactive) {
+    return(invisible(TRUE))
+  }
+
+  cli::cli_inform(c(
+    "INFOSIGA-SP data are not available locally.",
+    "i" = "The download is approximately 120 MB and will be stored in your user cache."
+  ))
+  confirmed <- ask("Download now?", default = TRUE)
+  if (!isTRUE(confirmed)) {
+    cli::cli_abort("Download cancelled; no files were added to your cache.")
+  }
+  invisible(TRUE)
 }
 
 # Return the archive members (CSV file names) for a dataset, matched by the

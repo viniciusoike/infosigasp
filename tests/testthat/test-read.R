@@ -3,7 +3,9 @@ test_that("read_infosiga imports each dataset with the expected structure", {
 
   sin <- read_infosiga("sinistros", quiet = TRUE)
   expect_s3_class(sin, "tbl_df")
-  expect_true(all(c("id_sinistro", "data_sinistro", "latitude") %in% names(sin)))
+  expect_true(all(
+    c("id_sinistro", "data_sinistro", "latitude") %in% names(sin)
+  ))
   expect_s3_class(sin$data_sinistro, "Date")
   expect_type(sin$latitude, "double")
   expect_type(sin$qtd_pedestre, "integer")
@@ -11,11 +13,15 @@ test_that("read_infosiga imports each dataset with the expected structure", {
   expect_equal(nrow(sin), 30L)
 
   peo <- read_infosiga("pessoas", quiet = TRUE)
-  expect_true(all(c("id_pessoa", "gravidade_lesao", "data_obito") %in% names(peo)))
+  expect_true(all(
+    c("id_pessoa", "gravidade_lesao", "data_obito") %in% names(peo)
+  ))
   expect_s3_class(peo$data_obito, "Date")
 
   veh <- read_infosiga("veiculos", quiet = TRUE)
-  expect_true(all(c("id_veiculo", "marca_modelo", "tipo_veiculo") %in% names(veh)))
+  expect_true(all(
+    c("id_veiculo", "marca_modelo", "tipo_veiculo") %in% names(veh)
+  ))
   expect_type(veh$ano_fab, "integer")
 })
 
@@ -46,32 +52,64 @@ test_that("invalid arguments are rejected", {
   local_infosiga_fixture()
   expect_error(read_infosiga("foo", quiet = TRUE))
   expect_error(read_infosiga("sinistros", year = "abc", quiet = TRUE))
+  expect_error(read_infosiga("sinistros", refresh = NA, quiet = TRUE))
+  expect_error(
+    read_infosiga("sinistros", clean = FALSE, labels = TRUE, quiet = TRUE),
+    "requires"
+  )
 })
 
-test_that("overwrite = TRUE is forwarded to infosiga_download on a cache hit", {
-  dir <- local_infosiga_fixture()
-  # Point downloads at a source that does not exist: with overwrite = TRUE,
-  # read_infosiga() must attempt a refresh (and fail), proving `...` reaches
-  # infosiga_download() even though a cached archive is already present.
+test_that("refresh = TRUE is forwarded to .infosiga_download on a cache hit", {
+  local_infosiga_fixture()
+  # Point downloads at a source that does not exist: with refresh = TRUE,
+  # read_infosiga() must attempt a refresh even when a cached archive exists.
   withr::local_options(list(infosigasp.zip_url = "file:///nope/refresh.zip"))
   expect_error(
-    suppressWarnings(read_infosiga("sinistros", overwrite = TRUE, quiet = TRUE)),
+    suppressWarnings(read_infosiga("sinistros", refresh = TRUE, quiet = TRUE)),
     "Failed to download"
   )
 })
 
-test_that("a cache hit without overwrite does not attempt a download", {
-  dir <- local_infosiga_fixture()
+test_that("a cache hit without refresh does not attempt a download", {
+  local_infosiga_fixture()
   # A broken source must never be touched when a valid cached archive exists.
   withr::local_options(list(infosigasp.zip_url = "file:///nope/refresh.zip"))
   expect_no_error(read_infosiga("sinistros", quiet = TRUE))
 })
 
-test_that("missing archive without download raises an informative error", {
+test_that("a missing archive is downloaded automatically", {
   tmp <- withr::local_tempdir()
   withr::local_options(list(infosigasp.cache_dir = tmp))
-  expect_error(
-    read_infosiga("sinistros", download_if_missing = FALSE, quiet = TRUE),
-    "not cached"
+  fixture <- test_path("fixtures", "dados_infosiga.zip")
+  url <- paste0("file://", normalizePath(fixture, winslash = "/"))
+  withr::local_options(list(infosigasp.zip_url = url))
+
+  out <- read_infosiga("sinistros", quiet = TRUE)
+  expect_s3_class(out, "tbl_df")
+  expect_true(file.exists(.infosiga_archive_path()))
+})
+
+test_that("the first interactive download asks for confirmation", {
+  accepted <- .infosiga_confirm_download(
+    is_interactive = TRUE,
+    ask = function(...) TRUE
   )
+  expect_true(accepted)
+
+  expect_snapshot(
+    .infosiga_confirm_download(
+      is_interactive = TRUE,
+      ask = function(...) FALSE
+    ),
+    error = TRUE
+  )
+})
+
+test_that("labels can be applied through read_infosiga", {
+  local_infosiga_fixture()
+  source <- read_infosiga("veiculos", labels = FALSE, quiet = TRUE)
+  tidied <- read_infosiga("veiculos", labels = TRUE, quiet = TRUE)
+
+  expect_identical(nrow(tidied), nrow(source))
+  expect_identical(tidied, .infosiga_tidy_labels(source, "veiculos"))
 })

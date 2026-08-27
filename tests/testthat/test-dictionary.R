@@ -1,6 +1,6 @@
-# infosiga_dictionary() ------------------------------------------------------
+# dictionary_infosiga() ------------------------------------------------------
 
-test_that("infosiga_dictionary downloads and extracts the PDF files", {
+test_that("dictionary_infosiga downloads and extracts the PDF files", {
   tmp <- withr::local_tempdir()
   withr::local_options(list(infosigasp.cache_dir = tmp))
 
@@ -8,7 +8,7 @@ test_that("infosiga_dictionary downloads and extracts the PDF files", {
   url <- paste0("file://", normalizePath(fixture, winslash = "/"))
   withr::local_options(list(infosigasp.dictionary_url = url))
 
-  pdfs <- infosiga_dictionary(quiet = TRUE)
+  pdfs <- dictionary_infosiga(quiet = TRUE)
 
   expect_length(pdfs, 3L)
   expect_true(all(file.exists(pdfs)))
@@ -23,7 +23,7 @@ test_that("infosiga_dictionary downloads and extracts the PDF files", {
   )
 })
 
-test_that("infosiga_dictionary reuses the cache and does not re-download", {
+test_that("dictionary_infosiga reuses the cache and does not re-download", {
   tmp <- withr::local_tempdir()
   withr::local_options(list(infosigasp.cache_dir = tmp))
 
@@ -31,22 +31,40 @@ test_that("infosiga_dictionary reuses the cache and does not re-download", {
   url <- paste0("file://", normalizePath(fixture, winslash = "/"))
   withr::local_options(list(infosigasp.dictionary_url = url))
 
-  first <- infosiga_dictionary(quiet = TRUE)
+  first <- dictionary_infosiga(quiet = TRUE)
 
   # Point the URL at a non-existent source: a second call must not touch it,
   # because the cached PDFs already satisfy the request.
   withr::local_options(list(infosigasp.dictionary_url = "file:///nope.zip"))
-  second <- expect_no_error(infosiga_dictionary(quiet = TRUE))
+  second <- expect_no_error(dictionary_infosiga(quiet = TRUE))
   expect_setequal(second, first)
 })
 
-test_that("infosiga_dictionary errors when the download fails", {
+test_that("dictionary_infosiga selects one dataset and supports refresh", {
   tmp <- withr::local_tempdir()
   withr::local_options(list(infosigasp.cache_dir = tmp))
-  withr::local_options(list(infosigasp.dictionary_url = "file:///nope/dict.zip"))
+
+  fixture <- test_path("fixtures", "dicionario.zip")
+  url <- paste0("file://", normalizePath(fixture, winslash = "/"))
+  withr::local_options(list(infosigasp.dictionary_url = url))
+
+  path <- dictionary_infosiga("sinistros", quiet = TRUE)
+  refreshed <- dictionary_infosiga("sinistros", refresh = TRUE, quiet = TRUE)
+
+  expect_length(path, 1L)
+  expect_match(basename(path), "sinistros")
+  expect_identical(refreshed, path)
+})
+
+test_that("dictionary_infosiga errors when the download fails", {
+  tmp <- withr::local_tempdir()
+  withr::local_options(list(infosigasp.cache_dir = tmp))
+  withr::local_options(list(
+    infosigasp.dictionary_url = "file:///nope/dict.zip"
+  ))
 
   expect_error(
-    infosiga_dictionary(quiet = TRUE),
+    dictionary_infosiga(quiet = TRUE),
     "Failed to download"
   )
 })

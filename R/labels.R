@@ -1,7 +1,7 @@
 # Opinionated label tidying -----------------------------------------------
 #
 # Everything in this file is *opt-in* and deliberately separate from
-# clean_infosiga(), which stays faithful to the published categories. Users
+# .infosiga_clean(), which stays faithful to the published categories. Users
 # reproducing a DETRAN-SP figure need the source labels verbatim; users doing
 # their own analysis usually want labels that group and plot correctly. These
 # helpers serve the second case only.
@@ -123,7 +123,7 @@ names(.cor_veiculo_map)[length(.cor_veiculo_map) - 1:0] <- c(
   paste0("N", intToUtf8(0x00e3), "o Informado")
 )
 
-# Missing-value markers that clean_infosiga() leaves alone because they are not
+# Missing-value markers that .infosiga_clean() leaves alone because they are not
 # the documented "NAO DISPONIVEL" sentinel. Compared after accent folding, so
 # only one spelling of each is needed here.
 .extra_na_markers <- c(
@@ -189,86 +189,86 @@ names(.cor_veiculo_map)[length(.cor_veiculo_map) - 1:0] <- c(
   !is.na(x) & grepl("^[0-9]+(\\.[0-9]+)?$", x)
 }
 
-#' Tidy the category labels of an INFOSIGA-SP dataset
-#'
-#' An **opt-in** companion to [clean_infosiga()] that rewrites category labels
-#' into a consistent, presentation-ready form: Title Case, accents restored
-#' where an authoritative spelling exists, duplicate categories merged, and the
-#' source's assorted "not informed" strings mapped to `NA`.
-#'
-#' It stays separate from [clean_infosiga()], which never touches labels. Use
-#' `clean_infosiga()` (or `read_infosiga(clean = TRUE)`) when you need
-#' categories exactly as DETRAN-SP publishes them, for example to reproduce an
-#' official figure. Use `tidy_infosiga_labels()` on top of that when you are
-#' doing your own analysis and want labels that group, sort and plot sensibly.
-#'
-#' @param data A data frame from [read_infosiga()] or [clean_infosiga()].
-#' @param dataset Which dataset `data` corresponds to: `"sinistros"`,
-#'   `"pessoas"` or `"veiculos"`. Determines which columns are rewritten.
-#'
-#' @return A [tibble][tibble::tibble] with the same rows as `data`. Columns are
-#'   unchanged except as described in *Details*; `sinistros` additionally gains
-#'   a `conservacao_codigo` column.
-#'
-#' @details
-#' \subsection{Place names (sinistros, pessoas)}{
-#' The source publishes `municipio` unaccented and upper case (`"SAO PAULO"`)
-#' but `regiao_administrativa` with its accents intact, so neither can be
-#' joined to other Brazilian data as published. Both take the official IBGE
-#' spelling, matched on `cod_ibge` and never on the name. Nine municipalities
-#' differ between the two sources: eight apostrophes that INFOSIGA renders as
-#' spaces (`"SANTA BARBARA D OESTE"`), plus one genuine spelling difference,
-#' IBGE's authoritative `"Sao Luiz do Paraitinga"` against INFOSIGA's
-#' `"SAO LUIS DO PARAITINGA"`. See [infosiga_municipios].
-#' }
-#'
-#' \subsection{Vehicle colour (veiculos)}{
-#' `cor_veiculo` carries dozens of distinct values for roughly sixteen real
-#' colours, because two upstream systems coexist in every year: an upper-case
-#' stream (`"PRETA"`, `"BRANCA"`) and a title-case one with different gender
-#' agreement (`"Preta"`, `"Branco"`). Note that `toupper()` alone will *not*
-#' merge these. Values map onto a canonical set. Single-colour official liveries
-#' (`"BRANCA (PADRAO PM)"`) fold into the base colour, two- and three-tone
-#' values (`"CIN/VER/PRE"`) become `"Multicor"`, and camouflage becomes
-#' `"Camuflada"`. Unrecognised values pass through unchanged, so a colour the
-#' mapping does not know is never dropped.
-#' }
-#'
-#' \subsection{Occupation (pessoas)}{
-#' `profissao` is Title Cased, which merges the several hundred values that
-#' differ from another value only by capitalisation, and `"NAO INFORMADA"` /
-#' `"Nao informada"` become `NA`. Accents are **not** restored here and
-#' occupations are **not** grouped semantically, because no authoritative
-#' spelling list covers these free-text values. Expect near-duplicates to
-#' remain.
-#' }
-#'
-#' \subsection{Road maintenance (sinistros)}{
-#' `conservacao` mixes two vocabularies: the name of the body that maintains
-#' the road (`"PREFEITURA"`, `"NOVADUTRA"`) and bare route codes (`"10.03"`),
-#' the latter covering tens of thousands of rows. The codes move into a new
-#' `conservacao_codigo` column, so `conservacao` holds names only.
-#'
-#' Those names keep their source capitalisation, unlike every other column here.
-#' Most are brands or acronyms (`"SPMAR"`, `"TEBE"`, `"CART"`, `"AUTOBAN"`,
-#' `"DNIT"`), and Title Case would corrupt them into `"Spmar"` and `"Tebe"`.
-#' }
-#'
-#' Every step is idempotent: calling `tidy_infosiga_labels()` on an
-#' already-tidied dataset changes nothing.
-#'
-#' @seealso [clean_infosiga()] for the faithful processing this builds on, and
-#'   [infosiga_municipios] for the municipality lookup.
-#'
-#' @examples
-#' raw <- readr::read_delim(
-#'   system.file("extdata", "veiculos_sample.csv", package = "infosigasp"),
-#'   delim = ";", show_col_types = FALSE
-#' )
-#' tidied <- tidy_infosiga_labels(clean_infosiga(raw, "veiculos"), "veiculos")
-#' sort(unique(tidied$cor_veiculo))
-#' @export
-tidy_infosiga_labels <- function(
+# Tidy the category labels of an INFOSIGA-SP dataset
+#
+# An **opt-in** companion to [.infosiga_clean()] that rewrites category labels
+# into a consistent, presentation-ready form: Title Case, accents restored
+# where an authoritative spelling exists, duplicate categories merged, and the
+# source's assorted "not informed" strings mapped to `NA`.
+#
+# It stays separate from [.infosiga_clean()], which never touches labels. Use
+# `.infosiga_clean()` (or `read_infosiga(clean = TRUE)`) when you need
+# categories exactly as DETRAN-SP publishes them, for example to reproduce an
+# official figure. Use `.infosiga_tidy_labels()` on top of that when you are
+# doing your own analysis and want labels that group, sort and plot sensibly.
+#
+# @param data A data frame from [read_infosiga()] or [.infosiga_clean()].
+# @param dataset Which dataset `data` corresponds to: `"sinistros"`,
+#   `"pessoas"` or `"veiculos"`. Determines which columns are rewritten.
+#
+# @return A [tibble][tibble::tibble] with the same rows as `data`. Columns are
+#   unchanged except as described in *Details*; `sinistros` additionally gains
+#   a `conservacao_codigo` column.
+#
+# @details
+# \subsection{Place names (sinistros, pessoas)}{
+# The source publishes `municipio` unaccented and upper case (`"SAO PAULO"`)
+# but `regiao_administrativa` with its accents intact, so neither can be
+# joined to other Brazilian data as published. Both take the official IBGE
+# spelling, matched on `cod_ibge` and never on the name. Nine municipalities
+# differ between the two sources: eight apostrophes that INFOSIGA renders as
+# spaces (`"SANTA BARBARA D OESTE"`), plus one genuine spelling difference,
+# IBGE's authoritative `"Sao Luiz do Paraitinga"` against INFOSIGA's
+# `"SAO LUIS DO PARAITINGA"`. See [infosiga_municipios].
+# }
+#
+# \subsection{Vehicle colour (veiculos)}{
+# `cor_veiculo` carries dozens of distinct values for roughly sixteen real
+# colours, because two upstream systems coexist in every year: an upper-case
+# stream (`"PRETA"`, `"BRANCA"`) and a title-case one with different gender
+# agreement (`"Preta"`, `"Branco"`). Note that `toupper()` alone will *not*
+# merge these. Values map onto a canonical set. Single-colour official liveries
+# (`"BRANCA (PADRAO PM)"`) fold into the base colour, two- and three-tone
+# values (`"CIN/VER/PRE"`) become `"Multicor"`, and camouflage becomes
+# `"Camuflada"`. Unrecognised values pass through unchanged, so a colour the
+# mapping does not know is never dropped.
+# }
+#
+# \subsection{Occupation (pessoas)}{
+# `profissao` is Title Cased, which merges the several hundred values that
+# differ from another value only by capitalisation, and `"NAO INFORMADA"` /
+# `"Nao informada"` become `NA`. Accents are **not** restored here and
+# occupations are **not** grouped semantically, because no authoritative
+# spelling list covers these free-text values. Expect near-duplicates to
+# remain.
+# }
+#
+# \subsection{Road maintenance (sinistros)}{
+# `conservacao` mixes two vocabularies: the name of the body that maintains
+# the road (`"PREFEITURA"`, `"NOVADUTRA"`) and bare route codes (`"10.03"`),
+# the latter covering tens of thousands of rows. The codes move into a new
+# `conservacao_codigo` column, so `conservacao` holds names only.
+#
+# Those names keep their source capitalisation, unlike every other column here.
+# Most are brands or acronyms (`"SPMAR"`, `"TEBE"`, `"CART"`, `"AUTOBAN"`,
+# `"DNIT"`), and Title Case would corrupt them into `"Spmar"` and `"Tebe"`.
+# }
+#
+# Every step is idempotent: calling `.infosiga_tidy_labels()` on an
+# already-tidied dataset changes nothing.
+#
+# @seealso [.infosiga_clean()] for the faithful processing this builds on, and
+#   [infosiga_municipios] for the municipality lookup.
+#
+# @examples
+# raw <- readr::read_delim(
+#   system.file("extdata", "veiculos_sample.csv", package = "infosigasp"),
+#   delim = ";", show_col_types = FALSE
+# )
+# tidied <- tidy_infosiga_labels(.infosiga_clean(raw, "veiculos"), "veiculos")
+# sort(unique(tidied$cor_veiculo))
+# @export
+.infosiga_tidy_labels <- function(
   data,
   dataset = c(
     "sinistros",
@@ -281,8 +281,7 @@ tidy_infosiga_labels <- function(
   # Place names, matched on cod_ibge rather than on the name itself. Rows whose
   # code is missing or unknown keep whatever they already had.
   if ("cod_ibge" %in% names(data)) {
-    # Qualified so R CMD check sees a binding for the lazy-loaded dataset.
-    lookup <- infosigasp::infosiga_municipios
+    lookup <- infosiga_municipios
     idx <- match(data$cod_ibge, lookup$cod_ibge)
     ok <- !is.na(idx)
     for (col in intersect(
