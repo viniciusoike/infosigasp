@@ -18,7 +18,7 @@ ibge <- jsonlite::fromJSON(
 
 # The source spellings, and INFOSIGA's own assignment of municipality to
 # administrative region, come from the crash dataset itself.
-sinistros <- read_infosiga("sinistros", clean = TRUE, quiet = TRUE)
+sinistros <- read_infosiga("sinistros", processing = "clean", quiet = TRUE)
 src <- unique(sinistros[c("cod_ibge", "municipio", "regiao_administrativa")])
 src <- src[order(src$cod_ibge), ]
 

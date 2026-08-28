@@ -23,9 +23,10 @@ knitr::opts_chunk$set(
 ## Overview
 
 [INFOSIGA-SP](https://infosiga.detran.sp.gov.br/) is the São Paulo State
-Traffic Accident Information and Management System, maintained by DETRAN-SP.
-It publishes, as open data, detailed records of every traffic crash in the
-state of São Paulo from 2015 onward.
+Traffic Incident Information and Management System, maintained by DETRAN-SP.
+It publishes open occurrence records from 2015 onward. Coverage and definitions
+vary over time: 2015--2018 covers fatal crashes only, and the events table also
+contains notifications that have not yet been confirmed as crashes.
 
 `infosigasp` downloads and imports those records. It handles what makes the
 raw files awkward to read directly.
@@ -44,10 +45,10 @@ library(infosigasp)
 
 INFOSIGA-SP organises its data into three linked tables.
 
-- **`sinistros`** — crash *events*. One row per recorded event, with the
-  date, time, location (including latitude/longitude), road attributes and a
-  breakdown of how many vehicles and victims were involved, by type and
-  severity.
+- **`sinistros`** — occurrence records. One row per confirmed crash or
+  notification, with the date, time, location (including latitude/longitude),
+  road attributes and a breakdown of how many vehicles and victims were
+  involved, by type and severity.
 - **`pessoas`** — *people* (victims). One row per person involved, with
   demographic attributes, injury severity and, for fatalities, the date and
   place of death.
@@ -69,22 +70,41 @@ sinistros <- read_infosiga("sinistros")
 sinistros
 ```
 
-The `year` argument restricts the import to specific years, filtering on the
-year of the crash (`ano_sinistro`).
+### Raw, typed and clean data
 
-```{r read-year, eval = isTRUE(getOption("infosigasp.run_live"))}
-recent <- read_infosiga("sinistros", year = 2022:2025)
+`read_infosiga()` separates tabular import, type parsing and cleaning through
+the `processing` argument.
+
+| mode | result |
+|------|--------|
+| `"raw"` | Every field is character. Empty strings, whitespace, sentinels and malformed representations remain visible. |
+| `"typed"` | Documented dates, times and numeric fields receive R classes; other source values remain unchanged. |
+| `"clean"` | The default. Applies the cleaning pipeline after typed import. |
+
+Every mode decodes Latin-1 to UTF-8, parses the CSV structure and combines the
+period files. Raw mode is therefore a lossless tabular representation rather
+than a byte-for-byte copy of the source archive.
+
+Choose the mode according to the task: use `"raw"` to audit source values,
+`"typed"` to parse documented classes while retaining source labels and
+padding, and the default `"clean"` mode for most analysis. All modes retain
+import diagnostics in `attr(x, "problems")`; typed and clean modes replace
+values that fail their declared parser with `NA`, while raw mode preserves the
+field text.
+
+```{r processing, eval = isTRUE(getOption("infosigasp.run_live"))}
+raw <- read_infosiga("sinistros", processing = "raw")
+typed <- read_infosiga("sinistros", processing = "typed")
+clean <- read_infosiga("sinistros", processing = "clean")
 ```
 
-### Processed vs. raw data
+Typed mode parses full dates to `Date`, times to `hms`, numeric fields to
+integer or double, and empty fields to `NA`. Identifiers remain character to
+preserve leading zeros and avoid integer overflow.
 
-By default `read_infosiga()` returns a **processed** dataset (`clean = TRUE`).
-The processing never renames columns, recodes category labels or drops rows. It
-only fixes types and source artefacts. The full pipeline is documented in
-`?read_infosiga`; the main steps are below.
+Clean mode then applies the following transformations:
 
-- **Dates and times.** Full dates are parsed to `Date` and times to `hms` (in
-  both modes), and the `ano_mes_*` year-month columns (published as `"YYYY/MM"`)
+- **Year-month dates.** The `ano_mes_*` columns (published as `"YYYY/MM"`)
   become first-of-month `Date` values.
 - **Whitespace.** Text columns lose their leading and trailing whitespace. The
   source pads some fields to a fixed width (`nacionalidade` ships as
@@ -101,13 +121,26 @@ only fixes types and source artefacts. The full pipeline is documented in
 - **Crash-type flags.** The binary `tp_sinistro_*` columns (`"S"` / empty)
   become **logical**, so you can `sum()` or filter them directly. The
   categorical `tp_sinistro_primario` stays text.
+- **Count blocks.** A blank `qtd_*` entry becomes zero when another count in
+  the same vehicle or injury-severity block is populated. Entirely blank blocks
+  remain missing.
 - **Numeric strings.** `tempo_sinistro_obito` (days from crash to death) becomes
   **integer**, and `numero_logradouro` loses the spurious trailing `".0"` the
   export appends (`"193.0"`).
-- **Coordinates.** `latitude`/`longitude` outside the São Paulo state bounding
-  box become `NA` as a pair. These are mis-encoded values and `(0, 0)`
-  placeholders, a few percent of records. No rows are dropped; pass
-  `clean = FALSE` for the raw coordinates.
+- **Coordinates.** Coordinate pairs outside a validation bounding box around
+  São Paulo state become `NA`. This catches extreme malformed values and
+  `(0, 0)` placeholders but is a rectangular screen, not a state-boundary test.
+  No rows are dropped; typed and raw modes preserve the coordinates before this
+  validation.
+
+Before converting an ordinal, flag or integer column, clean mode validates its
+observed representations. If it finds an unexpected value, it preserves the
+entire column and warns; the class can therefore remain character after an
+upstream change.
+
+These safeguards apply to closed-domain conversions, not to every parsed
+column. For example, a malformed numeric coordinate can become `NA` during the
+typed import and will be listed in `attr(x, "problems")`.
 
 ```{r clean, eval = isTRUE(getOption("infosigasp.run_live"))}
 sinistros <- read_infosiga("sinistros")
@@ -121,23 +154,13 @@ calendar order rather than alphabetically.
 table(sinistros$dia_da_semana)
 ```
 
-Pass `clean = FALSE` if you would rather have the data exactly as published,
-with every text column a character vector and `"NAO DISPONIVEL"` and the
-source's whitespace padding preserved verbatim.
+### Standardizing category labels
 
-```{r raw, eval = isTRUE(getOption("infosigasp.run_live"))}
-raw <- read_infosiga("sinistros", clean = FALSE)
-```
+Clean mode does not harmonize nominal categories beyond its documented
+missing-value rule. Select only the harmonizations you need with `standardize`.
 
-### Tidying the category labels
-
-The default cleaning fixes types and source artefacts but never touches category
-*labels*, so that anyone reproducing an official DETRAN-SP figure gets exactly
-the categories DETRAN-SP publishes. Those labels are, however, genuinely messy.
-For your own analysis, opt in with `labels = TRUE`.
-
-```{r tidy-labels, eval = isTRUE(getOption("infosigasp.run_live"))}
-veiculos <- read_infosiga("veiculos", labels = TRUE)
+```{r standardize-labels, eval = isTRUE(getOption("infosigasp.run_live"))}
+veiculos <- read_infosiga("veiculos", standardize = "cores")
 
 sort(table(veiculos$cor_veiculo), decreasing = TRUE)
 ```
@@ -147,32 +170,30 @@ values for **about sixteen real colours**, because two upstream systems coexist
 in every year, one upper-case and one title-cased, and the two disagree on
 gender agreement.
 
-| source values | tidied |
-|---------------|--------|
+| source values | standardized |
+|---------------|--------------|
 | `PRETA`, `Preta` | `Preta` |
-| `BRANCA`, `Branco`, `BRANCA (PADRAO PM)` | `Branca` |
+| `BRANCA`, `Branco` | `Branca` |
 | `VERMELHA`, `Vermelho` | `Vermelha` |
-| `CIN/VER/PRE`, `BRANCA/VERMELHA` | `Multicor` |
 
 Note that `toupper()` alone will not merge `Branca` and `Branco`.
+Detailed liveries and multi-tone values remain unchanged because grouping them
+would be an analytical recode rather than label harmonization.
 
 The remaining changes are listed below.
 
-- **Place names.** The source publishes `municipio` unaccented (`"SAO PAULO"`)
-  while `regiao_administrativa` keeps its accents, so neither joins to other
-  Brazilian data as published. Both take the official IBGE spelling.
-- **`profissao`** is Title Cased, which merges the several hundred values that
-  differ from another only by capitalisation, and the stray `"NAO INFORMADA"`
-  markers become `NA`.
-- **`conservacao`** mixes the name of the maintaining body (`"PREFEITURA"`)
-  with bare route codes (`"10.03"`); the codes move to a new
-  `conservacao_codigo` column.
+- **`"municipios"`.** Municipality names take their official IBGE spelling,
+  matched by `cod_ibge`; INFOSIGA administrative-region names receive consistent
+  accents and case without changing their classification.
+- **`"profissoes"`.** Occupations are title-cased, which merges values that
+  differ only by capitalisation. Known nonresponse markers—including variants
+  of `"NAO INFORMADA"`, `"SEM INFORMACAO"` and `"DESCONHECIDO"`—become `NA`.
 
-Two limits are worth naming. `profissao` keeps its unaccented spelling and its
-occupations stay ungrouped, because no authoritative list covers these free-text
-values. `conservacao` names keep their source capitalisation, because most are
-brand acronyms (`SPMAR`, `TEBE`, `CART`) that Title Case would corrupt into
-`Spmar` and `Tebe`.
+Use `standardize = c("municipios", "profissoes")` to combine options, or
+`standardize = "all"` for every option applicable to the selected dataset.
+`profissao` keeps its unaccented spelling and occupations stay ungrouped because
+no authoritative list covers these free-text values. Standardization requires
+`processing = "clean"`.
 
 ### Joining to other Brazilian data
 
@@ -236,8 +257,8 @@ read_infosiga("sinistros") |>
   count(ano_sinistro)
 ```
 
-Otherwise, start the series in 2019 by passing a `year` range to
-`read_infosiga()`.
+Otherwise, start the series in 2019 by filtering `ano_sinistro >= 2019` after
+importing the data.
 
 ### A third of `sinistros` rows are notifications
 
@@ -311,6 +332,14 @@ with the latest available version and return the requested dataset.
 sinistros <- read_infosiga("sinistros", refresh = TRUE)
 ```
 
+`read_infosiga()` always imports every available year. Filter the returned
+tibble when you need a shorter period.
+
+```{r filter-years, eval = isTRUE(getOption("infosigasp.run_live"))}
+recent <- read_infosiga("sinistros") |>
+  filter(ano_sinistro >= 2022)
+```
+
 You can point the cache somewhere else for a session (or permanently via your
 `.Rprofile`) with the `infosigasp.cache_dir` option.
 
@@ -322,11 +351,13 @@ options(infosigasp.cache_dir = "~/data/infosiga")
 
 INFOSIGA-SP distributes a field-by-field data dictionary (PDF, in Portuguese).
 `dictionary_infosiga()` downloads it and returns the paths to the extracted
-files.
+files. Pass `"sinistros"`, `"pessoas"` or `"veiculos"` to return one PDF.
 
 ```{r dictionary, eval = isTRUE(getOption("infosigasp.run_live"))}
 pdfs <- dictionary_infosiga()
 basename(pdfs)
+
+sinistros_pdf <- dictionary_infosiga("sinistros")
 ```
 
 ## Citing the data

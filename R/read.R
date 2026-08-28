@@ -6,22 +6,22 @@
 #'
 #' @param dataset Which dataset to import.
 #'   \describe{
-#'     \item{`"sinistros"`}{Crash events (one row per event).}
+#'     \item{`"sinistros"`}{Occurrence records: confirmed crashes and
+#'       notifications (one row per record).}
 #'     \item{`"pessoas"`}{Victims / people involved (one row per person).}
 #'     \item{`"veiculos"`}{Vehicles involved (one row per vehicle).}
 #'   }
-#' @param year Optional integer vector used to filter rows by year of the
-#'   crash (`ano_sinistro`). If `NULL` (default), all available years are
-#'   returned. For example, `year = 2020:2023`.
-#' @param clean Logical. If `TRUE` (default), return a processed dataset:
-#'   text is trimmed, the `"NAO DISPONIVEL"` marker becomes `NA`, ordinal
-#'   columns become ordered factors, crash-type flags become logical, and
-#'   impossible coordinates become `NA`. If `FALSE`, return the raw data
-#'   exactly as published, with all text columns as character vectors.
-#' @param labels Logical. If `TRUE`, additionally standardise category labels
-#'   for analysis and presentation. This restores authoritative place-name
-#'   spellings, applies consistent title case, merges duplicate vehicle-colour
-#'   categories and separates road-maintenance codes. Requires `clean = TRUE`.
+#' @param processing Level of processing to apply. `"raw"` imports every field
+#'   as character and preserves empty strings, whitespace, sentinels and source
+#'   representations. `"typed"` parses the documented column classes without
+#'   applying additional cleaning. `"clean"` (default) adds the package's
+#'   cleaning pipeline to the typed import.
+#' @param standardize Optional character vector selecting label harmonisation:
+#'   `"municipios"` restores official municipality spellings and harmonises
+#'   administrative-region names; `"cores"` merges duplicate vehicle-colour
+#'   spellings; and `"profissoes"` applies consistent title case and missing-value
+#'   markers to occupations. Use `"all"` for every option applicable to the
+#'   selected dataset. Requires `processing = "clean"`.
 #' @param refresh Logical. If `TRUE`, download the latest available source data
 #'   before reading. If `FALSE` (default), reuse the copy in the local
 #'   `infosigasp` cache, downloading it only when it is missing.
@@ -34,33 +34,46 @@
 #'
 #' @details
 #' Source files are encoded in Latin-1 (ISO-8859-1), use `;` as the field
-#' separator, `,` as the decimal mark and `DD/MM/YYYY` dates. `read_infosiga()`
-#' handles all of these and returns UTF-8 text, `Date` columns and numeric
-#' coordinates. Each dataset is distributed across two period files inside the
-#' archive (2015-2021 and 2022 onward); they are read and row-bound
-#' transparently.
+#' separator, `,` as the decimal mark and `DD/MM/YYYY` dates. Every mode
+#' decodes text to UTF-8, parses the CSV structure and row-binds the period files.
+#' The modes differ in what happens to the fields after that tabular import.
 #'
-#' By default (`clean = TRUE`) the result is then processed by the package's
-#' internal cleaning step: text columns are whitespace-trimmed, the
-#' `"NAO DISPONIVEL"` ("not available") marker becomes `NA`, ordinal columns
-#' (`dia_da_semana`, `turno`, `gravidade_lesao`, the age bands) become
-#' **ordered factors**, the `ano_mes_*` year-month strings are parsed to
-#' first-of-month `Date`s, the binary `tp_sinistro_*` crash-type flags become
-#' **logical**, blank `qtd_*` counts inside an otherwise-filled block become
-#' `0`, `tempo_sinistro_obito` becomes **integer**, and
-#' `latitude`/`longitude` values outside the bounding box of Sao Paulo state
-#' become `NA`. Pass `clean = FALSE` to obtain the raw data exactly as
-#' published, with every text column kept as a character vector and
-#' `"NAO DISPONIVEL"` and the source's
-#' fixed-width whitespace padding preserved verbatim.
+#' - `processing = "raw"` returns a lossless tabular representation: every
+#'   field is character, including dates and numbers, while empty strings,
+#'   whitespace, sentinels and malformed representations remain visible. This
+#'   is not a byte-for-byte copy because encoding is decoded and period files
+#'   are combined.
+#' - `processing = "typed"` parses the documented column classes. Dates become
+#'   `Date`, times become `hms`, numeric fields become integer or double,
+#'   empty fields become `NA`, and identifiers remain character. Category
+#'   labels, padding and explicit source sentinels otherwise remain unchanged.
+#' - `processing = "clean"` starts from the typed import, then trims text, maps
+#'   `"NAO DISPONIVEL"` to `NA`, orders ordinal columns, parses `ano_mes_*`,
+#'   converts crash-type flags to logical, fills blank `qtd_*` entries with
+#'   zero inside populated count blocks, converts `tempo_sinistro_obito` to
+#'   integer, removes a trailing `".0"` from `numero_logradouro`, and validates
+#'   coordinate pairs against a bounding box around Sao Paulo state.
+#'
+#' Before converting a closed-domain column, the cleaning step validates its
+#' observed values. If an ordinal column, crash-type flag or integer field
+#' contains an unexpected representation, the entire source column is preserved
+#' and a warning identifies the new values. This prevents upstream changes from
+#' becoming missing values or incorrect `FALSE` values silently.
+#'
+#' Label harmonisation is selective and opt-in. `standardize = "municipios"`
+#' uses official IBGE municipality names keyed by `cod_ibge` and harmonises the
+#' spelling of INFOSIGA administrative regions. `"cores"` merges case and gender
+#' variants of basic vehicle colours, while preserving detailed liveries and
+#' multi-tone values. `"profissoes"` applies consistent title case and known
+#' missing-value markers to occupation labels. These transformations preserve
+#' the rows and columns and never create broader analytical categories.
 #'
 #' A small fraction of rows in the source contain data-quality issues (for
 #' example, an unescaped `;` inside a street name, or mis-encoded coordinates).
-#' Any value that cannot be parsed to its declared column type is set to `NA`
-#' and recorded by [readr::problems()]. Empty fields are read as `NA` in both
-#' modes. In the raw data (`clean = FALSE`) the crash-type flag columns
-#' (`tp_sinistro_*`) hold `"S"` when the flag applies and `NA` otherwise; with
-#' `clean = TRUE` they are converted to logical.
+#' In typed and clean modes, values that cannot be parsed to their declared
+#' column type become `NA` and are recorded by [readr::problems()]. Raw mode
+#' preserves those field values as character. Structural CSV problems are
+#' recorded in every mode.
 #'
 #' @section Coverage and known caveats:
 #'
@@ -120,15 +133,18 @@
 #'
 #' @examples
 #' \dontrun{
-#' # Import all crash events, processed (downloads the archive on first use)
+#' # Import all occurrence records, cleaned (downloads on first use)
 #' sinistros <- read_infosiga("sinistros")
 #' levels(sinistros$dia_da_semana)
 #'
-#' # Only victims from 2022 and 2023
-#' vitimas <- read_infosiga("pessoas", year = 2022:2023)
+#' # Import all victims / people involved
+#' vitimas <- read_infosiga("pessoas")
 #'
-#' # The raw data, exactly as published
-#' raw <- read_infosiga("sinistros", clean = FALSE)
+#' # Lossless tabular import: every field is character
+#' raw <- read_infosiga("sinistros", processing = "raw")
+#'
+#' # Parse documented classes without further cleaning
+#' typed <- read_infosiga("sinistros", processing = "typed")
 #' }
 #'
 #' # A bundled sample (no download required) illustrates the structure:
@@ -141,26 +157,21 @@
 #' @export
 read_infosiga <- function(
   dataset = c("sinistros", "pessoas", "veiculos"),
-  year = NULL,
-  clean = TRUE,
-  labels = FALSE,
+  processing = c("clean", "typed", "raw"),
+  standardize = NULL,
   refresh = FALSE,
   quiet = FALSE
 ) {
   dataset <- match.arg(dataset)
+  processing <- match.arg(processing)
 
   if (!is.logical(refresh) || length(refresh) != 1L || is.na(refresh)) {
     cli::cli_abort("{.arg refresh} must be `TRUE` or `FALSE`.")
   }
-  if (isTRUE(labels) && !isTRUE(clean)) {
-    cli::cli_abort("{.arg labels = TRUE} requires {.arg clean = TRUE}.")
-  }
-
-  if (!is.null(year)) {
-    year <- suppressWarnings(as.integer(year))
-    if (anyNA(year)) {
-      cli::cli_abort("{.arg year} must be a vector of integer years.")
-    }
+  if (!is.null(standardize) && processing != "clean") {
+    cli::cli_abort(
+      "{.arg standardize} requires the {.val clean} processing mode."
+    )
   }
 
   zip_path <- .infosiga_archive_path()
@@ -198,7 +209,12 @@ read_infosiga <- function(
   on.exit(unlink(exdir, recursive = TRUE), add = TRUE)
   utils::unzip(zip_path, files = members, exdir = exdir)
 
-  spec <- .infosiga_col_spec(dataset)
+  is_raw <- processing == "raw"
+  spec <- if (is_raw) {
+    readr::cols(.default = readr::col_character())
+  } else {
+    .infosiga_col_spec(dataset)
+  }
   locale <- readr::locale(
     encoding = "latin1",
     decimal_mark = ",",
@@ -211,39 +227,36 @@ read_infosiga <- function(
       delim = ";",
       col_types = spec,
       locale = locale,
-      # Empty fields are the source's missing-value marker. Anything that
-      # still fails to parse (a handful of malformed source rows) becomes NA
-      # and is surfaced through readr::problems().
-      na = "",
+      # Raw mode preserves empty source fields. Typed and clean modes interpret
+      # them as missing values before applying their declared column types.
+      na = if (is_raw) character() else "",
+      trim_ws = FALSE,
       progress = FALSE,
       show_col_types = FALSE
     )
   })
+  import_problems <- parts |>
+    lapply(readr::problems) |>
+    dplyr::bind_rows()
 
   out <- dplyr::bind_rows(parts)
 
-  if (!is.null(year) && "ano_sinistro" %in% names(out)) {
-    out <- out |>
-      dplyr::filter(out$ano_sinistro %in% year)
-  }
-
   out <- tibble::as_tibble(out)
 
-  if (isTRUE(clean)) {
+  if (processing == "clean") {
     out <- .infosiga_clean(out, dataset)
   }
 
-  if (isTRUE(labels)) {
-    out <- .infosiga_tidy_labels(out, dataset)
+  if (!is.null(standardize)) {
+    out <- .infosiga_standardize(out, dataset, standardize)
   }
+  attr(out, "problems") <- import_problems
 
   if (!quiet) {
-    mode <- if (!isTRUE(clean)) {
-      "raw"
-    } else if (isTRUE(labels)) {
-      "processed and labelled"
+    mode <- if (!is.null(standardize)) {
+      "clean and standardised"
     } else {
-      "processed"
+      processing
     }
     cli::cli_alert_success(
       "Imported {nrow(out)} row{?s} and {ncol(out)} columns of {mode} {.val {dataset}}."

@@ -6,9 +6,8 @@
 \usage{
 read_infosiga(
   dataset = c("sinistros", "pessoas", "veiculos"),
-  year = NULL,
-  clean = TRUE,
-  labels = FALSE,
+  processing = c("clean", "typed", "raw"),
+  standardize = NULL,
   refresh = FALSE,
   quiet = FALSE
 )
@@ -16,25 +15,24 @@ read_infosiga(
 \arguments{
 \item{dataset}{Which dataset to import.
 \describe{
-\item{\code{"sinistros"}}{Crash events (one row per event).}
+\item{\code{"sinistros"}}{Occurrence records: confirmed crashes and
+notifications (one row per record).}
 \item{\code{"pessoas"}}{Victims / people involved (one row per person).}
 \item{\code{"veiculos"}}{Vehicles involved (one row per vehicle).}
 }}
 
-\item{year}{Optional integer vector used to filter rows by year of the
-crash (\code{ano_sinistro}). If \code{NULL} (default), all available years are
-returned. For example, \code{year = 2020:2023}.}
+\item{processing}{Level of processing to apply. \code{"raw"} imports every field
+as character and preserves empty strings, whitespace, sentinels and source
+representations. \code{"typed"} parses the documented column classes without
+applying additional cleaning. \code{"clean"} (default) adds the package's
+cleaning pipeline to the typed import.}
 
-\item{clean}{Logical. If \code{TRUE} (default), return a processed dataset:
-text is trimmed, the \code{"NAO DISPONIVEL"} marker becomes \code{NA}, ordinal
-columns become ordered factors, crash-type flags become logical, and
-impossible coordinates become \code{NA}. If \code{FALSE}, return the raw data
-exactly as published, with all text columns as character vectors.}
-
-\item{labels}{Logical. If \code{TRUE}, additionally standardise category labels
-for analysis and presentation. This restores authoritative place-name
-spellings, applies consistent title case, merges duplicate vehicle-colour
-categories and separates road-maintenance codes. Requires \code{clean = TRUE}.}
+\item{standardize}{Optional character vector selecting label harmonisation:
+\code{"municipios"} restores official municipality spellings and harmonises
+administrative-region names; \code{"cores"} merges duplicate vehicle-colour
+spellings; and \code{"profissoes"} applies consistent title case and missing-value
+markers to occupations. Use \code{"all"} for every option applicable to the
+selected dataset. Requires \code{processing = "clean"}.}
 
 \item{refresh}{Logical. If \code{TRUE}, download the latest available source data
 before reading. If \code{FALSE} (default), reuse the copy in the local
@@ -55,33 +53,47 @@ as a tidy tibble. The first interactive call asks before downloading about
 }
 \details{
 Source files are encoded in Latin-1 (ISO-8859-1), use \verb{;} as the field
-separator, \verb{,} as the decimal mark and \code{DD/MM/YYYY} dates. \code{read_infosiga()}
-handles all of these and returns UTF-8 text, \code{Date} columns and numeric
-coordinates. Each dataset is distributed across two period files inside the
-archive (2015-2021 and 2022 onward); they are read and row-bound
-transparently.
+separator, \verb{,} as the decimal mark and \code{DD/MM/YYYY} dates. Every mode
+decodes text to UTF-8, parses the CSV structure and row-binds the period files.
+The modes differ in what happens to the fields after that tabular import.
+\itemize{
+\item \code{processing = "raw"} returns a lossless tabular representation: every
+field is character, including dates and numbers, while empty strings,
+whitespace, sentinels and malformed representations remain visible. This
+is not a byte-for-byte copy because encoding is decoded and period files
+are combined.
+\item \code{processing = "typed"} parses the documented column classes. Dates become
+\code{Date}, times become \code{hms}, numeric fields become integer or double,
+empty fields become \code{NA}, and identifiers remain character. Category
+labels, padding and explicit source sentinels otherwise remain unchanged.
+\item \code{processing = "clean"} starts from the typed import, then trims text, maps
+\code{"NAO DISPONIVEL"} to \code{NA}, orders ordinal columns, parses \verb{ano_mes_*},
+converts crash-type flags to logical, fills blank \verb{qtd_*} entries with
+zero inside populated count blocks, converts \code{tempo_sinistro_obito} to
+integer, removes a trailing \code{".0"} from \code{numero_logradouro}, and validates
+coordinate pairs against a bounding box around Sao Paulo state.
+}
 
-By default (\code{clean = TRUE}) the result is then processed by the package's
-internal cleaning step: text columns are whitespace-trimmed, the
-\code{"NAO DISPONIVEL"} ("not available") marker becomes \code{NA}, ordinal columns
-(\code{dia_da_semana}, \code{turno}, \code{gravidade_lesao}, the age bands) become
-\strong{ordered factors}, the \verb{ano_mes_*} year-month strings are parsed to
-first-of-month \code{Date}s, the binary \verb{tp_sinistro_*} crash-type flags become
-\strong{logical}, blank \verb{qtd_*} counts inside an otherwise-filled block become
-\code{0}, \code{tempo_sinistro_obito} becomes \strong{integer}, and
-\code{latitude}/\code{longitude} values outside the bounding box of Sao Paulo state
-become \code{NA}. Pass \code{clean = FALSE} to obtain the raw data exactly as
-published, with every text column kept as a character vector and
-\code{"NAO DISPONIVEL"} and the source's
-fixed-width whitespace padding preserved verbatim.
+Before converting a closed-domain column, the cleaning step validates its
+observed values. If an ordinal column, crash-type flag or integer field
+contains an unexpected representation, the entire source column is preserved
+and a warning identifies the new values. This prevents upstream changes from
+becoming missing values or incorrect \code{FALSE} values silently.
+
+Label harmonisation is selective and opt-in. \code{standardize = "municipios"}
+uses official IBGE municipality names keyed by \code{cod_ibge} and harmonises the
+spelling of INFOSIGA administrative regions. \code{"cores"} merges case and gender
+variants of basic vehicle colours, while preserving detailed liveries and
+multi-tone values. \code{"profissoes"} applies consistent title case and known
+missing-value markers to occupation labels. These transformations preserve
+the rows and columns and never create broader analytical categories.
 
 A small fraction of rows in the source contain data-quality issues (for
 example, an unescaped \verb{;} inside a street name, or mis-encoded coordinates).
-Any value that cannot be parsed to its declared column type is set to \code{NA}
-and recorded by \code{\link[readr:problems]{readr::problems()}}. Empty fields are read as \code{NA} in both
-modes. In the raw data (\code{clean = FALSE}) the crash-type flag columns
-(\verb{tp_sinistro_*}) hold \code{"S"} when the flag applies and \code{NA} otherwise; with
-\code{clean = TRUE} they are converted to logical.
+In typed and clean modes, values that cannot be parsed to their declared
+column type become \code{NA} and are recorded by \code{\link[readr:problems]{readr::problems()}}. Raw mode
+preserves those field values as character. Structural CSV problems are
+recorded in every mode.
 }
 \section{Coverage and known caveats}{
 
@@ -141,15 +153,18 @@ DETRAN-SP revises the data; the structural points do not.
 
 \examples{
 \dontrun{
-# Import all crash events, processed (downloads the archive on first use)
+# Import all occurrence records, cleaned (downloads on first use)
 sinistros <- read_infosiga("sinistros")
 levels(sinistros$dia_da_semana)
 
-# Only victims from 2022 and 2023
-vitimas <- read_infosiga("pessoas", year = 2022:2023)
+# Import all victims / people involved
+vitimas <- read_infosiga("pessoas")
 
-# The raw data, exactly as published
-raw <- read_infosiga("sinistros", clean = FALSE)
+# Lossless tabular import: every field is character
+raw <- read_infosiga("sinistros", processing = "raw")
+
+# Parse documented classes without further cleaning
+typed <- read_infosiga("sinistros", processing = "typed")
 }
 
 # A bundled sample (no download required) illustrates the structure:
