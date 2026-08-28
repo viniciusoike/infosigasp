@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">infosigasp</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -37,15 +37,37 @@
     </div>
 
     <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.2.0" id="infosigasp-020">infosigasp 0.2.0<a class="anchor" aria-label="anchor" href="#infosigasp-020"></a></h2>
+<ul><li>Documented important changes in source-data coverage and definitions, including that 2015–2018 covers fatal crashes only and that <code>sinistros</code> includes unconfirmed notifications.</li>
+<li>Simplified the public API: <code><a href="../reference/read_infosiga.html">read_infosiga()</a></code> and <code><a href="../reference/dictionary_infosiga.html">dictionary_infosiga()</a></code> are now the only exported functions; download, cache, update, data-listing, cleaning and label-standardization helpers are internal implementation details. (<a href="https://github.com/viniciusoike/infosigasp/issues/20" class="external-link">#20</a>)</li>
+<li>
+<code><a href="../reference/dictionary_infosiga.html">dictionary_infosiga()</a></code> replaces <code>infosiga_dictionary()</code> and downloads the official PDF dictionaries for all datasets or a selected dataset. (<a href="https://github.com/viniciusoike/infosigasp/issues/20" class="external-link">#20</a>)</li>
+<li>
+<code><a href="../reference/read_infosiga.html">read_infosiga()</a></code> now supports explicit <code>"raw"</code>, <code>"typed"</code> and <code>"clean"</code> processing modes, with <code>"clean"</code> remaining the default. (<a href="https://github.com/viniciusoike/infosigasp/issues/22" class="external-link">#22</a>)</li>
+<li>
+<code><a href="../reference/read_infosiga.html">read_infosiga()</a></code> now supports selective label standardization through <code>standardize = "municipios"</code>, <code>"cores"</code>, <code>"profissoes"</code> or <code>"all"</code>, while preserving source categories that cannot be harmonized safely. (<a href="https://github.com/viniciusoike/infosigasp/issues/22" class="external-link">#22</a>)</li>
+<li>
+<code><a href="../reference/read_infosiga.html">read_infosiga()</a></code> now preserves unexpected categorical, flag and integer representations and emits a warning instead of silently coercing them. (<a href="https://github.com/viniciusoike/infosigasp/issues/22" class="external-link">#22</a>)</li>
+<li>
+<code><a href="../reference/read_infosiga.html">read_infosiga()</a></code> no longer accepts the non-pushdown <code>year</code> argument; filter <code>ano_sinistro</code> after import when a year subset is needed. (<a href="https://github.com/viniciusoike/infosigasp/issues/20" class="external-link">#20</a>)</li>
+</ul></div>
+    <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.1.0" id="infosigasp-010">infosigasp 0.1.0<a class="anchor" aria-label="anchor" href="#infosigasp-010"></a></h2>
 <p>Initial release.</p>
-<ul><li>Added <code><a href="../reference/dictionary_infosiga.html">dictionary_infosiga()</a></code>, which downloads and returns the official PDF dictionaries for all datasets or a selected dataset.</li>
-<li>Added <code><a href="../reference/read_infosiga.html">read_infosiga()</a></code>, which downloads and imports the <code>sinistros</code>, <code>pessoas</code> and <code>veiculos</code> datasets as tibbles. Its <code>processing</code> argument provides lossless tabular <code>"raw"</code>, parsed <code>"typed"</code> and default <code>"clean"</code> modes; <code>standardize</code> selectively harmonises category labels, and <code>refresh = TRUE</code> updates the cached data. The first interactive download asks for confirmation and reports its approximate size. Unexpected categorical or integer representations are preserved with a warning rather than silently coerced.</li>
-<li>Removed the non-pushdown <code>year</code> argument from <code><a href="../reference/read_infosiga.html">read_infosiga()</a></code>; filter <code>ano_sinistro</code> after import when a year subset is needed.</li>
-<li>Documented the coverage caveats of the source data in <code><a href="../reference/read_infosiga.html">?read_infosiga</a></code> and the getting-started vignette, chief among them that 2015–2018 covers fatal crashes only, so an unrestricted per-year count jumps roughly 20-fold in 2019.</li>
+<ul><li>Added <code><a href="../reference/read_infosiga.html">read_infosiga()</a></code>, which downloads (with caching) and imports the three INFOSIGA-SP datasets (<code>sinistros</code>, <code>pessoas</code> and <code>veiculos</code>) as tidy tibbles, handling the source encoding, decimal marks and date formats.</li>
+<li>Added <code>clean_infosiga()</code>, applied by default, which trims text, maps <code>"NAO DISPONIVEL"</code> to <code>NA</code>, makes ordinal columns ordered factors, parses the <code>ano_mes_*</code> columns to first-of-month <code>Date</code>s, turns the <code>tp_sinistro_*</code> crash-type flags logical, fills blank <code>qtd_*</code> counts with <code>0</code> inside an otherwise-populated count block, casts <code>tempo_sinistro_obito</code> to integer, strips the spurious <code>".0"</code> on <code>numero_logradouro</code>, and voids coordinates outside the São Paulo state bounding box.</li>
+<li>Added <code>clean = FALSE</code> to <code><a href="../reference/read_infosiga.html">read_infosiga()</a></code> for the raw data as published.</li>
+<li>Added <code>tidy_infosiga_labels()</code>, an opt-in second pass that rewrites category labels for analysts who do not need the published categories verbatim: IBGE spellings for <code>municipio</code> and <code>regiao_administrativa</code>, merged <code>cor_veiculo</code> spellings, Title Cased <code>profissao</code>, and route codes split out of <code>conservacao</code> into a new <code>conservacao_codigo</code> column.</li>
+<li>Added the <code>infosiga_municipios</code> dataset, pairing the official IBGE name and the INFOSIGA-SP spelling of each São Paulo municipality, keyed by <code>cod_ibge</code>.</li>
+<li>Added <code>infosiga_download()</code> to pre-fetch the source archive, falling back to a GitHub-release mirror when the DETRAN-SP endpoint is unavailable; further mirrors go in the <code>infosigasp.zip_url</code> option. Responses are checked for the ZIP signature before being cached, so a portal serving an error page under a 200 status falls through to the next mirror instead of poisoning the cache.</li>
+<li>Added a warning when <code><a href="../reference/read_infosiga.html">read_infosiga()</a></code> or <code>infosiga_download()</code> reuses a cached archive whose data are older than the <code>infosigasp.stale_days</code> option (30 days by default; set to <code>Inf</code> to disable), since DETRAN-SP refreshes the data monthly under the same file name. The age is that of the CSVs inside the archive rather than of the downloaded file, and the warning names the date they carry. It describes the local copy only; use <code>infosiga_check_update()</code> to compare it against a remote source.</li>
+<li>Added <code>infosiga_check_update()</code>, which reports whether the archive published on the package mirror is newer than the cached copy. It reads a small manifest describing the mirrored archive rather than the archive itself. A weekly GitHub Actions job re-fetches the official archive and republishes the mirror whenever its contents change, so the mirror can trail DETRAN-SP by up to a week. <code>infosigasp.manifest_url</code> accepts a vector of mirrors tried in order, matching <code>infosigasp.zip_url</code>.</li>
+<li>Added <code>infosiga_cache_dir()</code>, <code>infosiga_cache_list()</code> and <code>infosiga_cache_clear()</code> to manage the on-disk cache.</li>
+<li>Added <code>infosiga_datasets()</code>, which lists the available datasets and their keys, and <code>infosiga_dictionary()</code>, which downloads the official data dictionary. <code>infosigasp.dictionary_url</code> accepts a vector of mirrors tried in order, matching <code>infosigasp.zip_url</code>.</li>
 <li>Added a package hex logo drawn from the major road network of the São Paulo Metropolitan Region in the INFOSIGA-SP dark blue (<code>data-raw/logo.R</code>).</li>
 </ul></div>
-  </main></div>
+  </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
+    </nav></aside></div>
 
 
     <footer><div class="pkgdown-footer-left">
