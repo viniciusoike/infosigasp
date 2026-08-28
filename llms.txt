@@ -1,15 +1,16 @@
 # infosigasp
 
 `infosigasp` provides a programmatic interface to the open data
-published by **INFOSIGA-SP**, the São Paulo State Traffic Accident
+published by **INFOSIGA-SP**, the São Paulo State Traffic Incident
 Information and Management System maintained by **DETRAN-SP** (the São
 Paulo State Department of Motor Vehicles).
 
 The package downloads the official data archive, handles its quirks
 (Latin-1 encoding, semicolon separators, comma decimal marks,
-`DD/MM/YYYY` dates) and returns tidy tibbles ready for analysis. It
-covers every traffic crash recorded in the state of São Paulo from
-**2015 onward**.
+`DD/MM/YYYY` dates) and returns tidy `tibble` objects. It imports the
+occurrence records published by INFOSIGA-SP from **2015 onward**;
+coverage and definitions vary over time, as described below and in
+[`?read_infosiga`](https://viniciusoike.github.io/infosigasp/reference/read_infosiga.md).
 
 ## Installation
 
@@ -24,16 +25,19 @@ The development version lives on GitHub.
 
 ``` r
 
-# install.packages("pak")
-pak::pak("viniciusoike/infosigasp")
+# install.packages("remotes")
+remotes::install_github("viniciusoike/infosigasp")
 ```
 
 ## Datasets
 
-INFOSIGA-SP publishes three linked datasets: `sinistros` (crash events),
+INFOSIGA-SP publishes three datasets: `sinistros` (occurrence records),
 `pessoas` (victims) and `veiculos` (vehicles).
 
 Join the datasets on `id_sinistro`, and on `id_veiculo` where present.
+[`read_infosiga()`](https://viniciusoike.github.io/infosigasp/reference/read_infosiga.md)
+imports all available years; filter `ano_sinistro` after import when you
+need a shorter period.
 
 ## Usage
 
@@ -44,29 +48,38 @@ your user cache; later calls read straight from disk.
 
 library(infosigasp)
 
-# Crash events (one row per event)
+# Occurrence records (confirmed crashes and notifications)
 sinistros <- read_infosiga("sinistros")
 
-# Victims, restricted to a range of crash years
-vitimas <- read_infosiga("pessoas", year = 2022:2025)
+# Victims / people involved
+vitimas <- read_infosiga("pessoas")
 
 # Vehicles involved
 veiculos <- read_infosiga("veiculos")
 ```
 
-### Processed by default, raw on demand
+### Choose how much processing to apply
 
-By default
 [`read_infosiga()`](https://viniciusoike.github.io/infosigasp/reference/read_infosiga.md)
-returns a **processed** dataset. Dates parse to `Date` (including the
-`ano_mes_*` year-month columns, as first-of-month dates), text loses its
-padding, the `"NAO DISPONIVEL"` (“not available”) marker becomes `NA`,
-the binary `tp_sinistro_*` crash-type flags become logical, coordinates
-outside São Paulo state become `NA`, and the ordinal columns become
-**ordered factors** so they sort and plot in their natural order rather
-than alphabetically.
-[`?read_infosiga`](https://viniciusoike.github.io/infosigasp/reference/read_infosiga.md)
-documents the full processing pipeline.
+provides three explicit processing modes.
+
+| mode | result |
+|----|----|
+| `"raw"` | Every field is character; empty strings, padding, sentinels and malformed representations remain visible. |
+| `"typed"` | Documented dates, times and numeric fields receive useful R classes, but source labels and padding remain unchanged. |
+| `"clean"` | The default. Adds conservative cleaning to the typed import. |
+
+Raw mode is a lossless **tabular** import, not a byte-for-byte copy: the
+package still decodes Latin-1 to UTF-8, parses the CSV structure and
+combines the period files.
+
+Clean mode trims text, maps `"NAO DISPONIVEL"` to `NA`, parses
+`ano_mes_*` as first-of-month dates, orders ordinal columns, converts
+crash-type flags to logical, fills blank `qtd_*` entries with zero
+inside populated count blocks, removes export-only trailing `".0"`
+values from `numero_logradouro`, and validates coordinate pairs against
+a bounding box around São Paulo state. It does not rename columns,
+harmonize nominal labels or drop rows.
 
 ``` r
 
@@ -78,34 +91,46 @@ levels(vitimas$gravidade_lesao)
 #> [1] "LEVE"  "GRAVE" "FATAL"
 ```
 
-Pass `clean = FALSE` to get the data exactly as published (every text
-column as a character vector, markers preserved).
+``` r
+
+raw <- read_infosiga("sinistros", processing = "raw")
+typed <- read_infosiga("sinistros", processing = "typed")
+```
+
+Use `"raw"` to audit the source representation, `"typed"` when you want
+useful classes without the cleaning rules, and the default `"clean"`
+mode for most analysis. Parsing issues are available in
+`attr(x, "problems")` in every mode.
+
+Before converting a closed-domain column, clean mode checks its observed
+values. If it encounters a new ordinal level, flag token or integer
+representation, it preserves that entire column and warns instead of
+silently discarding values.
+
+### Standardizing category labels
+
+Clean mode does not harmonize nominal categories beyond its documented
+missing-value rule. Select the harmonizations you need with
+`standardize`. For example, `cor_veiculo` contains duplicate basic
+colours because two upstream systems disagree on case and gender
+agreement (`PRETA`, `Preta`; `BRANCA`, `Branco`).
 
 ``` r
 
-raw <- read_infosiga("sinistros", clean = FALSE)
+veiculos <- read_infosiga("veiculos", standardize = "cores")
 ```
 
-### Tidying the category labels
+The other options are `"municipios"`, which uses official IBGE
+municipality names and harmonizes INFOSIGA administrative-region names,
+and `"profissoes"`, which title-cases occupation labels. Pass a
+character vector to combine options, or `"all"` for every option
+applicable to the selected dataset. Detailed vehicle liveries and
+multi-tone colours remain unchanged; standardization never creates
+broader analytical groups or reshapes fields.
 
-The default processing fixes types and source artefacts but leaves
-category labels alone, so anyone reproducing an official DETRAN-SP
-figure gets exactly the published categories. Those labels are messy.
-`cor_veiculo`, for example, carries dozens of values for about sixteen
-real colours because two upstream systems disagree on case and gender
-agreement (`PRETA`, `Preta`; `BRANCA`, `Branco`). Pass `labels = TRUE`
-when you want labels that group, sort and plot sensibly.
-
-``` r
-
-veiculos <- read_infosiga("veiculos", labels = TRUE)
-```
-
-This also gives `municipio` and `regiao_administrativa` their official
-IBGE spellings, title-cases `profissao`, and splits route codes out of
-`conservacao` into a new `conservacao_codigo` column.
-
-The getting-started vignette covers both passes in full.
+The getting-started vignette covers the processing modes and
+standardization in full. Standardization is available only with
+`processing = "clean"`.
 
 ### Updating the local data
 
@@ -120,12 +145,14 @@ sinistros <- read_infosiga("sinistros", refresh = TRUE)
 ### Data dictionary
 
 [`dictionary_infosiga()`](https://viniciusoike.github.io/infosigasp/reference/dictionary_infosiga.md)
-downloads the official field-by-field documentation (PDF, in
-Portuguese).
+downloads the official field-by-field documentation (one PDF per
+dataset, in Portuguese) and returns the local file paths. Supply a
+dataset name to retrieve only its dictionary.
 
 ``` r
 
 dictionary_infosiga()
+dictionary_infosiga("sinistros")
 ```
 
 ## Example

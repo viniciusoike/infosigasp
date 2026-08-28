@@ -7,13 +7,16 @@ Department of Motor Vehicles (DETRAN-SP).
 
 ## Details
 
-INFOSIGA-SP distributes three related datasets covering every traffic
-crash recorded in the state of Sao Paulo, Brazil, from 2015 onward.
+INFOSIGA-SP distributes three related datasets of occurrence records
+from 2015 onward. Coverage and definitions vary over time; notably,
+2015–2018 covers fatal crashes only, and the events table includes
+notifications that have not yet been confirmed as crashes.
 
 - `sinistros`:
 
-  Crash events: one row per recorded event, with date, time, location
-  and a breakdown of vehicles and victims by severity.
+  Occurrence records: one row per confirmed crash or notification, with
+  date, time, location and a breakdown of vehicles and victims by
+  severity.
 
 - `pessoas`:
 

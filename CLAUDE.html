@@ -44,15 +44,15 @@
 <ul><li>
 <strong>Two-function public API.</strong> Only <code><a href="reference/read_infosiga.html">read_infosiga()</a></code> and <code><a href="reference/dictionary_infosiga.html">dictionary_infosiga()</a></code> are exported. Downloading, caching and transformations are implementation details reached through arguments to these functions.</li>
 <li>
-<strong>Clean by default, raw on request.</strong> <code><a href="reference/read_infosiga.html">read_infosiga()</a></code> returns a processed tibble (<code>clean = TRUE</code>); <code>clean = FALSE</code> returns the data exactly as published. All cleaning logic lives in <code>.infosiga_clean()</code> and must stay <strong>idempotent</strong>.</li>
+<strong>Explicit processing modes.</strong> <code><a href="reference/read_infosiga.html">read_infosiga()</a></code> supports <code>"raw"</code> (all fields character with source representations preserved), <code>"typed"</code> (declared R classes without cleaning) and default <code>"clean"</code> modes. All cleaning logic lives in <code>.infosiga_clean()</code> and must stay <strong>idempotent</strong>.</li>
 <li>
-<strong>Faithful layer, then opinionated layer.</strong> <code>.infosiga_clean()</code> fixes types and missing-value markers but never renames columns, recodes category labels or drops rows. Anything that rewrites what the source says — IBGE municipality spellings, Title Case, merged categories — belongs in <code>.infosiga_tidy_labels()</code>, which users opt into with <code>labels = TRUE</code>.</li>
+<strong>Faithful layer, then harmonisation layer.</strong> <code>.infosiga_clean()</code> fixes types and missing-value markers but never renames columns, recodes category labels or drops rows. Conservative label harmonisation belongs in <code>.infosiga_standardize()</code>, which users select with <code>standardize</code>. Analytical recoding and reshaping are outside the initial release scope.</li>
 <li>
 <strong>Original column names are preserved</strong> (Portuguese). Do not anglicise them; users cross-reference the official data dictionary (<code><a href="reference/dictionary_infosiga.html">dictionary_infosiga()</a></code>).</li>
 <li>
 <strong>The cache is never poisoned by a bad download.</strong> Downloads go to a tempfile, are validated (non-empty + ZIP magic bytes via <code>.infosiga_is_zip()</code>), and only then copied into the cache. A failed refresh leaves any existing archive intact.</li>
 <li>
-<strong>Mirror fallback.</strong> <code>infosigasp.zip_url</code> and <code>infosigasp.dictionary_url</code> may each be a vector of URLs tried in order.</li>
+<strong>Mirror fallback.</strong> <code>infosigasp.zip_url</code> and <code>infosigasp.dictionary_url</code> may each be a vector of URLs tried in order. The default <code>zip_url</code> falls back to the <code>data-current</code> GitHub release, which <code>.github/workflows/refresh-data-mirror.yaml</code> re-uploads weekly whenever the DETRAN-SP archive hash changes. That tag rolls; never pin a dated one.</li>
 <li>
 <strong>Refresh through the reader.</strong> <code>read_infosiga(refresh = TRUE)</code> is the only public update path. The first interactive download asks for confirmation and reports the approximate 120 MB size; explicit refreshes do not prompt again.</li>
 </ul></div>
@@ -61,12 +61,23 @@
 <ul><li>Code style: RStudio section headers (<code># Section ----</code>), per the global CLAUDE.md. Internal helpers and constants are prefixed <code>.infosiga_</code>.</li>
 <li>User-facing messages, warnings, and errors go through <strong>cli</strong> (<code>cli_abort</code>, <code>cli_warn</code>, <code>cli_alert_*</code>) — never base <code>stop</code>/<code>warning</code>/<code>message</code>.</li>
 <li>Source/URL/spec constants live in <code>R/infosiga-specs.R</code>. Behaviour is tunable through <code><a href="https://rdrr.io/r/base/options.html" class="external-link">options()</a></code>: <code>infosigasp.cache_dir</code>, <code>infosigasp.zip_url</code> and <code>infosigasp.dictionary_url</code>.</li>
+<li>Data processing uses <strong>dplyr and stringr</strong>, not base R. <code>dplyr (&gt;= 1.2.0)</code> is pinned because <code>.infosiga_clean()</code> and <code>.infosiga_standardize()</code> call <code>replace_values()</code> and <code>replace_when()</code>.</li>
+<li>Source files stay <strong>pure ASCII</strong>. Accented literals are built with <code><a href="https://rdrr.io/r/base/utf8Conversion.html" class="external-link">intToUtf8()</a></code> — see <code>.infosiga_factor_levels</code> in <code>R/clean.R</code>. The values are UTF-8, matching the decoded Latin-1 source.</li>
+</ul></div>
+<div class="section level2">
+<h2 id="data-shipped-with-the-package">Data shipped with the package<a class="anchor" aria-label="anchor" href="#data-shipped-with-the-package"></a></h2>
+<ul><li>
+<code>R/sysdata.rda</code> holds <code>infosiga_municipios</code>, the 645-row <code>cod_ibge</code> to IBGE spelling lookup that the label layer joins against. Regenerate it with <code>data-raw/municipios.R</code>, which calls the IBGE API and <code>usethis::use_data(internal = TRUE)</code>.</li>
+<li>
+<code>inst/extdata/&lt;dataset&gt;_sample.csv</code> are 100-row UTF-8 extracts of the most recent period file, so examples and the vignette avoid the 120 MB download.</li>
 </ul></div>
 <div class="section level2">
 <h2 id="testing">Testing<a class="anchor" aria-label="anchor" href="#testing"></a></h2>
 <ul><li>Tests must run <strong>offline</strong>. Network paths are exercised by pointing the URL options at <code>file://</code> URLs (see <code>test-download.R</code> and <code>test-dictionary.R</code>).</li>
 <li>The cache is redirected to a tempdir via the <code>infosigasp.cache_dir</code> option; use the <code>local_infosiga_fixture()</code> helper (<code>helper-cache.R</code>) to seed it with the fixture archive <code>tests/testthat/fixtures/dados_infosiga.zip</code>.</li>
-<li>Fixtures: <code>dados_infosiga.zip</code> (minimal data archive, two period files per dataset) and <code>dicionario.zip</code> (dummy dictionary PDFs). Regenerate sample bundles and fixtures with <code>data-raw/sample-data.R</code>.</li>
+<li>Fixtures: <code>dados_infosiga.zip</code> (minimal data archive, two period files per dataset) and <code>dicionario.zip</code> (dummy dictionary PDFs). Both are Latin-1, like the source archive, while the <code>inst/extdata</code> samples are UTF-8; keep that split when regenerating either.</li>
+<li>
+<code>tests/testthat/_snaps/read.md</code> snapshots the cli output of <code><a href="reference/read_infosiga.html">read_infosiga()</a></code>. Editing those messages means reviewing and accepting the snapshot with <code>testthat::snapshot_accept("read")</code>.</li>
 <li>testthat 3e. Prefer <code>withr::local_*</code> for option/tempdir cleanup.</li>
 </ul></div>
 <div class="section level2">
@@ -78,6 +89,8 @@
 <code>devtools::document()</code> after editing roxygen (regenerates <code>man/</code> + NAMESPACE)</li>
 <li>Rebuild the README from <code>README.Rmd</code> with <code>devtools::build_readme()</code>
 </li>
+<li>
+<code>data-raw/sample-data.R</code> regenerates the <code>inst/extdata</code> samples and the test fixtures; <code>data-raw/municipios.R</code> regenerates <code>R/sysdata.rda</code>. Both hit the network, so run them only after an upstream schema change.</li>
 </ul></div>
 </div>
 

@@ -14,17 +14,18 @@ and `veiculos` (vehicles), from 2015 on.
   [`dictionary_infosiga()`](https://viniciusoike.github.io/infosigasp/reference/dictionary_infosiga.md)
   are exported. Downloading, caching and transformations are
   implementation details reached through arguments to these functions.
-- **Clean by default, raw on request.**
+- **Explicit processing modes.**
   [`read_infosiga()`](https://viniciusoike.github.io/infosigasp/reference/read_infosiga.md)
-  returns a processed tibble (`clean = TRUE`); `clean = FALSE` returns
-  the data exactly as published. All cleaning logic lives in
+  supports `"raw"` (all fields character with source representations
+  preserved), `"typed"` (declared R classes without cleaning) and
+  default `"clean"` modes. All cleaning logic lives in
   `.infosiga_clean()` and must stay **idempotent**.
-- **Faithful layer, then opinionated layer.** `.infosiga_clean()` fixes
-  types and missing-value markers but never renames columns, recodes
-  category labels or drops rows. Anything that rewrites what the source
-  says — IBGE municipality spellings, Title Case, merged categories —
-  belongs in `.infosiga_tidy_labels()`, which users opt into with
-  `labels = TRUE`.
+- **Faithful layer, then harmonisation layer.** `.infosiga_clean()`
+  fixes types and missing-value markers but never renames columns,
+  recodes category labels or drops rows. Conservative label
+  harmonisation belongs in `.infosiga_standardize()`, which users select
+  with `standardize`. Analytical recoding and reshaping are outside the
+  initial release scope.
 - **Original column names are preserved** (Portuguese). Do not anglicise
   them; users cross-reference the official data dictionary
   ([`dictionary_infosiga()`](https://viniciusoike.github.io/infosigasp/reference/dictionary_infosiga.md)).
@@ -34,7 +35,10 @@ and `veiculos` (vehicles), from 2015 on.
   refresh leaves any existing archive intact.
 - **Mirror fallback.** `infosigasp.zip_url` and
   `infosigasp.dictionary_url` may each be a vector of URLs tried in
-  order.
+  order. The default `zip_url` falls back to the `data-current` GitHub
+  release, which `.github/workflows/refresh-data-mirror.yaml` re-uploads
+  weekly whenever the DETRAN-SP archive hash changes. That tag rolls;
+  never pin a dated one.
 - **Refresh through the reader.** `read_infosiga(refresh = TRUE)` is the
   only public update path. The first interactive download asks for
   confirmation and reports the approximate 120 MB size; explicit
@@ -51,6 +55,24 @@ and `veiculos` (vehicles), from 2015 on.
   tunable through [`options()`](https://rdrr.io/r/base/options.html):
   `infosigasp.cache_dir`, `infosigasp.zip_url` and
   `infosigasp.dictionary_url`.
+- Data processing uses **dplyr and stringr**, not base R.
+  `dplyr (>= 1.2.0)` is pinned because `.infosiga_clean()` and
+  `.infosiga_standardize()` call `replace_values()` and
+  `replace_when()`.
+- Source files stay **pure ASCII**. Accented literals are built with
+  [`intToUtf8()`](https://rdrr.io/r/base/utf8Conversion.html) — see
+  `.infosiga_factor_levels` in `R/clean.R`. The values are UTF-8,
+  matching the decoded Latin-1 source.
+
+## Data shipped with the package
+
+- `R/sysdata.rda` holds `infosiga_municipios`, the 645-row `cod_ibge` to
+  IBGE spelling lookup that the label layer joins against. Regenerate it
+  with `data-raw/municipios.R`, which calls the IBGE API and
+  `usethis::use_data(internal = TRUE)`.
+- `inst/extdata/<dataset>_sample.csv` are 100-row UTF-8 extracts of the
+  most recent period file, so examples and the vignette avoid the 120 MB
+  download.
 
 ## Testing
 
@@ -62,8 +84,13 @@ and `veiculos` (vehicles), from 2015 on.
   to seed it with the fixture archive
   `tests/testthat/fixtures/dados_infosiga.zip`.
 - Fixtures: `dados_infosiga.zip` (minimal data archive, two period files
-  per dataset) and `dicionario.zip` (dummy dictionary PDFs). Regenerate
-  sample bundles and fixtures with `data-raw/sample-data.R`.
+  per dataset) and `dicionario.zip` (dummy dictionary PDFs). Both are
+  Latin-1, like the source archive, while the `inst/extdata` samples are
+  UTF-8; keep that split when regenerating either.
+- `tests/testthat/_snaps/read.md` snapshots the cli output of
+  [`read_infosiga()`](https://viniciusoike.github.io/infosigasp/reference/read_infosiga.md).
+  Editing those messages means reviewing and accepting the snapshot with
+  `testthat::snapshot_accept("read")`.
 - testthat 3e. Prefer `withr::local_*` for option/tempdir cleanup.
 
 ## Useful commands
@@ -72,3 +99,7 @@ and `veiculos` (vehicles), from 2015 on.
 - `devtools::document()` after editing roxygen (regenerates `man/` +
   NAMESPACE)
 - Rebuild the README from `README.Rmd` with `devtools::build_readme()`
+- `data-raw/sample-data.R` regenerates the `inst/extdata` samples and
+  the test fixtures; `data-raw/municipios.R` regenerates
+  `R/sysdata.rda`. Both hit the network, so run them only after an
+  upstream schema change.

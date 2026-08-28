@@ -4,9 +4,9 @@ This article reproduces the official INFOSIGA-SP data dictionary
 (**v1.5, 2026-06-16**), published by DETRAN-SP, for the three datasets
 returned by
 [`read_infosiga()`](https://viniciusoike.github.io/infosigasp/reference/read_infosiga.md):
-`sinistros` (crash events), `pessoas` (victims) and `veiculos`
-(vehicles). Field names, descriptions and allowed values appear here
-verbatim;
+`sinistros` (confirmed crashes and notifications), `pessoas` (victims)
+and `veiculos` (vehicles). Field names, descriptions and allowed values
+appear here verbatim;
 [`dictionary_infosiga()`](https://viniciusoike.github.io/infosigasp/reference/dictionary_infosiga.md)
 downloads the original PDFs, which are in Portuguese.
 
@@ -15,21 +15,21 @@ Three notes on reading the tables.
 - **Click a row** (or the arrow) to expand the storage format, the
   source of the field, the full list of allowed values and any
   additional notes.
-- The **Type** and **Nulls** columns describe the files *as published*,
-  i.e. what you get with `read_infosiga(clean = FALSE)`. With the
-  default `clean = TRUE`, some columns change class: dates and times are
-  parsed, the `tp_sinistro_*` flags become logical, ordinal columns
-  become ordered factors and the `NAO DISPONIVEL` marker becomes `NA`
-  (see
+- The **Type** and **Nulls** columns describe the source schema, not
+  necessarily the returned R classes. `processing = "raw"` returns every
+  field as character; `"typed"` parses the documented classes; and the
+  default `"clean"` mode adds missing-value, factor and flag
+  conversions. See
   [`?read_infosiga`](https://viniciusoike.github.io/infosigasp/reference/read_infosiga.md)
-  for the full list).
+  for the full pipeline.
 - In the *Source* field, **PC**, **PM** and **PRF** stand for Polícia
   Civil, Polícia Militar and Polícia Rodoviária Federal; **DETRAN-SP**
   marks fields derived by the Infosiga system itself.
 
-## Sinistros (crash events)
+## Sinistros (occurrence records)
 
-One row per recorded crash event, keyed by `id_sinistro` (48 variables).
+One row per confirmed crash or notification, keyed by `id_sinistro` (48
+variables).
 
 ## Pessoas (victims)
 

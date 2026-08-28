@@ -74,9 +74,11 @@
 <h2 id="overview">Overview<a class="anchor" aria-label="anchor" href="#overview"></a>
 </h2>
 <p><a href="https://infosiga.detran.sp.gov.br/" class="external-link">INFOSIGA-SP</a> is the
-São Paulo State Traffic Accident Information and Management System,
-maintained by DETRAN-SP. It publishes, as open data, detailed records of
-every traffic crash in the state of São Paulo from 2015 onward.</p>
+São Paulo State Traffic Incident Information and Management System,
+maintained by DETRAN-SP. It publishes open occurrence records from 2015
+onward. Coverage and definitions vary over time: 2015–2018 covers fatal
+crashes only, and the events table also contains notifications that have
+not yet been confirmed as crashes.</p>
 <p><code>infosigasp</code> downloads and imports those records. It
 handles what makes the raw files awkward to read directly.</p>
 <ul>
@@ -99,10 +101,10 @@ onward).</li>
 <p>INFOSIGA-SP organises its data into three linked tables.</p>
 <ul>
 <li>
-<strong><code>sinistros</code></strong> — crash <em>events</em>. One
-row per recorded event, with the date, time, location (including
-latitude/longitude), road attributes and a breakdown of how many
-vehicles and victims were involved, by type and severity.</li>
+<strong><code>sinistros</code></strong> — occurrence records. One
+row per confirmed crash or notification, with the date, time, location
+(including latitude/longitude), road attributes and a breakdown of how
+many vehicles and victims were involved, by type and severity.</li>
 <li>
 <strong><code>pessoas</code></strong> — <em>people</em> (victims).
 One row per person involved, with demographic attributes, injury
@@ -127,26 +129,62 @@ first download.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">sinistros</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/read_infosiga.html">read_infosiga</a></span><span class="op">(</span><span class="st">"sinistros"</span><span class="op">)</span></span>
 <span><span class="va">sinistros</span></span></code></pre></div>
-<p>The <code>year</code> argument restricts the import to specific
-years, filtering on the year of the crash
-(<code>ano_sinistro</code>).</p>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">recent</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/read_infosiga.html">read_infosiga</a></span><span class="op">(</span><span class="st">"sinistros"</span>, year <span class="op">=</span> <span class="fl">2022</span><span class="op">:</span><span class="fl">2025</span><span class="op">)</span></span></code></pre></div>
 <div class="section level3">
-<h3 id="processed-vs--raw-data">Processed vs. raw data<a class="anchor" aria-label="anchor" href="#processed-vs--raw-data"></a>
+<h3 id="raw-typed-and-clean-data">Raw, typed and clean data<a class="anchor" aria-label="anchor" href="#raw-typed-and-clean-data"></a>
 </h3>
-<p>By default <code><a href="../reference/read_infosiga.html">read_infosiga()</a></code> returns a
-<strong>processed</strong> dataset (<code>clean = TRUE</code>). The
-processing never renames columns, recodes category labels or drops rows.
-It only fixes types and source artefacts. The full pipeline is
-documented in <code><a href="../reference/read_infosiga.html">?read_infosiga</a></code>; the main steps are below.</p>
+<p><code><a href="../reference/read_infosiga.html">read_infosiga()</a></code> separates tabular import, type parsing
+and cleaning through the <code>processing</code> argument.</p>
+<table class="table">
+<colgroup>
+<col width="42%">
+<col width="57%">
+</colgroup>
+<thead><tr class="header">
+<th>mode</th>
+<th>result</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td><code>"raw"</code></td>
+<td>Every field is character. Empty strings, whitespace, sentinels and
+malformed representations remain visible.</td>
+</tr>
+<tr class="even">
+<td><code>"typed"</code></td>
+<td>Documented dates, times and numeric fields receive R classes; other
+source values remain unchanged.</td>
+</tr>
+<tr class="odd">
+<td><code>"clean"</code></td>
+<td>The default. Applies the cleaning pipeline after typed import.</td>
+</tr>
+</tbody>
+</table>
+<p>Every mode decodes Latin-1 to UTF-8, parses the CSV structure and
+combines the period files. Raw mode is therefore a lossless tabular
+representation rather than a byte-for-byte copy of the source
+archive.</p>
+<p>Choose the mode according to the task: use <code>"raw"</code> to
+audit source values, <code>"typed"</code> to parse documented classes
+while retaining source labels and padding, and the default
+<code>"clean"</code> mode for most analysis. All modes retain import
+diagnostics in <code>attr(x, "problems")</code>; typed and clean modes
+replace values that fail their declared parser with <code>NA</code>,
+while raw mode preserves the field text.</p>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">raw</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/read_infosiga.html">read_infosiga</a></span><span class="op">(</span><span class="st">"sinistros"</span>, processing <span class="op">=</span> <span class="st">"raw"</span><span class="op">)</span></span>
+<span><span class="va">typed</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/read_infosiga.html">read_infosiga</a></span><span class="op">(</span><span class="st">"sinistros"</span>, processing <span class="op">=</span> <span class="st">"typed"</span><span class="op">)</span></span>
+<span><span class="va">clean</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/read_infosiga.html">read_infosiga</a></span><span class="op">(</span><span class="st">"sinistros"</span>, processing <span class="op">=</span> <span class="st">"clean"</span><span class="op">)</span></span></code></pre></div>
+<p>Typed mode parses full dates to <code>Date</code>, times to
+<code>hms</code>, numeric fields to integer or double, and empty fields
+to <code>NA</code>. Identifiers remain character to preserve leading
+zeros and avoid integer overflow.</p>
+<p>Clean mode then applies the following transformations:</p>
 <ul>
 <li>
-<strong>Dates and times.</strong> Full dates are parsed to
-<code>Date</code> and times to <code>hms</code> (in both modes), and the
-<code>ano_mes_*</code> year-month columns (published as
-<code>"YYYY/MM"</code>) become first-of-month <code>Date</code>
-values.</li>
+<strong>Year-month dates.</strong> The <code>ano_mes_*</code>
+columns (published as <code>"YYYY/MM"</code>) become first-of-month
+<code>Date</code> values.</li>
 <li>
 <strong>Whitespace.</strong> Text columns lose their leading and
 trailing whitespace. The source pads some fields to a fixed width
@@ -182,18 +220,30 @@ their natural order instead of alphabetically.
 directly. The categorical <code>tp_sinistro_primario</code> stays
 text.</li>
 <li>
+<strong>Count blocks.</strong> A blank <code>qtd_*</code> entry
+becomes zero when another count in the same vehicle or injury-severity
+block is populated. Entirely blank blocks remain missing.</li>
+<li>
 <strong>Numeric strings.</strong> <code>tempo_sinistro_obito</code>
 (days from crash to death) becomes <strong>integer</strong>, and
 <code>numero_logradouro</code> loses the spurious trailing
 <code>".0"</code> the export appends (<code>"193.0"</code>).</li>
 <li>
-<strong>Coordinates.</strong>
-<code>latitude</code>/<code>longitude</code> outside the São Paulo state
-bounding box become <code>NA</code> as a pair. These are mis-encoded
-values and <code>(0, 0)</code> placeholders, a few percent of records.
-No rows are dropped; pass <code>clean = FALSE</code> for the raw
-coordinates.</li>
+<strong>Coordinates.</strong> Coordinate pairs outside a validation
+bounding box around São Paulo state become <code>NA</code>. This catches
+extreme malformed values and <code>(0, 0)</code> placeholders but is a
+rectangular screen, not a state-boundary test. No rows are dropped;
+typed and raw modes preserve the coordinates before this
+validation.</li>
 </ul>
+<p>Before converting an ordinal, flag or integer column, clean mode
+validates its observed representations. If it finds an unexpected value,
+it preserves the entire column and warns; the class can therefore remain
+character after an upstream change.</p>
+<p>These safeguards apply to closed-domain conversions, not to every
+parsed column. For example, a malformed numeric coordinate can become
+<code>NA</code> during the typed import and will be listed in
+<code>attr(x, "problems")</code>.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">sinistros</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/read_infosiga.html">read_infosiga</a></span><span class="op">(</span><span class="st">"sinistros"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/levels.html" class="external-link">levels</a></span><span class="op">(</span><span class="va">sinistros</span><span class="op">$</span><span class="va">dia_da_semana</span><span class="op">)</span></span></code></pre></div>
@@ -201,23 +251,15 @@ coordinates.</li>
 tabulation comes out in calendar order rather than alphabetically.</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/table.html" class="external-link">table</a></span><span class="op">(</span><span class="va">sinistros</span><span class="op">$</span><span class="va">dia_da_semana</span><span class="op">)</span></span></code></pre></div>
-<p>Pass <code>clean = FALSE</code> if you would rather have the data
-exactly as published, with every text column a character vector and
-<code>"NAO DISPONIVEL"</code> and the source’s whitespace padding
-preserved verbatim.</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">raw</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/read_infosiga.html">read_infosiga</a></span><span class="op">(</span><span class="st">"sinistros"</span>, clean <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level3">
-<h3 id="tidying-the-category-labels">Tidying the category labels<a class="anchor" aria-label="anchor" href="#tidying-the-category-labels"></a>
+<h3 id="standardizing-category-labels">Standardizing category labels<a class="anchor" aria-label="anchor" href="#standardizing-category-labels"></a>
 </h3>
-<p>The default cleaning fixes types and source artefacts but never
-touches category <em>labels</em>, so that anyone reproducing an official
-DETRAN-SP figure gets exactly the categories DETRAN-SP publishes. Those
-labels are, however, genuinely messy. For your own analysis, opt in with
-<code>labels = TRUE</code>.</p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">veiculos</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/read_infosiga.html">read_infosiga</a></span><span class="op">(</span><span class="st">"veiculos"</span>, labels <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<p>Clean mode does not harmonize nominal categories beyond its
+documented missing-value rule. Select only the harmonizations you need
+with <code>standardize</code>.</p>
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">veiculos</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/read_infosiga.html">read_infosiga</a></span><span class="op">(</span><span class="st">"veiculos"</span>, standardize <span class="op">=</span> <span class="st">"cores"</span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/sort.html" class="external-link">sort</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/table.html" class="external-link">table</a></span><span class="op">(</span><span class="va">veiculos</span><span class="op">$</span><span class="va">cor_veiculo</span><span class="op">)</span>, decreasing <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
 <p>Vehicle colour is the clearest case. The source carries dozens of
@@ -227,7 +269,7 @@ title-cased, and the two disagree on gender agreement.</p>
 <table class="table">
 <thead><tr class="header">
 <th>source values</th>
-<th>tidied</th>
+<th>standardized</th>
 </tr></thead>
 <tbody>
 <tr class="odd">
@@ -238,8 +280,7 @@ title-cased, and the two disagree on gender agreement.</p>
 </tr>
 <tr class="even">
 <td>
-<code>BRANCA</code>, <code>Branco</code>,
-<code>BRANCA (PADRAO PM)</code>
+<code>BRANCA</code>, <code>Branco</code>
 </td>
 <td><code>Branca</code></td>
 </tr>
@@ -249,42 +290,32 @@ title-cased, and the two disagree on gender agreement.</p>
 </td>
 <td><code>Vermelha</code></td>
 </tr>
-<tr class="even">
-<td>
-<code>CIN/VER/PRE</code>, <code>BRANCA/VERMELHA</code>
-</td>
-<td><code>Multicor</code></td>
-</tr>
 </tbody>
 </table>
 <p>Note that <code><a href="https://rdrr.io/r/base/chartr.html" class="external-link">toupper()</a></code> alone will not merge
-<code>Branca</code> and <code>Branco</code>.</p>
+<code>Branca</code> and <code>Branco</code>. Detailed liveries and
+multi-tone values remain unchanged because grouping them would be an
+analytical recode rather than label harmonization.</p>
 <p>The remaining changes are listed below.</p>
 <ul>
 <li>
-<strong>Place names.</strong> The source publishes
-<code>municipio</code> unaccented (<code>"SAO PAULO"</code>) while
-<code>regiao_administrativa</code> keeps its accents, so neither joins
-to other Brazilian data as published. Both take the official IBGE
-spelling.</li>
+<strong><code>"municipios"</code>.</strong> Municipality names take
+their official IBGE spelling, matched by <code>cod_ibge</code>; INFOSIGA
+administrative-region names receive consistent accents and case without
+changing their classification.</li>
 <li>
-<strong><code>profissao</code></strong> is Title Cased, which merges
-the several hundred values that differ from another only by
-capitalisation, and the stray <code>"NAO INFORMADA"</code> markers
-become <code>NA</code>.</li>
-<li>
-<strong><code>conservacao</code></strong> mixes the name of the
-maintaining body (<code>"PREFEITURA"</code>) with bare route codes
-(<code>"10.03"</code>); the codes move to a new
-<code>conservacao_codigo</code> column.</li>
+<strong><code>"profissoes"</code>.</strong> Occupations are
+title-cased, which merges values that differ only by capitalisation.
+Known nonresponse markers—including variants of
+<code>"NAO INFORMADA"</code>, <code>"SEM INFORMACAO"</code> and
+<code>"DESCONHECIDO"</code>—become <code>NA</code>.</li>
 </ul>
-<p>Two limits are worth naming. <code>profissao</code> keeps its
-unaccented spelling and its occupations stay ungrouped, because no
-authoritative list covers these free-text values.
-<code>conservacao</code> names keep their source capitalisation, because
-most are brand acronyms (<code>SPMAR</code>, <code>TEBE</code>,
-<code>CART</code>) that Title Case would corrupt into <code>Spmar</code>
-and <code>Tebe</code>.</p>
+<p>Use <code>standardize = c("municipios", "profissoes")</code> to
+combine options, or <code>standardize = "all"</code> for every option
+applicable to the selected dataset. <code>profissao</code> keeps its
+unaccented spelling and occupations stay ungrouped because no
+authoritative list covers these free-text values. Standardization
+requires <code>processing = "clean"</code>.</p>
 </div>
 <div class="section level3">
 <h3 id="joining-to-other-brazilian-data">Joining to other Brazilian data<a class="anchor" aria-label="anchor" href="#joining-to-other-brazilian-data"></a>
@@ -306,7 +337,7 @@ Those are the denominators that turn crash counts into crash
 </h3>
 <p>The package ships a small sample of each dataset so you can inspect
 the columns without any network access.</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">sample_path</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>, <span class="st">"sinistros_sample.csv"</span>, package <span class="op">=</span> <span class="st">"infosigasp"</span><span class="op">)</span></span>
 <span><span class="va">sample</span> <span class="op">&lt;-</span> <span class="fu">readr</span><span class="fu">::</span><span class="fu"><a href="https://readr.tidyverse.org/reference/read_delim.html" class="external-link">read_delim</a></span><span class="op">(</span></span>
 <span>  <span class="va">sample_path</span>,</span>
@@ -394,14 +425,14 @@ the data. The break in 2019 does not move. The same break appears in
 injury levels simply do not occur before 2019.</p>
 <p>So for any trend that reaches back before 2019, <strong>restrict to
 fatalities</strong>.</p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://dplyr.tidyverse.org" class="external-link">dplyr</a></span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="../reference/read_infosiga.html">read_infosiga</a></span><span class="op">(</span><span class="st">"sinistros"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">tipo_registro</span> <span class="op">==</span> <span class="st">"SINISTRO FATAL"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/count.html" class="external-link">count</a></span><span class="op">(</span><span class="va">ano_sinistro</span><span class="op">)</span></span></code></pre></div>
-<p>Otherwise, start the series in 2019 by passing a <code>year</code>
-range to <code><a href="../reference/read_infosiga.html">read_infosiga()</a></code>.</p>
+<p>Otherwise, start the series in 2019 by filtering
+<code>ano_sinistro &gt;= 2019</code> after importing the data.</p>
 </div>
 <div class="section level3">
 <h3 id="a-third-of-sinistros-rows-are-notifications">A third of <code>sinistros</code> rows are notifications<a class="anchor" aria-label="anchor" href="#a-third-of-sinistros-rows-are-notifications"></a>
@@ -410,7 +441,7 @@ range to <code><a href="../reference/read_infosiga.html">read_infosiga()</a></co
 <code>"NOTIFICACAO"</code>, a reported event not yet confirmed as a
 crash. Notifications are about a third of all rows, so treating every
 row as a crash overstates the total considerably.</p>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/read_infosiga.html">read_infosiga</a></span><span class="op">(</span><span class="st">"sinistros"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/count.html" class="external-link">count</a></span><span class="op">(</span><span class="va">tipo_registro</span>, sort <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
 <p>DETRAN-SP reclassifies records as it validates them, so the newest
@@ -447,7 +478,7 @@ row.</strong> Use a left join to keep them.</li>
 <p>The imported data are ordinary tibbles, so any tidyverse (or base R)
 workflow applies. Here is a count of traffic fatalities per year from
 the victims dataset.</p>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://dplyr.tidyverse.org" class="external-link">dplyr</a></span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">deaths_by_year</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/read_infosiga.html">read_infosiga</a></span><span class="op">(</span><span class="st">"pessoas"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
@@ -460,7 +491,7 @@ the victims dataset.</p>
 fatalities, the one thing collected consistently since 2015.</p>
 <p>Fatalities also break down by the type of victim (driver, passenger,
 pedestrian).</p>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/read_infosiga.html">read_infosiga</a></span><span class="op">(</span><span class="st">"pessoas"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">gravidade_lesao</span> <span class="op">==</span> <span class="st">"FATAL"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/count.html" class="external-link">count</a></span><span class="op">(</span><span class="va">tipo_de_vitima</span>, sort <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
@@ -475,8 +506,13 @@ municipality (<code>municipio</code> / <code>cod_ibge</code>).</p>
 DETRAN-SP updates the archive monthly. Use <code>refresh = TRUE</code>
 to replace your local copy with the latest available version and return
 the requested dataset.</p>
-<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">sinistros</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/read_infosiga.html">read_infosiga</a></span><span class="op">(</span><span class="st">"sinistros"</span>, refresh <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
+<p><code><a href="../reference/read_infosiga.html">read_infosiga()</a></code> always imports every available year.
+Filter the returned tibble when you need a shorter period.</p>
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">recent</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/read_infosiga.html">read_infosiga</a></span><span class="op">(</span><span class="st">"sinistros"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">ano_sinistro</span> <span class="op">&gt;=</span> <span class="fl">2022</span><span class="op">)</span></span></code></pre></div>
 <p>You can point the cache somewhere else for a session (or permanently
 via your <code>.Rprofile</code>) with the
 <code>infosigasp.cache_dir</code> option.</p>
@@ -488,10 +524,13 @@ via your <code>.Rprofile</code>) with the
 </h2>
 <p>INFOSIGA-SP distributes a field-by-field data dictionary (PDF, in
 Portuguese). <code><a href="../reference/dictionary_infosiga.html">dictionary_infosiga()</a></code> downloads it and returns
-the paths to the extracted files.</p>
+the paths to the extracted files. Pass <code>"sinistros"</code>,
+<code>"pessoas"</code> or <code>"veiculos"</code> to return one PDF.</p>
 <div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">pdfs</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/dictionary_infosiga.html">dictionary_infosiga</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/basename.html" class="external-link">basename</a></span><span class="op">(</span><span class="va">pdfs</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu"><a href="https://rdrr.io/r/base/basename.html" class="external-link">basename</a></span><span class="op">(</span><span class="va">pdfs</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">sinistros_pdf</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/dictionary_infosiga.html">dictionary_infosiga</a></span><span class="op">(</span><span class="st">"sinistros"</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="citing-the-data">Citing the data<a class="anchor" aria-label="anchor" href="#citing-the-data"></a>
