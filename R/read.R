@@ -49,10 +49,10 @@
 #'   labels, padding and explicit source sentinels otherwise remain unchanged.
 #' - `processing = "clean"` starts from the typed import, then trims text, maps
 #'   `"NAO DISPONIVEL"` to `NA`, orders ordinal columns, parses `ano_mes_*`,
-#'   converts crash-type flags to logical, fills blank `qtd_*` entries with
-#'   zero inside populated count blocks, converts `tempo_sinistro_obito` to
+#'   converts crash-type flags to logical, converts `tempo_sinistro_obito` to
 #'   integer, removes a trailing `".0"` from `numero_logradouro`, and validates
-#'   coordinate pairs against a bounding box around Sao Paulo state.
+#'   coordinate pairs against the Sao Paulo state boundary with a 2 km buffer.
+#'   Missing `qtd_*` counts remain `NA`.
 #'
 #' Before converting a closed-domain column, the cleaning step validates its
 #' observed values. If an ordinal column, crash-type flag or integer field

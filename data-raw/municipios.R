@@ -10,6 +10,11 @@
 
 library(infosigasp)
 
+# Preserve the state boundary stored in the same internal data file.
+internal_data <- new.env(parent = emptyenv())
+load("R/sysdata.rda", envir = internal_data)
+spo_shape <- internal_data$spo_shape
+
 # Official names and codes for the 645 municipalities of Sao Paulo state
 # (UF code 35). IBGE ships them already correctly accented and cased.
 ibge <- jsonlite::fromJSON(
@@ -95,4 +100,9 @@ stopifnot(
   setequal(infosiga_municipios$cod_ibge[mismatch], known_spelling_diffs)
 )
 
-usethis::use_data(infosiga_municipios, internal = TRUE, overwrite = TRUE)
+usethis::use_data(
+  infosiga_municipios,
+  spo_shape,
+  internal = TRUE,
+  overwrite = TRUE
+)

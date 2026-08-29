@@ -4,6 +4,14 @@ template:
   bootstrap: 5
   bslib:
     primary: "#1f6feb"
+    base_font: {google: "Lato"}
+    heading_font: {google: "Lora"}
+    code_font: {google: "Fira Code"}
+    navbar-bg: "#1E3A5F"
+
+navbar:
+  bg: dark
+  type: dark
 
 home:
   title: Download and import traffic crash data from INFOSIGA-SP
@@ -27,3 +35,4 @@ articles:
   contents:
   - infosigasp
   - articles/data-dictionary
+  - articles/data-dictionary-pt

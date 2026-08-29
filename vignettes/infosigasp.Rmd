@@ -121,16 +121,17 @@ Clean mode then applies the following transformations:
 - **Crash-type flags.** The binary `tp_sinistro_*` columns (`"S"` / empty)
   become **logical**, so you can `sum()` or filter them directly. The
   categorical `tp_sinistro_primario` stays text.
-- **Count blocks.** A blank `qtd_*` entry becomes zero when another count in
-  the same vehicle or injury-severity block is populated. Entirely blank blocks
-  remain missing.
+- **Counts.** Missing `qtd_*` entries remain `NA`, including when another
+  vehicle or injury-severity count is available for the same crash. Clean mode
+  does not infer that an unreported count is zero.
 - **Numeric strings.** `tempo_sinistro_obito` (days from crash to death) becomes
   **integer**, and `numero_logradouro` loses the spurious trailing `".0"` the
   export appends (`"193.0"`).
-- **Coordinates.** Coordinate pairs outside a validation bounding box around
-  São Paulo state become `NA`. This catches extreme malformed values and
-  `(0, 0)` placeholders but is a rectangular screen, not a state-boundary test.
-  No rows are dropped; typed and raw modes preserve the coordinates before this
+- **Coordinates.** Coordinate pairs outside the São Paulo state boundary with
+  a 2 km buffer become `NA`. The buffer retains plausible near-border records,
+  while the spatial test rejects extreme malformed values, `(0, 0)`
+  placeholders and points elsewhere inside the state's rectangular extent. No
+  rows are dropped; typed and raw modes preserve the coordinates before this
   validation.
 
 Before converting an ordinal, flag or integer column, clean mode validates its

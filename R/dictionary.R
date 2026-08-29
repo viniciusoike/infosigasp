@@ -3,6 +3,8 @@
 #' Downloads the official INFOSIGA-SP data dictionary, a set of PDF documents
 #' (one per dataset) describing every column and its accepted values. The
 #' archive is saved to the cache and the extracted PDF paths are returned.
+#' A searchable HTML transcription is available in the
+#' [online data dictionary](https://viniciusoike.github.io/infosigasp/articles/data-dictionary.html).
 #'
 #' @param dataset Optional dataset whose dictionary should be returned: one of
 #'   `"sinistros"`, `"pessoas"` or `"veiculos"`. If `NULL` (default), return
@@ -40,7 +42,9 @@ dictionary_infosiga <- function(
         "Using the INFOSIGA-SP dictionaries in the local infosigasp cache."
       )
     }
-    return(invisible(.infosiga_select_dictionary(existing, dataset)))
+    selected <- .infosiga_select_dictionary(existing, dataset)
+    .infosiga_link_dictionary(dataset, quiet)
+    return(invisible(selected))
   }
 
   urls <- .infosiga_dictionary_url()
@@ -77,7 +81,21 @@ dictionary_infosiga <- function(
       "Extracted {length(pdfs)} dictionary file{?s} to {.path {dest}}."
     )
   }
-  invisible(.infosiga_select_dictionary(pdfs, dataset))
+  selected <- .infosiga_select_dictionary(pdfs, dataset)
+  .infosiga_link_dictionary(dataset, quiet)
+  invisible(selected)
+}
+
+.infosiga_link_dictionary <- function(dataset, quiet) {
+  if (quiet) {
+    return(invisible(NULL))
+  }
+
+  url <- paste0(
+    "https://viniciusoike.github.io/infosigasp/articles/data-dictionary.html",
+    if (!is.null(dataset)) paste0("#", dataset) else ""
+  )
+  cli::cli_alert_info("Browse the searchable data dictionary at {.url {url}}.")
 }
 
 .infosiga_select_dictionary <- function(paths, dataset) {

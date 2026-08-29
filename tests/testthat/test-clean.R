@@ -86,36 +86,22 @@ test_that("clean converts tp_sinistro_* flags to logical, keeping primario", {
   expect_identical(cleaned$tp_sinistro_primario, c("COLISAO", "CHOQUE"))
 })
 
-test_that("clean fills blank counts with 0 only within a populated block", {
+test_that("clean preserves missing counts within populated blocks", {
   raw <- tibble::tibble(
     # Row 1: vehicle block populated, gravity block fully blank.
     # Row 2: gravity block populated, vehicle block fully blank.
     # Row 3: both blocks fully blank (no breakdown recorded).
     qtd_automovel = c(2L, NA, NA),
-    qtd_motocicleta = c(NA, NA, NA),
+    qtd_motocicleta = rep(NA_integer_, 3),
     qtd_gravidade_leve = c(NA, 1L, NA),
-    qtd_gravidade_fatal = c(NA, NA, NA)
+    qtd_gravidade_fatal = rep(NA_integer_, 3)
   )
   cleaned <- .infosiga_clean(raw, "sinistros")
 
-  # Row 1: vehicle block has a value -> its blanks become 0; gravity block is
-  # entirely blank -> left NA (genuinely not recorded).
   expect_identical(cleaned$qtd_automovel, c(2L, NA, NA))
-  expect_identical(cleaned$qtd_motocicleta, c(0L, NA, NA))
-  # Row 2: gravity block has a value -> its blanks become 0; vehicle block NA.
+  expect_identical(cleaned$qtd_motocicleta, c(NA_integer_, NA, NA))
   expect_identical(cleaned$qtd_gravidade_leve, c(NA, 1L, NA))
-  expect_identical(cleaned$qtd_gravidade_fatal, c(NA, 0L, NA))
-})
-
-test_that("count-block filling is idempotent", {
-  raw <- tibble::tibble(
-    qtd_automovel = c(2L, NA),
-    qtd_motocicleta = c(NA, NA),
-    qtd_gravidade_leve = c(NA, NA)
-  )
-  once <- .infosiga_clean(raw, "sinistros")
-  twice <- .infosiga_clean(once, "sinistros")
-  expect_identical(once, twice)
+  expect_identical(cleaned$qtd_gravidade_fatal, c(NA_integer_, NA, NA))
 })
 
 test_that("clean converts tempo_sinistro_obito to integer", {
@@ -190,12 +176,13 @@ test_that("ano_mes_* strings become first-of-month Dates when cleaning", {
   )
 })
 
-test_that("coordinates outside the Sao Paulo bounding box are dropped", {
+test_that("coordinates outside the buffered Sao Paulo boundary are dropped", {
   raw <- tibble::tibble(
-    latitude = c(-23.5, -234526, 0, -23.5, 10.0),
-    longitude = c(-46.6, 236392064, 0, 0.0, 10.0),
+    latitude = c(-23.5, -25.43, -234526, 0, -23.5, 10.0),
+    longitude = c(-46.6, -49.27, 236392064, 0, 0.0, 10.0),
     descricao = c(
       "valid SP",
+      "inside old bbox but outside SP",
       "corrupt",
       "null island",
       "half-valid",
@@ -204,8 +191,8 @@ test_that("coordinates outside the Sao Paulo bounding box are dropped", {
   )
   cleaned <- .infosiga_clean(raw, "sinistros")
   # Only the genuine Sao Paulo point survives; everything else -> NA in pairs.
-  expect_equal(cleaned$latitude, c(-23.5, NA, NA, NA, NA))
-  expect_equal(cleaned$longitude, c(-46.6, NA, NA, NA, NA))
+  expect_equal(cleaned$latitude, c(-23.5, NA, NA, NA, NA, NA))
+  expect_equal(cleaned$longitude, c(-46.6, NA, NA, NA, NA, NA))
 })
 
 test_that("a valid coordinate paired with a bad one is dropped pairwise", {
