@@ -1,8 +1,10 @@
 # infosigasp 0.2.0
 
+* Coordinate validation now uses the São Paulo state boundary with a 2 km buffer instead of its rectangular bounding box.
 * Documented important changes in source-data coverage and definitions, including that 2015--2018 covers fatal crashes only and that `sinistros` includes unconfirmed notifications.
+* Missing `qtd_*` counts now remain `NA` during cleaning because a blank source value does not establish a zero count.
 * Simplified the public API: `read_infosiga()` and `dictionary_infosiga()` are now the only exported functions; download, cache, update, data-listing, cleaning and label-standardization helpers are internal implementation details. (#20)
-* `dictionary_infosiga()` replaces `infosiga_dictionary()` and downloads the official PDF dictionaries for all datasets or a selected dataset. (#20)
+* `dictionary_infosiga()` replaces `infosiga_dictionary()`, downloads the official PDF dictionaries for all datasets or a selected dataset, and links to the searchable online data dictionary. (#20)
 * `read_infosiga()` now supports explicit `"raw"`, `"typed"` and `"clean"` processing modes, with `"clean"` remaining the default. (#22)
 * `read_infosiga()` now supports selective label standardization through `standardize = "municipios"`, `"cores"`, `"profissoes"` or `"all"`, while preserving source categories that cannot be harmonized safely. (#22)
 * `read_infosiga()` now preserves unexpected categorical, flag and integer representations and emits a warning instead of silently coercing them. (#22)

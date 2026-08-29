@@ -68,10 +68,10 @@ empty fields become \code{NA}, and identifiers remain character. Category
 labels, padding and explicit source sentinels otherwise remain unchanged.
 \item \code{processing = "clean"} starts from the typed import, then trims text, maps
 \code{"NAO DISPONIVEL"} to \code{NA}, orders ordinal columns, parses \verb{ano_mes_*},
-converts crash-type flags to logical, fills blank \verb{qtd_*} entries with
-zero inside populated count blocks, converts \code{tempo_sinistro_obito} to
+converts crash-type flags to logical, converts \code{tempo_sinistro_obito} to
 integer, removes a trailing \code{".0"} from \code{numero_logradouro}, and validates
-coordinate pairs against a bounding box around Sao Paulo state.
+coordinate pairs against the Sao Paulo state boundary with a 2 km buffer.
+Missing \verb{qtd_*} counts remain \code{NA}.
 }
 
 Before converting a closed-domain column, the cleaning step validates its

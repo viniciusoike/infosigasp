@@ -115,70 +115,34 @@
   converted
 }
 
-# The sinistros count columns form two independent blocks: a vehicle-count
-# block (how many of each vehicle type were involved) and a gravity-count
-# block (how many victims of each severity). Within a record a blank entry in
-# either block means "zero", but only when the rest of that block is filled in;
-# records that carry no breakdown at all leave the whole block blank, and there
-# the blanks are genuinely "not recorded" rather than zero. The two blocks are
-# kept separate because they are filled independently: roughly 47k records have
-# vehicle counts but no gravity breakdown, and ~6k the reverse.
-.infosiga_qtd_blocks <- list(
-  veiculos = c(
-    "qtd_pedestre",
-    "qtd_bicicleta",
-    "qtd_motocicleta",
-    "qtd_automovel",
-    "qtd_onibus",
-    "qtd_caminhao",
-    "qtd_veic_outros",
-    "qtd_veic_nao_disponivel"
-  ),
-  gravidade = c(
-    "qtd_gravidade_fatal",
-    "qtd_gravidade_grave",
-    "qtd_gravidade_leve",
-    "qtd_gravidade_ileso",
-    "qtd_gravidade_nao_disponivel"
-  )
-)
+# Validate coordinate pairs against the buffered Sao Paulo state boundary.
+# A bounding-box prefilter cheaply rejects malformed coordinates before the
+# spatial predicate and avoids passing invalid latitude values to s2.
+.infosiga_valid_coordinates <- function(latitude, longitude) {
+  valid <- rep(FALSE, length(latitude))
+  boundary <- sf::st_bbox(spo_shape)
 
-# Within one count block, fill NA -> 0L on the rows that carry at least one
-# value in that block, leaving rows whose entire block is blank as NA. This is
-# idempotent: a second pass finds no NAs to fill on the populated rows and skips
-# the all-NA rows. `cols` is restricted to those present in `data`.
-.infosiga_fill_count_block <- function(data, cols) {
-  cols <- intersect(cols, names(data))
+  candidates <- is.finite(latitude) &
+    is.finite(longitude) &
+    dplyr::between(latitude, boundary[["ymin"]], boundary[["ymax"]]) &
+    dplyr::between(longitude, boundary[["xmin"]], boundary[["xmax"]])
 
-  if (length(cols) == 0) {
-    return(data)
+  if (!any(candidates)) {
+    return(valid)
   }
 
-  has_count <- data |>
-    dplyr::transmute(
-      has_count = dplyr::if_any(dplyr::all_of(cols), \(x) !is.na(x))
-    ) |>
-    dplyr::pull("has_count")
+  points <- sf::st_as_sf(
+    data.frame(
+      longitude = longitude[candidates],
+      latitude = latitude[candidates]
+    ),
+    coords = c("longitude", "latitude"),
+    crs = 4326
+  )
 
-  data |>
-    dplyr::mutate(
-      dplyr::across(
-        dplyr::all_of(cols),
-        function(x) {
-          dplyr::replace_when(
-            as.integer(x),
-            has_count & is.na(x) ~ 0L
-          )
-        }
-      )
-    )
+  valid[candidates] <- lengths(sf::st_intersects(points, spo_shape)) > 0
+  valid
 }
-
-# Bounding box of the state of Sao Paulo, with a small margin so genuine
-# near-border crashes are kept. The state spans roughly latitude -25.4..-19.8
-# and longitude -53.1..-44.2; coordinates outside this box (mis-encoded values
-# and "null island" 0,0 placeholders) are treated as errors.
-.sp_bbox <- list(lat = c(-25.6, -19.5), lon = c(-53.3, -44.0))
 
 # Clean and process an INFOSIGA-SP dataset
 #
@@ -234,13 +198,9 @@
 #     and therefore becomes uniformly `FALSE`. That is an unpopulated upstream
 #     field, not evidence that no rear-end collisions occurred. A crash may
 #     also set several flags at once, so the flags do not partition the data.
-#   \item **Count columns** (`sinistros`). The `qtd_*` columns form two
-#     independent blocks: vehicle counts (`qtd_pedestre`, `qtd_automovel`,
-#     ...) and victim-severity counts (`qtd_gravidade_*`). A blank entry inside
-#     a block that is otherwise filled in means *zero* and becomes `0L`. When a
-#     record carries no breakdown at all, the whole block is blank; those
-#     blanks are genuinely "not recorded" and stay `NA`. The two blocks are
-#     handled separately because many records carry one but not the other.
+#   \item **Count columns** (`sinistros`). Missing `qtd_*` values remain `NA`.
+#     Clean mode does not infer that a blank count is zero, even when another
+#     vehicle or victim-severity count is available for the same crash.
 #   \item **Days to death** (`pessoas`). `tempo_sinistro_obito`, the number of
 #     days between the crash and the victim's death (published as a numeric
 #     string), becomes **integer**.
@@ -253,11 +213,12 @@
 #     `"193"`); any other decimal part survives. The column stays character
 #     because the two meanings are not comparable on a single numeric scale.
 #   \item **Coordinates** (`sinistros`). Validates `latitude`/`longitude` as a
-#     pair against the bounding box of the state of Sao Paulo. Points outside
-#     the box, which are mis-encoded values and `(0, 0)` "null island"
-#     placeholders, have both coordinates set to `NA`. This affects a few
-#     percent of records and drops no rows. Use `processing = "typed"` or
-#     `"raw"` if you need the coordinates before this validation.
+#     pair against the boundary of Sao Paulo state with a 2 km buffer. Points
+#     outside the buffered boundary, including mis-encoded values and `(0, 0)`
+#     "null island" placeholders, have both coordinates set to `NA`. This
+#     affects a few percent of records and drops no rows. Use
+#     `processing = "typed"` or `"raw"` if you need the coordinates before this
+#     validation.
 # }
 #
 # Nominal text columns (such as `municipio`, `tipo_via` or `sexo`) stay
@@ -351,14 +312,7 @@
       )
     )
 
-  # 5. Count columns (sinistros). A blank entry inside a populated count block
-  #    means zero, so NA -> 0L on rows that carry any count in that block; rows
-  #    with the whole block blank record no breakdown and are left NA. The two
-  #    blocks (vehicle counts, gravity counts) are filled independently.
-  data <- .infosiga_fill_count_block(data, .infosiga_qtd_blocks$veiculos)
-  data <- .infosiga_fill_count_block(data, .infosiga_qtd_blocks$gravidade)
-
-  # 6. tempo_sinistro_obito (days from crash to death) becomes integer. Preserve
+  # 5. tempo_sinistro_obito (days from crash to death) becomes integer. Preserve
   #    the source column and warn if any non-missing value is not an integer.
   if (
     "tempo_sinistro_obito" %in%
@@ -374,7 +328,7 @@
       )
   }
 
-  # 7. Strip the spurious trailing ".0" the source export appends ("193.0" ->
+  # 6. Strip the spurious trailing ".0" the source export appends ("193.0" ->
   #    "193"). The "\\.0$" anchor matters: on highways this column holds a
   #    kilometre marker whose decimal part is real ("0.25"), so only an exactly
   #    zero fraction is dropped. The column stays character because a house
@@ -391,23 +345,13 @@
       )
   }
 
-  # 8. Coordinates are validated as a pair against the Sao Paulo bounding box.
-  #    A point is kept only if both latitude and longitude are present and
-  #    inside the box; otherwise both are set to NA. This drops mis-encoded
-  #    values and "null island" (0, 0) placeholders.
+  # 7. Coordinates are validated as a pair against the buffered Sao Paulo
+  #    state boundary. Otherwise both are set to NA.
   if (all(c("latitude", "longitude") %in% names(data))) {
-    valid_coordinates <- !is.na(data$latitude) &
-      !is.na(data$longitude) &
-      dplyr::between(
-        data$latitude,
-        .sp_bbox$lat[1],
-        .sp_bbox$lat[2]
-      ) &
-      dplyr::between(
-        data$longitude,
-        .sp_bbox$lon[1],
-        .sp_bbox$lon[2]
-      )
+    valid_coordinates <- .infosiga_valid_coordinates(
+      data$latitude,
+      data$longitude
+    )
 
     data <- data |>
       dplyr::mutate(

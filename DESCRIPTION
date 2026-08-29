@@ -27,6 +27,7 @@ Imports:
     cli,
     dplyr (>= 1.2.0),
     readr (>= 2.0.0),
+    sf,
     stringr,
     tibble,
     tools,
