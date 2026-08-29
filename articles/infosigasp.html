@@ -13,7 +13,10 @@
 <link rel="manifest" href="../site.webmanifest">
 <script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="../deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet">
-<script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
+<script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/Lato-0.4.10/font.css" rel="stylesheet">
+<link href="../deps/Fira_Code-0.4.10/font.css" rel="stylesheet">
+<link href="../deps/Lora-0.4.10/font.css" rel="stylesheet">
+<link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
 <script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Getting started with infosigasp">
 </head>
@@ -21,7 +24,7 @@
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
-    <nav class="navbar navbar-expand-lg fixed-top bg-light" data-bs-theme="light" aria-label="Site navigation"><div class="container">
+    <nav class="navbar navbar-expand-lg fixed-top bg-dark" data-bs-theme="dark" aria-label="Site navigation"><div class="container">
 
     <a class="navbar-brand me-2" href="../index.html">infosigasp</a>
 
@@ -40,6 +43,7 @@
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
 <li><a class="dropdown-item" href="../articles/data-dictionary.html">Data dictionary</a></li>
+    <li><a class="dropdown-item" href="../articles/data-dictionary-pt.html">Dicionário de dados</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
@@ -220,19 +224,21 @@ their natural order instead of alphabetically.
 directly. The categorical <code>tp_sinistro_primario</code> stays
 text.</li>
 <li>
-<strong>Count blocks.</strong> A blank <code>qtd_*</code> entry
-becomes zero when another count in the same vehicle or injury-severity
-block is populated. Entirely blank blocks remain missing.</li>
+<strong>Counts.</strong> Missing <code>qtd_*</code> entries remain
+<code>NA</code>, including when another vehicle or injury-severity count
+is available for the same crash. Clean mode does not infer that an
+unreported count is zero.</li>
 <li>
 <strong>Numeric strings.</strong> <code>tempo_sinistro_obito</code>
 (days from crash to death) becomes <strong>integer</strong>, and
 <code>numero_logradouro</code> loses the spurious trailing
 <code>".0"</code> the export appends (<code>"193.0"</code>).</li>
 <li>
-<strong>Coordinates.</strong> Coordinate pairs outside a validation
-bounding box around São Paulo state become <code>NA</code>. This catches
-extreme malformed values and <code>(0, 0)</code> placeholders but is a
-rectangular screen, not a state-boundary test. No rows are dropped;
+<strong>Coordinates.</strong> Coordinate pairs outside the São Paulo
+state boundary with a 2 km buffer become <code>NA</code>. The buffer
+retains plausible near-border records, while the spatial test rejects
+extreme malformed values, <code>(0, 0)</code> placeholders and points
+elsewhere inside the state’s rectangular extent. No rows are dropped;
 typed and raw modes preserve the coordinates before this
 validation.</li>
 </ul>

@@ -75,11 +75,11 @@ combines the period files.
 
 Clean mode trims text, maps `"NAO DISPONIVEL"` to `NA`, parses
 `ano_mes_*` as first-of-month dates, orders ordinal columns, converts
-crash-type flags to logical, fills blank `qtd_*` entries with zero
-inside populated count blocks, removes export-only trailing `".0"`
-values from `numero_logradouro`, and validates coordinate pairs against
-a bounding box around São Paulo state. It does not rename columns,
-harmonize nominal labels or drop rows.
+crash-type flags to logical, preserves missing `qtd_*` counts as `NA`,
+removes export-only trailing `".0"` values from `numero_logradouro`, and
+validates coordinate pairs against the São Paulo state boundary with a 2
+km buffer. It does not rename columns, harmonize nominal labels or drop
+rows.
 
 ``` r
 
@@ -147,7 +147,9 @@ sinistros <- read_infosiga("sinistros", refresh = TRUE)
 [`dictionary_infosiga()`](https://viniciusoike.github.io/infosigasp/reference/dictionary_infosiga.md)
 downloads the official field-by-field documentation (one PDF per
 dataset, in Portuguese) and returns the local file paths. Supply a
-dataset name to retrieve only its dictionary.
+dataset name to retrieve only its dictionary. The function also links to
+the [searchable online data
+dictionary](https://viniciusoike.github.io/infosigasp/articles/data-dictionary.html).
 
 ``` r
 

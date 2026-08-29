@@ -3,7 +3,9 @@
 Downloads the official INFOSIGA-SP data dictionary, a set of PDF
 documents (one per dataset) describing every column and its accepted
 values. The archive is saved to the cache and the extracted PDF paths
-are returned.
+are returned. A searchable HTML transcription is available in the
+[online data
+dictionary](https://viniciusoike.github.io/infosigasp/articles/data-dictionary.html).
 
 ## Usage
 

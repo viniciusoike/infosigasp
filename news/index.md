@@ -2,9 +2,13 @@
 
 ## infosigasp 0.2.0
 
+- Coordinate validation now uses the São Paulo state boundary with a 2
+  km buffer instead of its rectangular bounding box.
 - Documented important changes in source-data coverage and definitions,
   including that 2015–2018 covers fatal crashes only and that
   `sinistros` includes unconfirmed notifications.
+- Missing `qtd_*` counts now remain `NA` during cleaning because a blank
+  source value does not establish a zero count.
 - Simplified the public API:
   [`read_infosiga()`](https://viniciusoike.github.io/infosigasp/reference/read_infosiga.md)
   and
@@ -14,8 +18,9 @@
   implementation details.
   ([\#20](https://github.com/viniciusoike/infosigasp/issues/20))
 - [`dictionary_infosiga()`](https://viniciusoike.github.io/infosigasp/reference/dictionary_infosiga.md)
-  replaces `infosiga_dictionary()` and downloads the official PDF
-  dictionaries for all datasets or a selected dataset.
+  replaces `infosiga_dictionary()`, downloads the official PDF
+  dictionaries for all datasets or a selected dataset, and links to the
+  searchable online data dictionary.
   ([\#20](https://github.com/viniciusoike/infosigasp/issues/20))
 - [`read_infosiga()`](https://viniciusoike.github.io/infosigasp/reference/read_infosiga.md)
   now supports explicit `"raw"`, `"typed"` and `"clean"` processing

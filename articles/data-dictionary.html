@@ -13,7 +13,10 @@
 <link rel="manifest" href="../site.webmanifest">
 <script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="../deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet">
-<script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
+<script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/Lato-0.4.10/font.css" rel="stylesheet">
+<link href="../deps/Fira_Code-0.4.10/font.css" rel="stylesheet">
+<link href="../deps/Lora-0.4.10/font.css" rel="stylesheet">
+<link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
 <script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Data dictionary">
 </head>
@@ -21,7 +24,7 @@
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
-    <nav class="navbar navbar-expand-lg fixed-top bg-light" data-bs-theme="light" aria-label="Site navigation"><div class="container">
+    <nav class="navbar navbar-expand-lg fixed-top bg-dark" data-bs-theme="dark" aria-label="Site navigation"><div class="container">
 
     <a class="navbar-brand me-2" href="../index.html">infosigasp</a>
 
@@ -40,6 +43,7 @@
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
 <li><a class="dropdown-item" href="../articles/data-dictionary.html">Data dictionary</a></li>
+    <li><a class="dropdown-item" href="../articles/data-dictionary-pt.html">Dicionário de dados</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
@@ -71,14 +75,17 @@
 
     
     
-<p>This article reproduces the official INFOSIGA-SP data dictionary
+<p>This article transcribes the official INFOSIGA-SP data dictionary
 (<strong>v1.5, 2026-06-16</strong>), published by DETRAN-SP, for the
 three datasets returned by <code><a href="../reference/read_infosiga.html">read_infosiga()</a></code>:
 <code>sinistros</code> (confirmed crashes and notifications),
 <code>pessoas</code> (victims) and <code>veiculos</code> (vehicles).
-Field names, descriptions and allowed values appear here verbatim;
-<code><a href="../reference/dictionary_infosiga.html">dictionary_infosiga()</a></code> downloads the original PDFs, which
-are in Portuguese.</p>
+Field names, descriptions and category codes remain in Portuguese. The
+transcription only normalizes line breaks, list separators and minor
+punctuation; <code><a href="../reference/dictionary_infosiga.html">dictionary_infosiga()</a></code> downloads the original
+PDFs.</p>
+<p>A <a href="data-dictionary-pt.html">Brazilian Portuguese version</a>
+of this article is also available.</p>
 <p>Three notes on reading the tables.</p>
 <ul>
 <li>
@@ -97,98 +104,8 @@ Polícia Militar and Polícia Rodoviária Federal;
 <strong>DETRAN-SP</strong> marks fields derived by the Infosiga system
 itself.</li>
 </ul>
-<style type="text/css">
-.dict-var {
-  background: transparent;
-  padding: 0;
-  font-weight: 600;
-  word-break: break-word;
-}
-.dict-name {
-  font-weight: 600;
-}
-.dict-desc {
-  color: #5b6675;
-  font-size: 0.875rem;
-  margin-top: 2px;
-}
-.dict-type {
-  display: inline-block;
-  font-family: var(--bs-font-monospace, monospace);
-  font-size: 0.75rem;
-  padding: 2px 8px;
-  border-radius: 999px;
-  white-space: nowrap;
-}
-.dict-type-string {
-  background: #eef2ff;
-  color: #3730a3;
-}
-.dict-type-int64 {
-  background: #ecfdf5;
-  color: #047857;
-}
-.dict-type-float64 {
-  background: #f0fdfa;
-  color: #0f766e;
-}
-.dict-type-date,
-.dict-type-time {
-  background: #fff7ed;
-  color: #c2410c;
-}
-.dict-type-none {
-  color: #9aa3b0;
-}
-.dict-null {
-  font-size: 0.8rem;
-  font-weight: 600;
-}
-.dict-null-yes {
-  color: #b45309;
-}
-.dict-null-no {
-  color: #9aa3b0;
-}
-.dict-detail {
-  padding: 0.9rem 1rem 0.9rem 2.8rem;
-  background: #f8fafc;
-  font-size: 0.875rem;
-  border-top: 1px solid #e4e8ee;
-}
-.dict-detail-row {
-  display: flex;
-  gap: 1rem;
-  margin-bottom: 0.45rem;
-}
-.dict-detail-row:last-child {
-  margin-bottom: 0;
-}
-.dict-detail-label {
-  flex: 0 0 8.5rem;
-  font-size: 0.7rem;
-  font-weight: 700;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  color: #8b95a5;
-  padding-top: 2px;
-}
-.dict-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-}
-.dict-chip {
-  background: #fff;
-  border: 1px solid #d7dde6;
-  border-radius: 4px;
-  padding: 1px 8px;
-  font-size: 0.8rem;
-  font-family: var(--bs-font-monospace, monospace);
-}
-</style>
 <div class="section level2">
-<h2 id="sinistros-occurrence-records">Sinistros (occurrence records)<a class="anchor" aria-label="anchor" href="#sinistros-occurrence-records"></a>
+<h2 id="sinistros-crash-records">Sinistros (crash records)<a class="anchor" aria-label="anchor" href="#sinistros-crash-records"></a>
 </h2>
 <p>One row per confirmed crash or notification, keyed by
 <code>id_sinistro</code> (48 variables).</p>
@@ -207,11 +124,25 @@ itself.</li>
 <div class="section level2">
 <h2 id="veículos-vehicles">Veículos (vehicles)<a class="anchor" aria-label="anchor" href="#ve%C3%ADculos-vehicles"></a>
 </h2>
-<p>One row per vehicle involved in a crash, keyed by
-<code>id_veiculo</code> and linked to the events by
-<code>id_sinistro</code> (12 variables).</p>
+<p>One row per vehicle involved in a crash, identified by
+<code>id_sinistro</code> and <code>id_veiculo</code> (12 variables).</p>
 <div class="reactable html-widget html-fill-item" id="htmlwidget-36aa3d2a04d42bbc2145" style="width:auto;height:auto;"></div>
 <script type="application/json" data-for="htmlwidget-36aa3d2a04d42bbc2145">{"x":{"tag":{"name":"Reactable","attribs":{"data":{"variavel":["id_sinistro","id_veiculo","marca_modelo","ano_fab","ano_modelo","cor_veiculo","tipo_veiculo","data_sinistro","ano_sinistro","mes_sinistro","dia_sinistro","ano_mes_sinistro"],"nome":["Identificador do sinistro","Identificador do veículo","Marca e modelo do veículo","Ano de fabricação do veículo","Ano do modelo do veículo","Cor do veículo","Tipo de veículo","Data do sinistro","Ano do sinistro","Mês do sinistro","Dia do sinistro","Ano e mês do sinistro"],"descricao":["Identificador único do sinistro (chave estrangeira)","Identificador único do veículo (chave estrangeira)","Marca e modelo do veículo envolvido no sinistro","Ano de fabricação do veículo envolvido no sinistro","Ano do modelo do veículo envolvido no sinistro","Cor do veículo envolvido no sinistro","Tipo de veículo envolvido no sinistro","Data do sinistro","Ano do sinistro","Mês do sinistro","Dia do sinistro","Agrupamento do ano_sinistro com mes_sinistro"],"tipo":["int64","int64","string","int64","int64","string","string","date","int64","int64","int64","string"],"formato":["Número inteiro","Número inteiro","Texto livre","Número decimal","Número decimal","Texto livre","Texto predefinido","Data no formato dd/mm/aaaa","Número inteiro (4 dígitos)","Número inteiro (2 dígitos)","Número inteiro (2 dígitos)","Texto no formato aaaa/mm"],"fonte":["DETRAN-SP","DETRAN-SP","DETRAN-SP","DETRAN-SP","DETRAN-SP","DETRAN-SP","PC, PM e PRF","PC, PM e PRF","DETRAN-SP","DETRAN-SP","DETRAN-SP","DETRAN-SP"],"valores":["IDs devem ter 7 dígitos","ID único de 1 a 9999999 (até 7 dígitos)","Livre","Ano no formato aaaa","Ano no formato aaaa","Livre","AUTOMOVEL|BICICLETA|CAMINHAO|MOTOCICLETA|ONIBUS|OUTROS|NAO DISPONIVEL","Entre 01/01/2015 e 31/12/2021 no arquivo \"sinistros_2015-2021\", e maior ou igual a 01/01/2022 no arquivo \"sinistros_2022-2026\".","Entre 2015 e 2021 no arquivo \"sinistros_2015-2021\", e maior que 2022 no arquivo \"sinistros_2022-2026\".","Entre 1 e 12","Entre 1 e 31","Entre 2015/01 e 2021/12 no arquivo \"sinistros_2015-2021\", e maior ou igual a 2022/01 no arquivo \"sinistros_2022-2026\"."],"nulos":["não","não","sim","sim","sim","sim","não","não","não","não","não","não"],"observacao":["Pode haver mais de um veículo em um mesmo sinistro.","ID sequencial gerado para cada veículo envolvido no sinistro.","","1956 >= ano_fab >= ano_sinistro","1956 >= ano_modelo >= ano_sinistro + 1","","","","","","",""]},"columns":[{"id":".details","name":"","type":null,"vAlign":"top","headerVAlign":"bottom","sortable":false,"resizable":false,"filterable":false,"searchable":false,"width":45,"align":"center","details":[{"name":"div","attribs":{"className":"dict-detail"},"children":[{"name":"div","attribs":{"className":"dict-detail-row"},"children":[{"name":"span","attribs":{"className":"dict-detail-label"},"children":["Format"]},{"name":"span","attribs":{},"children":["Número inteiro"]}]},{"name":"div","attribs":{"className":"dict-detail-row"},"children":[{"name":"span","attribs":{"className":"dict-detail-label"},"children":["Source"]},{"name":"span","attribs":{},"children":["DETRAN-SP"]}]},{"name":"div","attribs":{"className":"dict-detail-row"},"children":[{"name":"span","attribs":{"className":"dict-detail-label"},"children":["Allowed values"]},{"name":"span","attribs":{},"children":["IDs devem ter 7 dígitos"]}]},{"name":"div","attribs":{"className":"dict-detail-row"},"children":[{"name":"span","attribs":{"className":"dict-detail-label"},"children":["Notes"]},{"name":"span","attribs":{},"children":["Pode haver mais de um veículo em um mesmo sinistro."]}]}]},{"name":"div","attribs":{"className":"dict-detail"},"children":[{"name":"div","attribs":{"className":"dict-detail-row"},"children":[{"name":"span","attribs":{"className":"dict-detail-label"},"children":["Format"]},{"name":"span","attribs":{},"children":["Número inteiro"]}]},{"name":"div","attribs":{"className":"dict-detail-row"},"children":[{"name":"span","attribs":{"className":"dict-detail-label"},"children":["Source"]},{"name":"span","attribs":{},"children":["DETRAN-SP"]}]},{"name":"div","attribs":{"className":"dict-detail-row"},"children":[{"name":"span","attribs":{"className":"dict-detail-label"},"children":["Allowed values"]},{"name":"span","attribs":{},"children":["ID único de 1 a 9999999 (até 7 dígitos)"]}]},{"name":"div","attribs":{"className":"dict-detail-row"},"children":[{"name":"span","attribs":{"className":"dict-detail-label"},"children":["Notes"]},{"name":"span","attribs":{},"children":["ID sequencial gerado para cada veículo envolvido no sinistro."]}]}]},{"name":"div","attribs":{"className":"dict-detail"},"children":[{"name":"div","attribs":{"className":"dict-detail-row"},"children":[{"name":"span","attribs":{"className":"dict-detail-label"},"children":["Format"]},{"name":"span","attribs":{},"children":["Texto livre"]}]},{"name":"div","attribs":{"className":"dict-detail-row"},"children":[{"name":"span","attribs":{"className":"dict-detail-label"},"children":["Source"]},{"name":"span","attribs":{},"children":["DETRAN-SP"]}]},{"name":"div","attribs":{"className":"dict-detail-row"},"children":[{"name":"span","attribs":{"className":"dict-detail-label"},"children":["Allowed values"]},{"name":"span","attribs":{},"children":["Livre"]}]}]},{"name":"div","attribs":{"className":"dict-detail"},"children":[{"name":"div","attribs":{"className":"dict-detail-row"},"children":[{"name":"span","attribs":{"className":"dict-detail-label"},"children":["Format"]},{"name":"span","attribs":{},"children":["Número decimal"]}]},{"name":"div","attribs":{"className":"dict-detail-row"},"children":[{"name":"span","attribs":{"className":"dict-detail-label"},"children":["Source"]},{"name":"span","attribs":{},"children":["DETRAN-SP"]}]},{"name":"div","attribs":{"className":"dict-detail-row"},"children":[{"name":"span","attribs":{"className":"dict-detail-label"},"children":["Allowed values"]},{"name":"span","attribs":{},"children":["Ano no formato aaaa"]}]},{"name":"div","attribs":{"className":"dict-detail-row"},"children":[{"name":"span","attribs":{"className":"dict-detail-label"},"children":["Notes"]},{"name":"span","attribs":{},"children":["1956 >= ano_fab >= ano_sinistro"]}]}]},{"name":"div","attribs":{"className":"dict-detail"},"children":[{"name":"div","attribs":{"className":"dict-detail-row"},"children":[{"name":"span","attribs":{"className":"dict-detail-label"},"children":["Format"]},{"name":"span","attribs":{},"children":["Número decimal"]}]},{"name":"div","attribs":{"className":"dict-detail-row"},"children":[{"name":"span","attribs":{"className":"dict-detail-label"},"children":["Source"]},{"name":"span","attribs":{},"children":["DETRAN-SP"]}]},{"name":"div","attribs":{"className":"dict-detail-row"},"children":[{"name":"span","attribs":{"className":"dict-detail-label"},"children":["Allowed values"]},{"name":"span","attribs":{},"children":["Ano no formato aaaa"]}]},{"name":"div","attribs":{"className":"dict-detail-row"},"children":[{"name":"span","attribs":{"className":"dict-detail-label"},"children":["Notes"]},{"name":"span","attribs":{},"children":["1956 >= ano_modelo >= ano_sinistro + 1"]}]}]},{"name":"div","attribs":{"className":"dict-detail"},"children":[{"name":"div","attribs":{"className":"dict-detail-row"},"children":[{"name":"span","attribs":{"className":"dict-detail-label"},"children":["Format"]},{"name":"span","attribs":{},"children":["Texto livre"]}]},{"name":"div","attribs":{"className":"dict-detail-row"},"children":[{"name":"span","attribs":{"className":"dict-detail-label"},"children":["Source"]},{"name":"span","attribs":{},"children":["DETRAN-SP"]}]},{"name":"div","attribs":{"className":"dict-detail-row"},"children":[{"name":"span","attribs":{"className":"dict-detail-label"},"children":["Allowed values"]},{"name":"span","attribs":{},"children":["Livre"]}]}]},{"name":"div","attribs":{"className":"dict-detail"},"children":[{"name":"div","attribs":{"className":"dict-detail-row"},"children":[{"name":"span","attribs":{"className":"dict-detail-label"},"children":["Format"]},{"name":"span","attribs":{},"children":["Texto predefinido"]}]},{"name":"div","attribs":{"className":"dict-detail-row"},"children":[{"name":"span","attribs":{"className":"dict-detail-label"},"children":["Source"]},{"name":"span","attribs":{},"children":["PC, PM e PRF"]}]},{"name":"div","attribs":{"className":"dict-detail-row"},"children":[{"name":"span","attribs":{"className":"dict-detail-label"},"children":["Allowed values"]},{"name":"div","attribs":{"className":"dict-chips"},"children":[{"name":"span","attribs":{"className":"dict-chip"},"children":["AUTOMOVEL"]},{"name":"span","attribs":{"className":"dict-chip"},"children":["BICICLETA"]},{"name":"span","attribs":{"className":"dict-chip"},"children":["CAMINHAO"]},{"name":"span","attribs":{"className":"dict-chip"},"children":["MOTOCICLETA"]},{"name":"span","attribs":{"className":"dict-chip"},"children":["ONIBUS"]},{"name":"span","attribs":{"className":"dict-chip"},"children":["OUTROS"]},{"name":"span","attribs":{"className":"dict-chip"},"children":["NAO DISPONIVEL"]}]}]}]},{"name":"div","attribs":{"className":"dict-detail"},"children":[{"name":"div","attribs":{"className":"dict-detail-row"},"children":[{"name":"span","attribs":{"className":"dict-detail-label"},"children":["Format"]},{"name":"span","attribs":{},"children":["Data no formato dd/mm/aaaa"]}]},{"name":"div","attribs":{"className":"dict-detail-row"},"children":[{"name":"span","attribs":{"className":"dict-detail-label"},"children":["Source"]},{"name":"span","attribs":{},"children":["PC, PM e PRF"]}]},{"name":"div","attribs":{"className":"dict-detail-row"},"children":[{"name":"span","attribs":{"className":"dict-detail-label"},"children":["Allowed values"]},{"name":"span","attribs":{},"children":["Entre 01/01/2015 e 31/12/2021 no arquivo \"sinistros_2015-2021\", e maior ou igual a 01/01/2022 no arquivo \"sinistros_2022-2026\"."]}]}]},{"name":"div","attribs":{"className":"dict-detail"},"children":[{"name":"div","attribs":{"className":"dict-detail-row"},"children":[{"name":"span","attribs":{"className":"dict-detail-label"},"children":["Format"]},{"name":"span","attribs":{},"children":["Número inteiro (4 dígitos)"]}]},{"name":"div","attribs":{"className":"dict-detail-row"},"children":[{"name":"span","attribs":{"className":"dict-detail-label"},"children":["Source"]},{"name":"span","attribs":{},"children":["DETRAN-SP"]}]},{"name":"div","attribs":{"className":"dict-detail-row"},"children":[{"name":"span","attribs":{"className":"dict-detail-label"},"children":["Allowed values"]},{"name":"span","attribs":{},"children":["Entre 2015 e 2021 no arquivo \"sinistros_2015-2021\", e maior que 2022 no arquivo \"sinistros_2022-2026\"."]}]}]},{"name":"div","attribs":{"className":"dict-detail"},"children":[{"name":"div","attribs":{"className":"dict-detail-row"},"children":[{"name":"span","attribs":{"className":"dict-detail-label"},"children":["Format"]},{"name":"span","attribs":{},"children":["Número inteiro (2 dígitos)"]}]},{"name":"div","attribs":{"className":"dict-detail-row"},"children":[{"name":"span","attribs":{"className":"dict-detail-label"},"children":["Source"]},{"name":"span","attribs":{},"children":["DETRAN-SP"]}]},{"name":"div","attribs":{"className":"dict-detail-row"},"children":[{"name":"span","attribs":{"className":"dict-detail-label"},"children":["Allowed values"]},{"name":"span","attribs":{},"children":["Entre 1 e 12"]}]}]},{"name":"div","attribs":{"className":"dict-detail"},"children":[{"name":"div","attribs":{"className":"dict-detail-row"},"children":[{"name":"span","attribs":{"className":"dict-detail-label"},"children":["Format"]},{"name":"span","attribs":{},"children":["Número inteiro (2 dígitos)"]}]},{"name":"div","attribs":{"className":"dict-detail-row"},"children":[{"name":"span","attribs":{"className":"dict-detail-label"},"children":["Source"]},{"name":"span","attribs":{},"children":["DETRAN-SP"]}]},{"name":"div","attribs":{"className":"dict-detail-row"},"children":[{"name":"span","attribs":{"className":"dict-detail-label"},"children":["Allowed values"]},{"name":"span","attribs":{},"children":["Entre 1 e 31"]}]}]},{"name":"div","attribs":{"className":"dict-detail"},"children":[{"name":"div","attribs":{"className":"dict-detail-row"},"children":[{"name":"span","attribs":{"className":"dict-detail-label"},"children":["Format"]},{"name":"span","attribs":{},"children":["Texto no formato aaaa/mm"]}]},{"name":"div","attribs":{"className":"dict-detail-row"},"children":[{"name":"span","attribs":{"className":"dict-detail-label"},"children":["Source"]},{"name":"span","attribs":{},"children":["DETRAN-SP"]}]},{"name":"div","attribs":{"className":"dict-detail-row"},"children":[{"name":"span","attribs":{"className":"dict-detail-label"},"children":["Allowed values"]},{"name":"span","attribs":{},"children":["Entre 2015/01 e 2021/12 no arquivo \"sinistros_2015-2021\", e maior ou igual a 2022/01 no arquivo \"sinistros_2022-2026\"."]}]}]}]},{"id":"variavel","name":"Variable","type":"character","vAlign":"top","headerVAlign":"bottom","cell":[{"name":"code","attribs":{"className":"dict-var"},"children":["id_sinistro"]},{"name":"code","attribs":{"className":"dict-var"},"children":["id_veiculo"]},{"name":"code","attribs":{"className":"dict-var"},"children":["marca_modelo"]},{"name":"code","attribs":{"className":"dict-var"},"children":["ano_fab"]},{"name":"code","attribs":{"className":"dict-var"},"children":["ano_modelo"]},{"name":"code","attribs":{"className":"dict-var"},"children":["cor_veiculo"]},{"name":"code","attribs":{"className":"dict-var"},"children":["tipo_veiculo"]},{"name":"code","attribs":{"className":"dict-var"},"children":["data_sinistro"]},{"name":"code","attribs":{"className":"dict-var"},"children":["ano_sinistro"]},{"name":"code","attribs":{"className":"dict-var"},"children":["mes_sinistro"]},{"name":"code","attribs":{"className":"dict-var"},"children":["dia_sinistro"]},{"name":"code","attribs":{"className":"dict-var"},"children":["ano_mes_sinistro"]}],"minWidth":190},{"id":"nome","name":"nome","type":"character","vAlign":"top","headerVAlign":"bottom","show":false},{"id":"descricao","name":"Description","type":"character","vAlign":"top","headerVAlign":"bottom","cell":[{"name":"div","attribs":{},"children":[{"name":"div","attribs":{"className":"dict-name"},"children":["Identificador do sinistro"]},{"name":"div","attribs":{"className":"dict-desc"},"children":["Identificador único do sinistro (chave estrangeira)"]}]},{"name":"div","attribs":{},"children":[{"name":"div","attribs":{"className":"dict-name"},"children":["Identificador do veículo"]},{"name":"div","attribs":{"className":"dict-desc"},"children":["Identificador único do veículo (chave estrangeira)"]}]},{"name":"div","attribs":{},"children":[{"name":"div","attribs":{"className":"dict-name"},"children":["Marca e modelo do veículo"]},{"name":"div","attribs":{"className":"dict-desc"},"children":["Marca e modelo do veículo envolvido no sinistro"]}]},{"name":"div","attribs":{},"children":[{"name":"div","attribs":{"className":"dict-name"},"children":["Ano de fabricação do veículo"]},{"name":"div","attribs":{"className":"dict-desc"},"children":["Ano de fabricação do veículo envolvido no sinistro"]}]},{"name":"div","attribs":{},"children":[{"name":"div","attribs":{"className":"dict-name"},"children":["Ano do modelo do veículo"]},{"name":"div","attribs":{"className":"dict-desc"},"children":["Ano do modelo do veículo envolvido no sinistro"]}]},{"name":"div","attribs":{},"children":[{"name":"div","attribs":{"className":"dict-name"},"children":["Cor do veículo"]},{"name":"div","attribs":{"className":"dict-desc"},"children":["Cor do veículo envolvido no sinistro"]}]},{"name":"div","attribs":{},"children":[{"name":"div","attribs":{"className":"dict-name"},"children":["Tipo de veículo"]},{"name":"div","attribs":{"className":"dict-desc"},"children":["Tipo de veículo envolvido no sinistro"]}]},{"name":"div","attribs":{},"children":[{"name":"div","attribs":{"className":"dict-name"},"children":["Data do sinistro"]},{"name":"div","attribs":{"className":"dict-desc"},"children":["Data do sinistro"]}]},{"name":"div","attribs":{},"children":[{"name":"div","attribs":{"className":"dict-name"},"children":["Ano do sinistro"]},{"name":"div","attribs":{"className":"dict-desc"},"children":["Ano do sinistro"]}]},{"name":"div","attribs":{},"children":[{"name":"div","attribs":{"className":"dict-name"},"children":["Mês do sinistro"]},{"name":"div","attribs":{"className":"dict-desc"},"children":["Mês do sinistro"]}]},{"name":"div","attribs":{},"children":[{"name":"div","attribs":{"className":"dict-name"},"children":["Dia do sinistro"]},{"name":"div","attribs":{"className":"dict-desc"},"children":["Dia do sinistro"]}]},{"name":"div","attribs":{},"children":[{"name":"div","attribs":{"className":"dict-name"},"children":["Ano e mês do sinistro"]},{"name":"div","attribs":{"className":"dict-desc"},"children":["Agrupamento do ano_sinistro com mes_sinistro"]}]}],"minWidth":320},{"id":"tipo","name":"Type","type":"character","vAlign":"top","headerVAlign":"bottom","cell":[{"name":"span","attribs":{"className":"dict-type dict-type-int64"},"children":["int64"]},{"name":"span","attribs":{"className":"dict-type dict-type-int64"},"children":["int64"]},{"name":"span","attribs":{"className":"dict-type dict-type-string"},"children":["string"]},{"name":"span","attribs":{"className":"dict-type dict-type-int64"},"children":["int64"]},{"name":"span","attribs":{"className":"dict-type dict-type-int64"},"children":["int64"]},{"name":"span","attribs":{"className":"dict-type dict-type-string"},"children":["string"]},{"name":"span","attribs":{"className":"dict-type dict-type-string"},"children":["string"]},{"name":"span","attribs":{"className":"dict-type dict-type-date"},"children":["date"]},{"name":"span","attribs":{"className":"dict-type dict-type-int64"},"children":["int64"]},{"name":"span","attribs":{"className":"dict-type dict-type-int64"},"children":["int64"]},{"name":"span","attribs":{"className":"dict-type dict-type-int64"},"children":["int64"]},{"name":"span","attribs":{"className":"dict-type dict-type-string"},"children":["string"]}],"width":100},{"id":"formato","name":"formato","type":"character","vAlign":"top","headerVAlign":"bottom","show":false},{"id":"fonte","name":"fonte","type":"character","vAlign":"top","headerVAlign":"bottom","show":false},{"id":"valores","name":"valores","type":"character","vAlign":"top","headerVAlign":"bottom","show":false},{"id":"nulos","name":"Nulls","type":"character","vAlign":"top","headerVAlign":"bottom","cell":[{"name":"span","attribs":{"className":"dict-null dict-null-no"},"children":["no"]},{"name":"span","attribs":{"className":"dict-null dict-null-no"},"children":["no"]},{"name":"span","attribs":{"className":"dict-null dict-null-yes"},"children":["yes"]},{"name":"span","attribs":{"className":"dict-null dict-null-yes"},"children":["yes"]},{"name":"span","attribs":{"className":"dict-null dict-null-yes"},"children":["yes"]},{"name":"span","attribs":{"className":"dict-null dict-null-yes"},"children":["yes"]},{"name":"span","attribs":{"className":"dict-null dict-null-no"},"children":["no"]},{"name":"span","attribs":{"className":"dict-null dict-null-no"},"children":["no"]},{"name":"span","attribs":{"className":"dict-null dict-null-no"},"children":["no"]},{"name":"span","attribs":{"className":"dict-null dict-null-no"},"children":["no"]},{"name":"span","attribs":{"className":"dict-null dict-null-no"},"children":["no"]},{"name":"span","attribs":{"className":"dict-null dict-null-no"},"children":["no"]}],"width":80,"align":"center"},{"id":"observacao","name":"observacao","type":"character","vAlign":"top","headerVAlign":"bottom","show":false}],"searchable":true,"defaultPageSize":15,"showPageSizeOptions":true,"pageSizeOptions":[15,30,50],"onClick":"expand","highlight":true,"rowStyle":{"cursor":"pointer"},"theme":{"borderColor":"#e4e8ee","highlightColor":"#f3f6fb","headerStyle":{"borderBottom":"2px solid #d7dde6","fontSize":"0.78rem","textTransform":"uppercase","letterSpacing":"0.04em","color":"#5b6675"},"searchInputStyle":{"width":"100%","maxWidth":"24rem"}},"language":{"searchPlaceholder":"Search variables..."},"dataKey":"ede58bb66fe809f04cd0fa433748d727"},"children":[]},"class":"reactR_markup"},"evals":[],"jsHooks":[]}</script>
+</div>
+<div class="section level2">
+<h2 id="known-inconsistencies-in-the-source">Known inconsistencies in the source<a class="anchor" aria-label="anchor" href="#known-inconsistencies-in-the-source"></a>
+</h2>
+<p>The official PDFs contain a few internal inconsistencies. In the
+<code>pessoas</code> dictionary, the format for
+<code>ano_mes_sinistro</code> and <code>ano_mes_obito</code> is printed
+as <code>mm/aaaa</code>, but the permitted ranges and published data use
+<code>aaaa/mm</code>. Some year ranges say “greater than 2022” although
+the corresponding files include 2022. The observations for
+<code>ano_fab</code> and <code>ano_modelo</code> also print their
+inequalities in reverse. The tables above preserve the official wording.
+The package’s type specifications follow the values found in the data
+files; identifiers and <code>numero_logradouro</code> remain character
+vectors to avoid losing information.</p>
 </div>
 <div class="section level2">
 <h2 id="source">Source<a class="anchor" aria-label="anchor" href="#source"></a>

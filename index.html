@@ -13,7 +13,10 @@
 <link rel="manifest" href="site.webmanifest">
 <script src="deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet">
-<script src="deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
+<script src="deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="deps/Lato-0.4.10/font.css" rel="stylesheet">
+<link href="deps/Fira_Code-0.4.10/font.css" rel="stylesheet">
+<link href="deps/Lora-0.4.10/font.css" rel="stylesheet">
+<link href="deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
 <script src="deps/headroom-0.11.0/headroom.min.js"></script><script src="deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="deps/search-1.0.0/fuse.min.js"></script><script src="deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="pkgdown.js"></script><meta property="og:title" content="Download and import traffic crash data from INFOSIGA-SP">
 <meta name="description" content="An R interface to the São Paulo State traffic crash open data published by DETRAN-SP.
@@ -26,7 +29,7 @@
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
-    <nav class="navbar navbar-expand-lg fixed-top bg-light" data-bs-theme="light" aria-label="Site navigation"><div class="container">
+    <nav class="navbar navbar-expand-lg fixed-top bg-dark" data-bs-theme="dark" aria-label="Site navigation"><div class="container">
 
     <a class="navbar-brand me-2" href="index.html">infosigasp</a>
 
@@ -45,6 +48,7 @@
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
 <li><a class="dropdown-item" href="articles/data-dictionary.html">Data dictionary</a></li>
+    <li><a class="dropdown-item" href="articles/data-dictionary-pt.html">Dicionário de dados</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="news/index.html">Changelog</a></li>
@@ -132,7 +136,7 @@
 </tbody>
 </table>
 <p>Raw mode is a lossless <strong>tabular</strong> import, not a byte-for-byte copy: the package still decodes Latin-1 to UTF-8, parses the CSV structure and combines the period files.</p>
-<p>Clean mode trims text, maps <code>"NAO DISPONIVEL"</code> to <code>NA</code>, parses <code>ano_mes_*</code> as first-of-month dates, orders ordinal columns, converts crash-type flags to logical, fills blank <code>qtd_*</code> entries with zero inside populated count blocks, removes export-only trailing <code>".0"</code> values from <code>numero_logradouro</code>, and validates coordinate pairs against a bounding box around São Paulo state. It does not rename columns, harmonize nominal labels or drop rows.</p>
+<p>Clean mode trims text, maps <code>"NAO DISPONIVEL"</code> to <code>NA</code>, parses <code>ano_mes_*</code> as first-of-month dates, orders ordinal columns, converts crash-type flags to logical, preserves missing <code>qtd_*</code> counts as <code>NA</code>, removes export-only trailing <code>".0"</code> values from <code>numero_logradouro</code>, and validates coordinate pairs against the São Paulo state boundary with a 2 km buffer. It does not rename columns, harmonize nominal labels or drop rows.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/levels.html" class="external-link">levels</a></span><span class="op">(</span><span class="va">sinistros</span><span class="op">$</span><span class="va">dia_da_semana</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] "Domingo"       "Segunda-feira" "Terça-feira"   "Quarta-feira"</span></span>
@@ -165,7 +169,7 @@
 <div class="section level3">
 <h3 id="data-dictionary">Data dictionary<a class="anchor" aria-label="anchor" href="#data-dictionary"></a>
 </h3>
-<p><code><a href="reference/dictionary_infosiga.html">dictionary_infosiga()</a></code> downloads the official field-by-field documentation (one PDF per dataset, in Portuguese) and returns the local file paths. Supply a dataset name to retrieve only its dictionary.</p>
+<p><code><a href="reference/dictionary_infosiga.html">dictionary_infosiga()</a></code> downloads the official field-by-field documentation (one PDF per dataset, in Portuguese) and returns the local file paths. Supply a dataset name to retrieve only its dictionary. The function also links to the <a href="https://viniciusoike.github.io/infosigasp/articles/data-dictionary.html">searchable online data dictionary</a>.</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="reference/dictionary_infosiga.html">dictionary_infosiga</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="fu"><a href="reference/dictionary_infosiga.html">dictionary_infosiga</a></span><span class="op">(</span><span class="st">"sinistros"</span><span class="op">)</span></span></code></pre></div>
