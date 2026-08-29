@@ -1,0 +1,88 @@
+.dict-var {
+  background: transparent;
+  padding: 0;
+  font-weight: 600;
+  word-break: break-word;
+}
+.dict-name {
+  font-weight: 600;
+}
+.dict-desc {
+  color: #5b6675;
+  font-size: 0.875rem;
+  margin-top: 2px;
+}
+.dict-type {
+  display: inline-block;
+  font-family: var(--bs-font-monospace, monospace);
+  font-size: 0.75rem;
+  padding: 2px 8px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+.dict-type-string {
+  background: #eef2ff;
+  color: #3730a3;
+}
+.dict-type-int64 {
+  background: #ecfdf5;
+  color: #047857;
+}
+.dict-type-float64 {
+  background: #f0fdfa;
+  color: #0f766e;
+}
+.dict-type-date,
+.dict-type-time {
+  background: #fff7ed;
+  color: #c2410c;
+}
+.dict-type-none {
+  color: #9aa3b0;
+}
+.dict-null {
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+.dict-null-yes {
+  color: #b45309;
+}
+.dict-null-no {
+  color: #9aa3b0;
+}
+.dict-detail {
+  padding: 0.9rem 1rem 0.9rem 2.8rem;
+  background: #f8fafc;
+  font-size: 0.875rem;
+  border-top: 1px solid #e4e8ee;
+}
+.dict-detail-row {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 0.45rem;
+}
+.dict-detail-row:last-child {
+  margin-bottom: 0;
+}
+.dict-detail-label {
+  flex: 0 0 8.5rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #8b95a5;
+  padding-top: 2px;
+}
+.dict-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.dict-chip {
+  background: #fff;
+  border: 1px solid #d7dde6;
+  border-radius: 4px;
+  padding: 1px 8px;
+  font-size: 0.8rem;
+  font-family: var(--bs-font-monospace, monospace);
+}

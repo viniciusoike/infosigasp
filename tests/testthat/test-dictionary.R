@@ -56,6 +56,20 @@ test_that("dictionary_infosiga selects one dataset and supports refresh", {
   expect_identical(refreshed, path)
 })
 
+test_that("dictionary_infosiga links to the searchable online dictionary", {
+  tmp <- withr::local_tempdir()
+  withr::local_options(list(infosigasp.cache_dir = tmp))
+
+  fixture <- test_path("fixtures", "dicionario.zip")
+  url <- paste0("file://", normalizePath(fixture, winslash = "/"))
+  withr::local_options(list(infosigasp.dictionary_url = url))
+
+  expect_message(
+    dictionary_infosiga("pessoas"),
+    "articles/data-dictionary\\.html#pessoas"
+  )
+})
+
 test_that("dictionary_infosiga errors when the download fails", {
   tmp <- withr::local_tempdir()
   withr::local_options(list(infosigasp.cache_dir = tmp))

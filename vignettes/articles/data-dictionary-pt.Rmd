@@ -1,0 +1,217 @@
+---
+title: "Dicionário de dados"
+css: data-dictionary.css
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
+```
+
+Este artigo transcreve o dicionário de dados oficial do INFOSIGA-SP
+(**v1.5, 16/06/2026**), publicado pelo DETRAN-SP, para as três bases que
+`read_infosiga()` retorna: `sinistros` (sinistros confirmados e notificações),
+`pessoas` (vítimas) e `veiculos` (veículos). Os nomes dos campos, as descrições
+e os códigos das categorias permanecem como constam na fonte. A transcrição
+apenas normaliza quebras de linha, separadores de listas e pequenos sinais de
+pontuação; `dictionary_infosiga()` baixa os arquivos PDF originais.
+
+O artigo também está [disponível em inglês](data-dictionary.html).
+
+Três observações ajudam a consultar as tabelas.
+
+- **Clique em uma linha** (ou na seta) para abrir o formato de armazenamento,
+  a fonte do campo, a lista completa de valores permitidos e as observações.
+- As colunas **Tipo** e **Nulos** descrevem o esquema da fonte, que nem sempre
+  corresponde às classes que o pacote retorna. `processing = "raw"` retorna
+  todos os campos como texto; `"typed"` converte as classes documentadas; e o
+  modo padrão, `"clean"`, também trata valores ausentes, fatores e indicadores
+  binários. Consulte `?read_infosiga` para conhecer o pipeline completo.
+- No campo *Fonte*, **PC**, **PM** e **PRF** significam Polícia Civil, Polícia
+  Militar e Polícia Rodoviária Federal. **DETRAN-SP** identifica os campos que
+  o próprio sistema Infosiga deriva.
+
+```{r setup}
+library(reactable)
+library(htmltools)
+```
+
+```{r data}
+read_dict <- function(file) {
+  readr::read_tsv(
+    file,
+    col_types = readr::cols(.default = readr::col_character()),
+    quote = "",
+    na = character()
+  )
+}
+
+dict_sinistros <- read_dict("dictionary-sinistros.tsv")
+dict_pessoas <- read_dict("dictionary-pessoas.tsv")
+dict_veiculos <- read_dict("dictionary-veiculos.tsv")
+```
+
+```{r helpers}
+# Apresenta cada dicionário como uma tabela pesquisável. A visualização
+# principal mostra variável, descrição, tipo e presença de valores nulos;
+# os demais campos ficam em uma linha expansível.
+dict_table <- function(dict) {
+  detail_row <- function(label, content) {
+    div(
+      class = "dict-detail-row",
+      span(class = "dict-detail-label", label),
+      content
+    )
+  }
+
+  reactable(
+    dict,
+    searchable = TRUE,
+    highlight = TRUE,
+    defaultPageSize = 15,
+    showPageSizeOptions = TRUE,
+    pageSizeOptions = c(15, 30, 50),
+    onClick = "expand",
+    rowStyle = list(cursor = "pointer"),
+    defaultColDef = colDef(vAlign = "top", headerVAlign = "bottom"),
+    columns = list(
+      variavel = colDef(
+        name = "Variável",
+        minWidth = 190,
+        cell = function(value) tags$code(class = "dict-var", value)
+      ),
+      nome = colDef(show = FALSE),
+      descricao = colDef(
+        name = "Descrição",
+        minWidth = 320,
+        cell = function(value, index) {
+          div(
+            div(class = "dict-name", dict$nome[index]),
+            div(class = "dict-desc", value)
+          )
+        }
+      ),
+      tipo = colDef(
+        name = "Tipo",
+        width = 100,
+        cell = function(value) {
+          if (value == "-") {
+            return(span(class = "dict-type-none", "\u2014"))
+          }
+          span(class = paste0("dict-type dict-type-", value), value)
+        }
+      ),
+      nulos = colDef(
+        name = "Nulos",
+        width = 80,
+        align = "center",
+        cell = function(value) {
+          if (value == "sim") {
+            span(class = "dict-null dict-null-yes", "sim")
+          } else {
+            span(class = "dict-null dict-null-no", "não")
+          }
+        }
+      ),
+      formato = colDef(show = FALSE),
+      fonte = colDef(show = FALSE),
+      valores = colDef(show = FALSE),
+      observacao = colDef(show = FALSE)
+    ),
+    details = function(index) {
+      row <- dict[index, ]
+      values <- strsplit(row$valores, "|", fixed = TRUE)[[1]]
+      div(
+        class = "dict-detail",
+        detail_row("Formato", span(row$formato)),
+        detail_row("Fonte", span(row$fonte)),
+        if (nzchar(row$valores)) {
+          detail_row(
+            "Valores permitidos",
+            if (length(values) > 1) {
+              div(
+                class = "dict-chips",
+                lapply(values, function(v) span(class = "dict-chip", v))
+              )
+            } else {
+              span(row$valores)
+            }
+          )
+        },
+        if (nzchar(row$observacao)) {
+          detail_row("Observações", span(row$observacao))
+        }
+      )
+    },
+    theme = reactableTheme(
+      borderColor = "#e4e8ee",
+      highlightColor = "#f3f6fb",
+      headerStyle = list(
+        borderBottom = "2px solid #d7dde6",
+        fontSize = "0.78rem",
+        textTransform = "uppercase",
+        letterSpacing = "0.04em",
+        color = "#5b6675"
+      ),
+      searchInputStyle = list(width = "100%", maxWidth = "24rem")
+    ),
+    language = reactableLang(
+      searchPlaceholder = "Pesquisar variáveis...",
+      noData = "Nenhum resultado",
+      pageNext = "Próxima",
+      pagePrevious = "Anterior",
+      pageSizeOptions = "Linhas por página",
+      pageInfo = "{rowStart}–{rowEnd} de {rows}"
+    )
+  )
+}
+```
+
+## Sinistros
+
+Cada linha representa um sinistro confirmado ou uma notificação, identificado
+por `id_sinistro` (`r nrow(dict_sinistros)` variáveis).
+
+```{r sinistros}
+dict_table(dict_sinistros)
+```
+
+## Pessoas
+
+Cada linha representa uma vítima, identificada por `id_pessoa` e vinculada às
+outras bases por `id_sinistro` e `id_veiculo`
+(`r nrow(dict_pessoas)` variáveis).
+
+```{r pessoas}
+dict_table(dict_pessoas)
+```
+
+## Veículos
+
+Cada linha representa um veículo envolvido em um sinistro, identificado por
+`id_sinistro` e `id_veiculo` (`r nrow(dict_veiculos)` variáveis).
+
+```{r veiculos}
+dict_table(dict_veiculos)
+```
+
+## Inconsistências conhecidas na fonte
+
+Os arquivos PDF oficiais contêm algumas inconsistências internas. No
+dicionário de `pessoas`, o formato de `ano_mes_sinistro` e `ano_mes_obito`
+aparece como `mm/aaaa`, mas os intervalos permitidos e os dados publicados usam
+`aaaa/mm`. Alguns intervalos indicam anos posteriores a 2022, embora os arquivos
+correspondentes incluam 2022. As observações de `ano_fab` e `ano_modelo` também
+apresentam as desigualdades em ordem invertida. As tabelas acima preservam a
+redação oficial. As especificações de tipo do pacote seguem os valores dos
+arquivos de dados; os identificadores e `numero_logradouro` permanecem como
+texto para evitar perda de informação.
+
+## Fonte
+
+DETRAN-SP, *Dicionário de dados* v1.5 (16/06/2026), distribuído com os dados
+abertos do INFOSIGA-SP em <https://infosiga.detran.sp.gov.br/>.
+`dictionary_infosiga()` baixa os arquivos PDF oficiais.
+
+```{r dictionary, echo = TRUE, eval = FALSE}
+infosigasp::dictionary_infosiga()
+```
