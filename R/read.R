@@ -25,6 +25,11 @@
 #' @param refresh Logical. If `TRUE`, download the latest available source data
 #'   before reading. If `FALSE` (default), reuse the copy in the local
 #'   `infosigasp` cache, downloading it only when it is missing.
+#' @param cache Logical. If `TRUE` (default), canonical results from
+#'   `processing = "clean"` are stored in the package's managed user cache and
+#'   reused on subsequent calls. Raw, typed and standardised variants are never
+#'   stored as processed artifacts. Set to `FALSE` to bypass the processed
+#'   cache; the downloaded source archive is managed separately.
 #' @param quiet Logical. If `FALSE` (default), report progress.
 #'
 #' @return A [tibble][tibble::tibble] with one row per record. The columns
@@ -53,6 +58,13 @@
 #'   integer, removes a trailing `".0"` from `numero_logradouro`, and validates
 #'   coordinate pairs against the Sao Paulo state boundary with a 2 km buffer.
 #'   Missing `qtd_*` counts remain `NA`.
+#'
+#' Canonical clean results are cached separately from the source ZIP. Cache
+#' entries are keyed by the source archive checksum and an internal cleaning
+#' schema version. Obsolete entries for a dataset are removed after a new entry
+#' is written. Standardisation is always applied in memory after loading the
+#' canonical clean result. Use [infosiga_cache_info()] to inspect disk use and
+#' [clear_infosiga_cache()] to remove processed entries.
 #'
 #' Before converting a closed-domain column, the cleaning step validates its
 #' observed values. If an ordinal column, crash-type flag or integer field
@@ -160,6 +172,7 @@ read_infosiga <- function(
   processing = c("clean", "typed", "raw"),
   standardize = NULL,
   refresh = FALSE,
+  cache = TRUE,
   quiet = FALSE
 ) {
   dataset <- match.arg(dataset)
@@ -167,6 +180,9 @@ read_infosiga <- function(
 
   if (!is.logical(refresh) || length(refresh) != 1L || is.na(refresh)) {
     cli::cli_abort("{.arg refresh} must be `TRUE` or `FALSE`.")
+  }
+  if (!is.logical(cache) || length(cache) != 1L || is.na(cache)) {
+    cli::cli_abort("{.arg cache} must be `TRUE` or `FALSE`.")
   }
   if (!is.null(standardize) && processing != "clean") {
     cli::cli_abort(
@@ -180,6 +196,52 @@ read_infosiga <- function(
     .infosiga_confirm_download()
   }
   zip_path <- .infosiga_download(refresh = refresh, quiet = quiet)
+
+  use_processed_cache <- processing == "clean" && cache
+  if (use_processed_cache) {
+    source_id <- .infosiga_source_id(zip_path)
+    if (is.na(source_id)) {
+      use_processed_cache <- FALSE
+      if (!quiet) {
+        cli::cli_alert_warning(
+          "Could not identify the source archive; bypassing the processed cache."
+        )
+      }
+    } else {
+      .infosiga_prune_stale_processed(source_id)
+      processed_path <- .infosiga_processed_path(dataset, source_id)
+      out <- .infosiga_read_processed(
+        processed_path,
+        dataset,
+        source_id,
+        quiet = quiet
+      )
+    }
+
+    if (use_processed_cache && !is.null(out)) {
+      if (!quiet) {
+        cli::cli_alert_info(
+          "Reading canonical clean {.val {dataset}} from the processed cache."
+        )
+      }
+      problems <- attr(out, "problems")
+      if (!is.null(standardize)) {
+        out <- .infosiga_standardize(out, dataset, standardize)
+        attr(out, "problems") <- problems
+      }
+      if (!quiet) {
+        mode <- if (is.null(standardize)) {
+          "clean"
+        } else {
+          "clean and standardised"
+        }
+        cli::cli_alert_success(
+          "Imported {nrow(out)} row{?s} and {ncol(out)} columns of {mode} {.val {dataset}}."
+        )
+      }
+      return(out)
+    }
+  }
 
   members <- .archive_members(zip_path, dataset)
   if (length(members) == 0) {
@@ -247,10 +309,22 @@ read_infosiga <- function(
     out <- .infosiga_clean(out, dataset)
   }
 
+  attr(out, "problems") <- import_problems
+
+  if (use_processed_cache) {
+    .infosiga_write_processed(
+      out,
+      processed_path,
+      dataset,
+      source_id,
+      quiet = quiet
+    )
+  }
+
   if (!is.null(standardize)) {
     out <- .infosiga_standardize(out, dataset, standardize)
+    attr(out, "problems") <- import_problems
   }
-  attr(out, "problems") <- import_problems
 
   if (!quiet) {
     mode <- if (!is.null(standardize)) {

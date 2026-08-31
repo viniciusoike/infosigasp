@@ -53,6 +53,10 @@ test_that("invalid arguments are rejected", {
     error = TRUE
   )
   expect_snapshot(
+    read_infosiga("sinistros", cache = NA, quiet = TRUE),
+    error = TRUE
+  )
+  expect_snapshot(
     read_infosiga(
       "sinistros",
       processing = "typed",

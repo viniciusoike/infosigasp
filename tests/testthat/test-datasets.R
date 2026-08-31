@@ -1,7 +1,12 @@
-test_that("the package exports only its reader and dictionary", {
+test_that("the package exports only data access and cache management", {
   expect_setequal(
     getNamespaceExports("infosigasp"),
-    c("read_infosiga", "dictionary_infosiga")
+    c(
+      "read_infosiga",
+      "dictionary_infosiga",
+      "infosiga_cache_info",
+      "clear_infosiga_cache"
+    )
   )
 })
 
