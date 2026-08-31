@@ -9,6 +9,7 @@ read_infosiga(
   processing = c("clean", "typed", "raw"),
   standardize = NULL,
   refresh = FALSE,
+  cache = TRUE,
   quiet = FALSE
 )
 }
@@ -37,6 +38,12 @@ selected dataset. Requires \code{processing = "clean"}.}
 \item{refresh}{Logical. If \code{TRUE}, download the latest available source data
 before reading. If \code{FALSE} (default), reuse the copy in the local
 \code{infosigasp} cache, downloading it only when it is missing.}
+
+\item{cache}{Logical. If \code{TRUE} (default), canonical results from
+\code{processing = "clean"} are stored in the package's managed user cache and
+reused on subsequent calls. Raw, typed and standardised variants are never
+stored as processed artifacts. Set to \code{FALSE} to bypass the processed
+cache; the downloaded source archive is managed separately.}
 
 \item{quiet}{Logical. If \code{FALSE} (default), report progress.}
 }
@@ -73,6 +80,13 @@ integer, removes a trailing \code{".0"} from \code{numero_logradouro}, and valid
 coordinate pairs against the Sao Paulo state boundary with a 2 km buffer.
 Missing \verb{qtd_*} counts remain \code{NA}.
 }
+
+Canonical clean results are cached separately from the source ZIP. Cache
+entries are keyed by the source archive checksum and an internal cleaning
+schema version. Obsolete entries for a dataset are removed after a new entry
+is written. Standardisation is always applied in memory after loading the
+canonical clean result. Use \code{\link[=infosiga_cache_info]{infosiga_cache_info()}} to inspect disk use and
+\code{\link[=clear_infosiga_cache]{clear_infosiga_cache()}} to remove processed entries.
 
 Before converting a closed-domain column, the cleaning step validates its
 observed values. If an ordinal column, crash-type flag or integer field
