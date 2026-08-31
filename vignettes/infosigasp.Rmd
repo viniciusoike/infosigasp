@@ -350,15 +350,14 @@ options(infosigasp.cache_dir = "~/data/infosiga")
 
 ## The official data dictionary
 
-INFOSIGA-SP distributes a field-by-field data dictionary (PDF, in Portuguese).
-`dictionary_infosiga()` downloads it and returns the paths to the extracted
-files. Pass `"sinistros"`, `"pessoas"` or `"veiculos"` to return one PDF.
+`dictionary_infosiga()` opens the package's searchable online data dictionary.
+Pass `"sinistros"`, `"pessoas"` or `"veiculos"` to open the corresponding
+section, or use `source = "official"` to visit the INFOSIGA-SP source website.
 
 ```{r dictionary, eval = isTRUE(getOption("infosigasp.run_live"))}
-pdfs <- dictionary_infosiga()
-basename(pdfs)
-
-sinistros_pdf <- dictionary_infosiga("sinistros")
+dictionary_infosiga()
+dictionary_infosiga("sinistros")
+dictionary_infosiga(source = "official")
 ```
 
 ## Citing the data

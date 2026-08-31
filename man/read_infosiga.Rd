@@ -94,63 +94,12 @@ In typed and clean modes, values that cannot be parsed to their declared
 column type become \code{NA} and are recorded by \code{\link[readr:problems]{readr::problems()}}. Raw mode
 preserves those field values as character. Structural CSV problems are
 recorded in every mode.
+
+Coverage, field definitions and analytical caveats are documented in the
+searchable online data dictionary returned by \code{\link[=dictionary_infosiga]{dictionary_infosiga()}}. In
+particular, data from 2015--2018 cover fatal crashes only, while data from
+2019 onward also include non-fatal crashes and notifications.
 }
-\section{Coverage and known caveats}{
-
-
-The source data are published as a single continuous series from 2015
-onward, but the \emph{scope} of what is collected has changed over time and
-several columns carry definitions that are easy to misread. None of these
-are import errors, so the package does not alter the data; they do,
-however, invalidate a number of otherwise reasonable analyses.
-
-\describe{
-\item{\strong{2015--2018 covers fatal crashes only.}}{This is the single most
-consequential caveat. Non-fatal records begin in 2019: for 2015--2018
-\code{tipo_registro} is \code{"SINISTRO FATAL"} for every row, and in \code{pessoas}
-the \code{"LEVE"} and \code{"GRAVE"} injury levels do not occur at all. Counting
-crashes or victims per year across the whole series therefore shows an
-apparent 20-fold jump in 2019 that is entirely an artefact of the
-expanded collection scope. \strong{For any trend that includes years before
-2019, restrict to fatalities} (\code{tipo_registro == "SINISTRO FATAL"}, or
-\code{gravidade_lesao == "FATAL"} in \code{pessoas}); otherwise start the series
-in 2019.}
-\item{\strong{\code{tipo_registro} mixes notifications with confirmed crashes.}}{
-About a third of \code{sinistros} rows are \code{"NOTIFICACAO"}, a reported event
-that has not been confirmed as a crash. Treating every row as a crash
-overstates the total substantially. Filter on \code{tipo_registro} according
-to whether you want confirmed events only.}
-\item{\strong{The most recent months are provisional.}}{DETRAN-SP reclassifies
-records as it validates them, so the newest months carry an unusually
-high share of \code{"NOTIFICACAO"} and an artificially low share of confirmed
-crashes. The final month or two of any release is also partial. Recent
-periods are not comparable with settled ones; drop the tail of the series
-before computing trends.}
-\item{\strong{\code{tempo_sinistro_obito} is capped at 30 days.}}{The published
-values never exceed 30, matching the 30-day convention for attributing a
-death to a crash. Deaths occurring later are not recorded as
-crash-related here, so fatality counts are 30-day counts, not lifetime
-ones.}
-\item{\strong{The \verb{qtd_*} vehicle counts do not always match \code{veiculos}.}}{
-Summing the \code{qtd_pedestre} .. \code{qtd_veic_nao_disponivel} columns
-disagrees with the number of matching \code{veiculos} rows for a small share
-of crashes, so the two routes to "how many vehicles" give different
-answers; pick one and state it. The \verb{qtd_gravidade_*} columns, by
-contrast, agree with the \code{pessoas} row counts for every crash.}
-\item{\strong{Coordinate availability varies sharply by year.}}{After the
-bounding-box validation described above, nearly every
-crash in the middle years of the series has usable coordinates, against a
-materially smaller share in the earliest and the most recent years.
-Mapped subsets are therefore not a uniform sample over time.}
-\item{\strong{Not every crash has victim or vehicle rows.}}{Around a third of
-\code{sinistros} records have no matching row in \code{pessoas}. Use a left join
-when you need to keep all crashes, and expect \code{NA} on the victim side.}
-}
-
-The figures above describe the 2026 releases and shift slightly as
-DETRAN-SP revises the data; the structural points do not.
-}
-
 \examples{
 \dontrun{
 # Import all occurrence records, cleaned (downloads on first use)

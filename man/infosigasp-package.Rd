@@ -35,8 +35,8 @@ The three datasets can be linked through the \code{id_sinistro} key (and
 \describe{
 \item{\code{\link[=read_infosiga]{read_infosiga()}}}{Download (if needed) and import a dataset as a
 tibble.}
-\item{\code{\link[=dictionary_infosiga]{dictionary_infosiga()}}}{Download and locate the official data
-dictionaries.}
+\item{\code{\link[=dictionary_infosiga]{dictionary_infosiga()}}}{Open the searchable data dictionary or the
+official source website.}
 }
 }
 
