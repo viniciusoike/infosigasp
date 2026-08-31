@@ -2,34 +2,35 @@
 % Please edit documentation in R/dictionary.R
 \name{dictionary_infosiga}
 \alias{dictionary_infosiga}
-\title{Download the INFOSIGA-SP data dictionary}
+\title{Open the INFOSIGA-SP data dictionary}
 \usage{
-dictionary_infosiga(dataset = NULL, refresh = FALSE, quiet = FALSE)
+dictionary_infosiga(
+  dataset = NULL,
+  source = c("online", "official"),
+  open = interactive()
+)
 }
 \arguments{
-\item{dataset}{Optional dataset whose dictionary should be returned: one of
-\code{"sinistros"}, \code{"pessoas"} or \code{"veiculos"}. If \code{NULL} (default), return
-all three dictionaries.}
+\item{dataset}{Optional dataset to link to: one of \code{"sinistros"},
+\code{"pessoas"} or \code{"veiculos"}. The online dictionary opens at that dataset's
+section. This argument has no effect when \code{source = "official"}.}
 
-\item{refresh}{Logical. If \code{TRUE}, download the dictionaries again before
-returning them. If \code{FALSE} (default), reuse the local copy when available.}
+\item{source}{Which documentation to open. \code{"online"} (default) uses the
+searchable dictionary on the package website. \code{"official"} uses the
+INFOSIGA-SP website, where DETRAN-SP publishes the original files.}
 
-\item{quiet}{Logical. Suppress progress messages. Defaults to \code{FALSE}.}
+\item{open}{Logical. If \code{TRUE} (the default in interactive sessions), open
+the URL in a browser.}
 }
 \value{
-A character vector of paths to the extracted PDF files, invisibly.
+The selected URL, invisibly.
 }
 \description{
-Downloads the official INFOSIGA-SP data dictionary, a set of PDF documents
-(one per dataset) describing every column and its accepted values. The
-archive is saved to the cache and the extracted PDF paths are returned.
-A searchable HTML transcription is available in the
-\href{https://viniciusoike.github.io/infosigasp/articles/data-dictionary.html}{online data dictionary}.
+Opens the package's searchable online data dictionary. Set
+\code{source = "official"} to open the INFOSIGA-SP source website instead.
 }
 \examples{
-\dontrun{
-pdfs <- dictionary_infosiga()
-# Open the dictionary for the crash-events dataset
-browseURL(dictionary_infosiga("sinistros"))
-}
+dictionary_infosiga(open = FALSE)
+dictionary_infosiga("sinistros", open = FALSE)
+dictionary_infosiga(source = "official", open = FALSE)
 }

@@ -20,19 +20,6 @@
   )
 }
 
-# URL(s) of the data dictionary archive (PDF files). Like `infosigasp.zip_url`,
-# this may be a character vector whose entries are tried in order until one
-# returns a valid ZIP, so additional mirrors can be supplied via the option.
-.infosiga_dictionary_url <- function() {
-  getOption(
-    "infosigasp.dictionary_url",
-    paste0(
-      "https://infosiga.detran.sp.gov.br/rest/painel/download/file/",
-      "CGSV_Infosiga_SP_dicionario_dados.zip"
-    )
-  )
-}
-
 # File name of the cached source archive.
 .infosiga_zip_name <- "dados_infosiga.zip"
 
