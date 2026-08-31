@@ -7,9 +7,8 @@ returned by
 `sinistros` (confirmed crashes and notifications), `pessoas` (victims)
 and `veiculos` (vehicles). Field names, descriptions and category codes
 remain in Portuguese. The transcription only normalizes line breaks,
-list separators and minor punctuation;
-[`dictionary_infosiga()`](https://viniciusoike.github.io/infosigasp/reference/dictionary_infosiga.md)
-downloads the original PDFs.
+list separators and minor punctuation.
+`dictionary_infosiga(source = "official")` opens the source website.
 
 A [Brazilian Portuguese
 version](https://viniciusoike.github.io/infosigasp/articles/data-dictionary-pt.md)
@@ -46,6 +45,40 @@ to the other datasets by `id_sinistro` and `id_veiculo` (30 variables).
 One row per vehicle involved in a crash, identified by `id_sinistro` and
 `id_veiculo` (12 variables).
 
+## Coverage and analytical caveats
+
+The source is published as a continuous series from 2015 onward, but its
+scope has changed. These features come from the published data rather
+than the import process.
+
+- **Data from 2015–2018 cover fatal crashes only.** Non-fatal records
+  begin in
+  2019. For trends that include earlier years, restrict `sinistros` to
+        `tipo_registro == "SINISTRO FATAL"` or `pessoas` to
+        `gravidade_lesao == "FATAL"`. Otherwise, start the series in
+        2019.
+- **`tipo_registro` includes notifications and confirmed crashes.** A
+  `"NOTIFICACAO"` is a reported event that has not been confirmed as a
+  crash. Filter this field according to the event definition required by
+  the analysis.
+- **Recent months are provisional.** DETRAN-SP reclassifies records as
+  it validates them, and the final months of a release may be
+  incomplete. Exclude the latest observations when comparing recent and
+  settled periods.
+- **`tempo_sinistro_obito` uses a 30-day limit.** Fatality counts
+  therefore follow the 30-day convention for attributing a death to a
+  crash.
+- **Vehicle totals can differ across tables.** The sum of the `qtd_*`
+  vehicle fields does not always match the number of corresponding rows
+  in `veiculos`. Choose one measure and report its definition.
+- **Coordinate coverage varies by year.** Spatial subsets are not a
+  uniform sample over time, especially in the earliest and latest years.
+- **Some crashes have no matching person or vehicle rows.** Use a left
+  join from `sinistros` when the analysis must retain every crash.
+
+These patterns describe the 2026 releases. Their frequency may change
+when DETRAN-SP revises the data.
+
 ## Known inconsistencies in the source
 
 The official PDFs contain a few internal inconsistencies. In the
@@ -63,10 +96,9 @@ information.
 
 DETRAN-SP, *Dicionário de dados* v1.5 (2026-06-16), distributed with the
 INFOSIGA-SP open data at <https://infosiga.detran.sp.gov.br/>.
-[`dictionary_infosiga()`](https://viniciusoike.github.io/infosigasp/reference/dictionary_infosiga.md)
-retrieves the official PDFs.
+`dictionary_infosiga(source = "official")` opens the source website.
 
 ``` r
 
-infosigasp::dictionary_infosiga()
+infosigasp::dictionary_infosiga(source = "official")
 ```

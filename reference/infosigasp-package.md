@@ -39,7 +39,7 @@ The three datasets can be linked through the `id_sinistro` key (and
 
 - [`dictionary_infosiga()`](https://viniciusoike.github.io/infosigasp/reference/dictionary_infosiga.md):
 
-  Download and locate the official data dictionaries.
+  Open the searchable data dictionary or the official source website.
 
 ## Data source and licence
 

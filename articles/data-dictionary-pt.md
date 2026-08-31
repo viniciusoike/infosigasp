@@ -7,9 +7,8 @@ retorna: `sinistros` (sinistros confirmados e notificações), `pessoas`
 (vítimas) e `veiculos` (veículos). Os nomes dos campos, as descrições e
 os códigos das categorias permanecem como constam na fonte. A
 transcrição apenas normaliza quebras de linha, separadores de listas e
-pequenos sinais de pontuação;
-[`dictionary_infosiga()`](https://viniciusoike.github.io/infosigasp/reference/dictionary_infosiga.md)
-baixa os arquivos PDF originais.
+pequenos sinais de pontuação. `dictionary_infosiga(source = "official")`
+abre o site de origem.
 
 O artigo também está [disponível em
 inglês](https://viniciusoike.github.io/infosigasp/articles/data-dictionary.md).
@@ -46,6 +45,42 @@ variáveis).
 Cada linha representa um veículo envolvido em um sinistro, identificado
 por `id_sinistro` e `id_veiculo` (12 variáveis).
 
+## Cobertura e ressalvas analíticas
+
+A fonte publica uma série contínua desde 2015, mas seu escopo mudou ao
+longo do tempo. Estas características pertencem aos dados publicados,
+não ao processo de importação.
+
+- **Os dados de 2015 a 2018 abrangem apenas sinistros fatais.** Os
+  registros não fatais começam em 2019. Em tendências que incluam anos
+  anteriores, restrinja `sinistros` a
+  `tipo_registro == "SINISTRO FATAL"` ou `pessoas` a
+  `gravidade_lesao == "FATAL"`. Caso contrário, inicie a série em 2019.
+- **`tipo_registro` inclui notificações e sinistros confirmados.** Uma
+  `"NOTIFICACAO"` é um evento informado que ainda não foi confirmado
+  como sinistro. Filtre esse campo conforme a definição adotada na
+  análise.
+- **Os meses recentes são provisórios.** O DETRAN-SP reclassifica
+  registros durante a validação, e os últimos meses de uma versão podem
+  estar incompletos. Exclua as observações mais recentes ao compará-las
+  com períodos consolidados.
+- **`tempo_sinistro_obito` adota o limite de 30 dias.** As contagens de
+  mortes, portanto, seguem a convenção de atribuir ao sinistro os óbitos
+  em até 30 dias.
+- **Os totais de veículos podem diferir entre tabelas.** A soma dos
+  campos `qtd_*` de veículos nem sempre coincide com o número de linhas
+  correspondentes em `veiculos`. Escolha uma medida e informe sua
+  definição.
+- **A cobertura de coordenadas varia por ano.** Os subconjuntos
+  espaciais não formam uma amostra uniforme ao longo do tempo, sobretudo
+  nos primeiros e nos últimos anos.
+- **Alguns sinistros não têm pessoas ou veículos correspondentes.**
+  Parta de `sinistros` com uma junção à esquerda quando a análise
+  precisar preservar todos os sinistros.
+
+Esses padrões descrevem as versões de 2026. Sua frequência pode mudar
+quando o DETRAN-SP revisar os dados.
+
 ## Inconsistências conhecidas na fonte
 
 Os arquivos PDF oficiais contêm algumas inconsistências internas. No
@@ -63,10 +98,9 @@ como texto para evitar perda de informação.
 
 DETRAN-SP, *Dicionário de dados* v1.5 (16/06/2026), distribuído com os
 dados abertos do INFOSIGA-SP em <https://infosiga.detran.sp.gov.br/>.
-[`dictionary_infosiga()`](https://viniciusoike.github.io/infosigasp/reference/dictionary_infosiga.md)
-baixa os arquivos PDF oficiais.
+`dictionary_infosiga(source = "official")` abre o site de origem.
 
 ``` r
 
-infosigasp::dictionary_infosiga()
+infosigasp::dictionary_infosiga(source = "official")
 ```

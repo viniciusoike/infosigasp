@@ -169,10 +169,11 @@
 <div class="section level3">
 <h3 id="data-dictionary">Data dictionary<a class="anchor" aria-label="anchor" href="#data-dictionary"></a>
 </h3>
-<p><code><a href="reference/dictionary_infosiga.html">dictionary_infosiga()</a></code> downloads the official field-by-field documentation (one PDF per dataset, in Portuguese) and returns the local file paths. Supply a dataset name to retrieve only its dictionary. The function also links to the <a href="https://viniciusoike.github.io/infosigasp/articles/data-dictionary.html">searchable online data dictionary</a>.</p>
+<p><code><a href="reference/dictionary_infosiga.html">dictionary_infosiga()</a></code> opens the <a href="https://viniciusoike.github.io/infosigasp/articles/data-dictionary.html">searchable online data dictionary</a>. Supply a dataset name to open its section, or use <code>source = "official"</code> to visit the INFOSIGA-SP source website.</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="reference/dictionary_infosiga.html">dictionary_infosiga</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="fu"><a href="reference/dictionary_infosiga.html">dictionary_infosiga</a></span><span class="op">(</span><span class="st">"sinistros"</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu"><a href="reference/dictionary_infosiga.html">dictionary_infosiga</a></span><span class="op">(</span><span class="st">"sinistros"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="reference/dictionary_infosiga.html">dictionary_infosiga</a></span><span class="op">(</span>source <span class="op">=</span> <span class="st">"official"</span><span class="op">)</span></span></code></pre></div>
 </div>
 </div>
 <div class="section level2">

@@ -1,45 +1,45 @@
-# Download the INFOSIGA-SP data dictionary
+# Open the INFOSIGA-SP data dictionary
 
-Downloads the official INFOSIGA-SP data dictionary, a set of PDF
-documents (one per dataset) describing every column and its accepted
-values. The archive is saved to the cache and the extracted PDF paths
-are returned. A searchable HTML transcription is available in the
-[online data
-dictionary](https://viniciusoike.github.io/infosigasp/articles/data-dictionary.html).
+Opens the package's searchable online data dictionary. Set
+`source = "official"` to open the INFOSIGA-SP source website instead.
 
 ## Usage
 
 ``` r
-dictionary_infosiga(dataset = NULL, refresh = FALSE, quiet = FALSE)
+dictionary_infosiga(
+  dataset = NULL,
+  source = c("online", "official"),
+  open = interactive()
+)
 ```
 
 ## Arguments
 
 - dataset:
 
-  Optional dataset whose dictionary should be returned: one of
-  `"sinistros"`, `"pessoas"` or `"veiculos"`. If `NULL` (default),
-  return all three dictionaries.
+  Optional dataset to link to: one of `"sinistros"`, `"pessoas"` or
+  `"veiculos"`. The online dictionary opens at that dataset's section.
+  This argument has no effect when `source = "official"`.
 
-- refresh:
+- source:
 
-  Logical. If `TRUE`, download the dictionaries again before returning
-  them. If `FALSE` (default), reuse the local copy when available.
+  Which documentation to open. `"online"` (default) uses the searchable
+  dictionary on the package website. `"official"` uses the INFOSIGA-SP
+  website, where DETRAN-SP publishes the original files.
 
-- quiet:
+- open:
 
-  Logical. Suppress progress messages. Defaults to `FALSE`.
+  Logical. If `TRUE` (the default in interactive sessions), open the URL
+  in a browser.
 
 ## Value
 
-A character vector of paths to the extracted PDF files, invisibly.
+The selected URL, invisibly.
 
 ## Examples
 
 ``` r
-if (FALSE) { # \dontrun{
-pdfs <- dictionary_infosiga()
-# Open the dictionary for the crash-events dataset
-browseURL(dictionary_infosiga("sinistros"))
-} # }
+dictionary_infosiga(open = FALSE)
+dictionary_infosiga("sinistros", open = FALSE)
+dictionary_infosiga(source = "official", open = FALSE)
 ```

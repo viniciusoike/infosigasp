@@ -528,15 +528,15 @@ via your <code>.Rprofile</code>) with the
 <div class="section level2">
 <h2 id="the-official-data-dictionary">The official data dictionary<a class="anchor" aria-label="anchor" href="#the-official-data-dictionary"></a>
 </h2>
-<p>INFOSIGA-SP distributes a field-by-field data dictionary (PDF, in
-Portuguese). <code><a href="../reference/dictionary_infosiga.html">dictionary_infosiga()</a></code> downloads it and returns
-the paths to the extracted files. Pass <code>"sinistros"</code>,
-<code>"pessoas"</code> or <code>"veiculos"</code> to return one PDF.</p>
+<p><code><a href="../reference/dictionary_infosiga.html">dictionary_infosiga()</a></code> opens the package’s searchable
+online data dictionary. Pass <code>"sinistros"</code>,
+<code>"pessoas"</code> or <code>"veiculos"</code> to open the
+corresponding section, or use <code>source = "official"</code> to visit
+the INFOSIGA-SP source website.</p>
 <div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">pdfs</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/dictionary_infosiga.html">dictionary_infosiga</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/basename.html" class="external-link">basename</a></span><span class="op">(</span><span class="va">pdfs</span><span class="op">)</span></span>
-<span></span>
-<span><span class="va">sinistros_pdf</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/dictionary_infosiga.html">dictionary_infosiga</a></span><span class="op">(</span><span class="st">"sinistros"</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/dictionary_infosiga.html">dictionary_infosiga</a></span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/dictionary_infosiga.html">dictionary_infosiga</a></span><span class="op">(</span><span class="st">"sinistros"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/dictionary_infosiga.html">dictionary_infosiga</a></span><span class="op">(</span>source <span class="op">=</span> <span class="st">"official"</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="citing-the-data">Citing the data<a class="anchor" aria-label="anchor" href="#citing-the-data"></a>

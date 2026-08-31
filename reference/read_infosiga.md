@@ -124,72 +124,11 @@ their declared column type become `NA` and are recorded by
 Raw mode preserves those field values as character. Structural CSV
 problems are recorded in every mode.
 
-## Coverage and known caveats
-
-The source data are published as a single continuous series from 2015
-onward, but the *scope* of what is collected has changed over time and
-several columns carry definitions that are easy to misread. None of
-these are import errors, so the package does not alter the data; they
-do, however, invalidate a number of otherwise reasonable analyses.
-
-- **2015–2018 covers fatal crashes only.**:
-
-  This is the single most consequential caveat. Non-fatal records begin
-  in 2019: for 2015–2018 `tipo_registro` is `"SINISTRO FATAL"` for every
-  row, and in `pessoas` the `"LEVE"` and `"GRAVE"` injury levels do not
-  occur at all. Counting crashes or victims per year across the whole
-  series therefore shows an apparent 20-fold jump in 2019 that is
-  entirely an artefact of the expanded collection scope. **For any trend
-  that includes years before 2019, restrict to fatalities**
-  (`tipo_registro == "SINISTRO FATAL"`, or `gravidade_lesao == "FATAL"`
-  in `pessoas`); otherwise start the series in 2019.
-
-- **`tipo_registro` mixes notifications with confirmed crashes.**:
-
-  About a third of `sinistros` rows are `"NOTIFICACAO"`, a reported
-  event that has not been confirmed as a crash. Treating every row as a
-  crash overstates the total substantially. Filter on `tipo_registro`
-  according to whether you want confirmed events only.
-
-- **The most recent months are provisional.**:
-
-  DETRAN-SP reclassifies records as it validates them, so the newest
-  months carry an unusually high share of `"NOTIFICACAO"` and an
-  artificially low share of confirmed crashes. The final month or two of
-  any release is also partial. Recent periods are not comparable with
-  settled ones; drop the tail of the series before computing trends.
-
-- **`tempo_sinistro_obito` is capped at 30 days.**:
-
-  The published values never exceed 30, matching the 30-day convention
-  for attributing a death to a crash. Deaths occurring later are not
-  recorded as crash-related here, so fatality counts are 30-day counts,
-  not lifetime ones.
-
-- **The `qtd_*` vehicle counts do not always match `veiculos`.**:
-
-  Summing the `qtd_pedestre` .. `qtd_veic_nao_disponivel` columns
-  disagrees with the number of matching `veiculos` rows for a small
-  share of crashes, so the two routes to "how many vehicles" give
-  different answers; pick one and state it. The `qtd_gravidade_*`
-  columns, by contrast, agree with the `pessoas` row counts for every
-  crash.
-
-- **Coordinate availability varies sharply by year.**:
-
-  After the bounding-box validation described above, nearly every crash
-  in the middle years of the series has usable coordinates, against a
-  materially smaller share in the earliest and the most recent years.
-  Mapped subsets are therefore not a uniform sample over time.
-
-- **Not every crash has victim or vehicle rows.**:
-
-  Around a third of `sinistros` records have no matching row in
-  `pessoas`. Use a left join when you need to keep all crashes, and
-  expect `NA` on the victim side.
-
-The figures above describe the 2026 releases and shift slightly as
-DETRAN-SP revises the data; the structural points do not.
+Coverage, field definitions and analytical caveats are documented in the
+searchable online data dictionary returned by
+[`dictionary_infosiga()`](https://viniciusoike.github.io/infosigasp/reference/dictionary_infosiga.md).
+In particular, data from 2015–2018 cover fatal crashes only, while data
+from 2019 onward also include non-fatal crashes and notifications.
 
 ## See also
 

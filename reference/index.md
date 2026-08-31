@@ -7,7 +7,7 @@ Read INFOSIGA-SP data and its official dictionaries.
 - [`read_infosiga()`](https://viniciusoike.github.io/infosigasp/reference/read_infosiga.md)
   : Import an INFOSIGA-SP dataset
 - [`dictionary_infosiga()`](https://viniciusoike.github.io/infosigasp/reference/dictionary_infosiga.md)
-  : Download the INFOSIGA-SP data dictionary
+  : Open the INFOSIGA-SP data dictionary
 
 ## Package
 

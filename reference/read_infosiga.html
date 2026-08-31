@@ -150,72 +150,10 @@ In typed and clean modes, values that cannot be parsed to their declared
 column type become <code>NA</code> and are recorded by <code><a href="https://readr.tidyverse.org/reference/problems.html" class="external-link">readr::problems()</a></code>. Raw mode
 preserves those field values as character. Structural CSV problems are
 recorded in every mode.</p>
-    </div>
-    <div class="section level2">
-    <h2 id="coverage-and-known-caveats">Coverage and known caveats<a class="anchor" aria-label="anchor" href="#coverage-and-known-caveats"></a></h2>
-
-
-
-<p>The source data are published as a single continuous series from 2015
-onward, but the <em>scope</em> of what is collected has changed over time and
-several columns carry definitions that are easy to misread. None of these
-are import errors, so the package does not alter the data; they do,
-however, invalidate a number of otherwise reasonable analyses.</p>
-<dl><dt><strong>2015–2018 covers fatal crashes only.</strong></dt>
-<dd><p>This is the single most
-consequential caveat. Non-fatal records begin in 2019: for 2015–2018
-<code>tipo_registro</code> is <code>"SINISTRO FATAL"</code> for every row, and in <code>pessoas</code>
-the <code>"LEVE"</code> and <code>"GRAVE"</code> injury levels do not occur at all. Counting
-crashes or victims per year across the whole series therefore shows an
-apparent 20-fold jump in 2019 that is entirely an artefact of the
-expanded collection scope. <strong>For any trend that includes years before
-2019, restrict to fatalities</strong> (<code>tipo_registro == "SINISTRO FATAL"</code>, or
-<code>gravidade_lesao == "FATAL"</code> in <code>pessoas</code>); otherwise start the series
-in 2019.</p></dd>
-
-<dt><strong><code>tipo_registro</code> mixes notifications with confirmed crashes.</strong></dt>
-<dd><p>About a third of <code>sinistros</code> rows are <code>"NOTIFICACAO"</code>, a reported event
-that has not been confirmed as a crash. Treating every row as a crash
-overstates the total substantially. Filter on <code>tipo_registro</code> according
-to whether you want confirmed events only.</p></dd>
-
-<dt><strong>The most recent months are provisional.</strong></dt>
-<dd><p>DETRAN-SP reclassifies
-records as it validates them, so the newest months carry an unusually
-high share of <code>"NOTIFICACAO"</code> and an artificially low share of confirmed
-crashes. The final month or two of any release is also partial. Recent
-periods are not comparable with settled ones; drop the tail of the series
-before computing trends.</p></dd>
-
-<dt><strong><code>tempo_sinistro_obito</code> is capped at 30 days.</strong></dt>
-<dd><p>The published
-values never exceed 30, matching the 30-day convention for attributing a
-death to a crash. Deaths occurring later are not recorded as
-crash-related here, so fatality counts are 30-day counts, not lifetime
-ones.</p></dd>
-
-<dt><strong>The <code>qtd_*</code> vehicle counts do not always match <code>veiculos</code>.</strong></dt>
-<dd><p>Summing the <code>qtd_pedestre</code> .. <code>qtd_veic_nao_disponivel</code> columns
-disagrees with the number of matching <code>veiculos</code> rows for a small share
-of crashes, so the two routes to "how many vehicles" give different
-answers; pick one and state it. The <code>qtd_gravidade_*</code> columns, by
-contrast, agree with the <code>pessoas</code> row counts for every crash.</p></dd>
-
-<dt><strong>Coordinate availability varies sharply by year.</strong></dt>
-<dd><p>After the
-bounding-box validation described above, nearly every
-crash in the middle years of the series has usable coordinates, against a
-materially smaller share in the earliest and the most recent years.
-Mapped subsets are therefore not a uniform sample over time.</p></dd>
-
-<dt><strong>Not every crash has victim or vehicle rows.</strong></dt>
-<dd><p>Around a third of
-<code>sinistros</code> records have no matching row in <code>pessoas</code>. Use a left join
-when you need to keep all crashes, and expect <code>NA</code> on the victim side.</p></dd>
-
-
-</dl><p>The figures above describe the 2026 releases and shift slightly as
-DETRAN-SP revises the data; the structural points do not.</p>
+<p>Coverage, field definitions and analytical caveats are documented in the
+searchable online data dictionary returned by <code><a href="dictionary_infosiga.html">dictionary_infosiga()</a></code>. In
+particular, data from 2015–2018 cover fatal crashes only, while data from
+2019 onward also include non-fatal crashes and notifications.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

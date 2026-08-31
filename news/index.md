@@ -18,10 +18,8 @@
   implementation details.
   ([\#20](https://github.com/viniciusoike/infosigasp/issues/20))
 - [`dictionary_infosiga()`](https://viniciusoike.github.io/infosigasp/reference/dictionary_infosiga.md)
-  replaces `infosiga_dictionary()`, downloads the official PDF
-  dictionaries for all datasets or a selected dataset, and links to the
-  searchable online data dictionary.
-  ([\#20](https://github.com/viniciusoike/infosigasp/issues/20))
+  now opens the searchable pkgdown data dictionary by default and can
+  point to the official INFOSIGA-SP source with `source = "official"`.
 - [`read_infosiga()`](https://viniciusoike.github.io/infosigasp/reference/read_infosiga.md)
   now supports explicit `"raw"`, `"typed"` and `"clean"` processing
   modes, with `"clean"` remaining the default.

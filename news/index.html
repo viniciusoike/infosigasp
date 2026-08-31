@@ -44,7 +44,7 @@
 <li>Missing <code>qtd_*</code> counts now remain <code>NA</code> during cleaning because a blank source value does not establish a zero count.</li>
 <li>Simplified the public API: <code><a href="../reference/read_infosiga.html">read_infosiga()</a></code> and <code><a href="../reference/dictionary_infosiga.html">dictionary_infosiga()</a></code> are now the only exported functions; download, cache, update, data-listing, cleaning and label-standardization helpers are internal implementation details. (<a href="https://github.com/viniciusoike/infosigasp/issues/20" class="external-link">#20</a>)</li>
 <li>
-<code><a href="../reference/dictionary_infosiga.html">dictionary_infosiga()</a></code> replaces <code>infosiga_dictionary()</code>, downloads the official PDF dictionaries for all datasets or a selected dataset, and links to the searchable online data dictionary. (<a href="https://github.com/viniciusoike/infosigasp/issues/20" class="external-link">#20</a>)</li>
+<code><a href="../reference/dictionary_infosiga.html">dictionary_infosiga()</a></code> now opens the searchable pkgdown data dictionary by default and can point to the official INFOSIGA-SP source with <code>source = "official"</code>.</li>
 <li>
 <code><a href="../reference/read_infosiga.html">read_infosiga()</a></code> now supports explicit <code>"raw"</code>, <code>"typed"</code> and <code>"clean"</code> processing modes, with <code>"clean"</code> remaining the default. (<a href="https://github.com/viniciusoike/infosigasp/issues/22" class="external-link">#22</a>)</li>
 <li>
