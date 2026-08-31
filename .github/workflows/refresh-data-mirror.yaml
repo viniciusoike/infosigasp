@@ -30,7 +30,7 @@ permissions:
 env:
   GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   GH_REPO: ${{ github.repository }}
-  ARCHIVE_URL: https://infosiga.detran.sp.gov.br/rest/painel/download/file/dados_infosiga.zip
+  ARCHIVE_URL: https://infosiga.detran.sp.gov.br/painel/download/file/dados_infosiga.zip
   ROLLING_TAG: data-current
 
 jobs:
