@@ -1,113 +1,50 @@
-#' Download the INFOSIGA-SP data dictionary
+#' Open the INFOSIGA-SP data dictionary
 #'
-#' Downloads the official INFOSIGA-SP data dictionary, a set of PDF documents
-#' (one per dataset) describing every column and its accepted values. The
-#' archive is saved to the cache and the extracted PDF paths are returned.
-#' A searchable HTML transcription is available in the
-#' [online data dictionary](https://viniciusoike.github.io/infosigasp/articles/data-dictionary.html).
+#' Opens the package's searchable online data dictionary. Set
+#' `source = "official"` to open the INFOSIGA-SP source website instead.
 #'
-#' @param dataset Optional dataset whose dictionary should be returned: one of
-#'   `"sinistros"`, `"pessoas"` or `"veiculos"`. If `NULL` (default), return
-#'   all three dictionaries.
-#' @param refresh Logical. If `TRUE`, download the dictionaries again before
-#'   returning them. If `FALSE` (default), reuse the local copy when available.
-#' @param quiet Logical. Suppress progress messages. Defaults to `FALSE`.
+#' @param dataset Optional dataset to link to: one of `"sinistros"`,
+#'   `"pessoas"` or `"veiculos"`. The online dictionary opens at that dataset's
+#'   section. This argument has no effect when `source = "official"`.
+#' @param source Which documentation to open. `"online"` (default) uses the
+#'   searchable dictionary on the package website. `"official"` uses the
+#'   INFOSIGA-SP website, where DETRAN-SP publishes the original files.
+#' @param open Logical. If `TRUE` (the default in interactive sessions), open
+#'   the URL in a browser.
 #'
-#' @return A character vector of paths to the extracted PDF files, invisibly.
+#' @return The selected URL, invisibly.
 #'
 #' @examples
-#' \dontrun{
-#' pdfs <- dictionary_infosiga()
-#' # Open the dictionary for the crash-events dataset
-#' browseURL(dictionary_infosiga("sinistros"))
-#' }
+#' dictionary_infosiga(open = FALSE)
+#' dictionary_infosiga("sinistros", open = FALSE)
+#' dictionary_infosiga(source = "official", open = FALSE)
 #' @export
 dictionary_infosiga <- function(
   dataset = NULL,
-  refresh = FALSE,
-  quiet = FALSE
+  source = c("online", "official"),
+  open = interactive()
 ) {
-  if (!is.logical(refresh) || length(refresh) != 1L || is.na(refresh)) {
-    cli::cli_abort("{.arg refresh} must be `TRUE` or `FALSE`.")
-  }
+  source <- match.arg(source)
+
   if (!is.null(dataset)) {
     dataset <- match.arg(dataset, .infosiga_datasets)
   }
-
-  dest <- .infosiga_dictionary_dir()
-  existing <- list.files(dest, pattern = "\\.pdf$", full.names = TRUE)
-  if (length(existing) > 0 && !refresh) {
-    if (!quiet) {
-      cli::cli_alert_info(
-        "Using the INFOSIGA-SP dictionaries in the local infosigasp cache."
-      )
-    }
-    selected <- .infosiga_select_dictionary(existing, dataset)
-    .infosiga_link_dictionary(dataset, quiet)
-    return(invisible(selected))
+  if (!is.logical(open) || length(open) != 1L || is.na(open)) {
+    cli::cli_abort("{.arg open} must be `TRUE` or `FALSE`.")
   }
 
-  urls <- .infosiga_dictionary_url()
-
-  old_timeout <- getOption("timeout")
-  on.exit(options(timeout = old_timeout), add = TRUE)
-  options(timeout = max(600, old_timeout))
-
-  tmp <- tempfile(fileext = ".zip")
-  on.exit(unlink(tmp), add = TRUE)
-
-  ok <- .infosiga_try_zip_sources(
-    urls,
-    destfile = tmp,
-    quiet = quiet,
-    first_action = "Downloading data dictionary from"
-  )
-
-  if (!ok) {
-    cli::cli_abort(c(
-      "Failed to download the data dictionary from {length(urls)} source{?s}.",
-      "i" = "Check your internet connection or try again later.",
-      "i" = "You can supply a mirror with {.code options(infosigasp.dictionary_url = ...)}."
-    ))
-  }
-
-  if (!dir.exists(dest)) {
-    dir.create(dest, recursive = TRUE, showWarnings = FALSE)
-  }
-  utils::unzip(tmp, exdir = dest)
-  pdfs <- list.files(dest, pattern = "\\.pdf$", full.names = TRUE)
-  if (!quiet) {
-    cli::cli_alert_success(
-      "Extracted {length(pdfs)} dictionary file{?s} to {.path {dest}}."
+  url <- if (source == "online") {
+    paste0(
+      "https://viniciusoike.github.io/infosigasp/articles/data-dictionary.html",
+      if (!is.null(dataset)) paste0("#", dataset) else ""
     )
-  }
-  selected <- .infosiga_select_dictionary(pdfs, dataset)
-  .infosiga_link_dictionary(dataset, quiet)
-  invisible(selected)
-}
-
-.infosiga_link_dictionary <- function(dataset, quiet) {
-  if (quiet) {
-    return(invisible(NULL))
+  } else {
+    "https://infosiga.detran.sp.gov.br/"
   }
 
-  url <- paste0(
-    "https://viniciusoike.github.io/infosigasp/articles/data-dictionary.html",
-    if (!is.null(dataset)) paste0("#", dataset) else ""
-  )
-  cli::cli_alert_info("Browse the searchable data dictionary at {.url {url}}.")
-}
-
-.infosiga_select_dictionary <- function(paths, dataset) {
-  if (is.null(dataset)) {
-    return(paths)
+  if (open) {
+    utils::browseURL(url)
   }
 
-  selected <- grep(dataset, paths, value = TRUE, ignore.case = TRUE)
-  if (length(selected) == 0L) {
-    cli::cli_abort(
-      "No dictionary for {.val {dataset}} was found in the downloaded files."
-    )
-  }
-  selected
+  invisible(url)
 }

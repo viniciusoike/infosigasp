@@ -17,7 +17,6 @@ test_that("cache paths are package-managed and predictable", {
   tmp <- withr::local_tempdir()
   withr::local_options(list(infosigasp.cache_dir = tmp))
   expect_identical(.infosiga_archive_path(), file.path(tmp, .infosiga_zip_name))
-  expect_identical(.infosiga_dictionary_dir(), file.path(tmp, "dictionary"))
   expect_identical(.infosiga_processed_dir(), file.path(tmp, "processed"))
 })
 

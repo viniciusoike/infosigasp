@@ -166,15 +166,15 @@ archive. Use `source = TRUE` to remove it too. Set `cache = FALSE` in
 
 ### Data dictionary
 
-`dictionary_infosiga()` downloads the official field-by-field
-documentation (one PDF per dataset, in Portuguese) and returns the local
-file paths. Supply a dataset name to retrieve only its dictionary. The
-function also links to the [searchable online data
+`dictionary_infosiga()` opens the [searchable online data
 dictionary](https://viniciusoike.github.io/infosigasp/articles/data-dictionary.html).
+Supply a dataset name to open its section, or use `source = "official"` to
+visit the INFOSIGA-SP source website.
 
 ``` r
 dictionary_infosiga()
 dictionary_infosiga("sinistros")
+dictionary_infosiga(source = "official")
 ```
 
 ## Example

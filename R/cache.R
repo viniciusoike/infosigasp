@@ -19,10 +19,6 @@
   file.path(.infosiga_cache_dir(), .infosiga_zip_name)
 }
 
-.infosiga_dictionary_dir <- function() {
-  file.path(.infosiga_cache_dir(), "dictionary")
-}
-
 .infosiga_processed_dir <- function() {
   file.path(.infosiga_cache_dir(), "processed")
 }

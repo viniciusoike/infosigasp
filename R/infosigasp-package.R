@@ -27,8 +27,15 @@
 #' \describe{
 #'   \item{[read_infosiga()]}{Download (if needed) and import a dataset as a
 #'     tibble.}
-#'   \item{[dictionary_infosiga()]}{Download and locate the official data
-#'     dictionaries.}
+#'   \item{[dictionary_infosiga()]}{Open the searchable data dictionary or the
+#'     official source website.}
+#' }
+#'
+#' @section Cache management:
+#' \describe{
+#'   \item{[infosiga_cache_info()]}{Inspect locally cached source and processed
+#'     data.}
+#'   \item{[clear_infosiga_cache()]}{Remove locally cached data.}
 #' }
 #'
 #' @section Data source and licence:

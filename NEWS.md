@@ -3,9 +3,9 @@
 * Coordinate validation now uses the São Paulo state boundary with a 2 km buffer instead of its rectangular bounding box.
 * Documented important changes in source-data coverage and definitions, including that 2015--2018 covers fatal crashes only and that `sinistros` includes unconfirmed notifications.
 * Missing `qtd_*` counts now remain `NA` during cleaning because a blank source value does not establish a zero count.
-* Simplified the public data API around `read_infosiga()` and `dictionary_infosiga()`; download, update, data-listing, cleaning and label-standardization helpers are internal implementation details. (#20)
+* Simplified the public API around `read_infosiga()`, `dictionary_infosiga()` and cache management; download, update, data-listing, cleaning and label-standardization helpers are internal implementation details. (#20)
 * `clear_infosiga_cache()` and `infosiga_cache_info()` remove processed cache entries and report their disk use while keeping operations within the package-managed user cache.
-* `dictionary_infosiga()` replaces `infosiga_dictionary()`, downloads the official PDF dictionaries for all datasets or a selected dataset, and links to the searchable online data dictionary. (#20)
+* `dictionary_infosiga()` now opens the searchable pkgdown data dictionary by default and can point to the official INFOSIGA-SP source with `source = "official"`.
 * `read_infosiga()` caches the canonical clean result by source checksum and cleaning-schema version, reuses it before applying optional standardizations, and removes obsolete processed artifacts. Set `cache = FALSE` to bypass the processed cache.
 * `read_infosiga()` now supports explicit `"raw"`, `"typed"` and `"clean"` processing modes, with `"clean"` remaining the default. (#22)
 * `read_infosiga()` now supports selective label standardization through `standardize = "municipios"`, `"cores"`, `"profissoes"` or `"all"`, while preserving source categories that cannot be harmonized safely. (#22)
