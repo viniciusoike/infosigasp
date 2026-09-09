@@ -8,11 +8,15 @@ internal_data <- new.env(parent = emptyenv())
 load("R/sysdata.rda", envir = internal_data)
 infosiga_municipios <- internal_data$infosiga_municipios
 
-spo_shape <- read_state(year = 2022, simplified = FALSE) |>
-  subset(code_state == 35) |>
-  st_transform(crs = 31983) |>
+states <- read_state(year = 2022, simplified = FALSE)
+spo <- subset(states, code_state == 35)
+
+spo_shape <- spo
+st_transform(crs = 31983) |>
   st_buffer(dist = 2000) |>
-  st_transform(crs = 4326) |>
+  st_transform(crs = 4326)
+
+spo_shape <- spo_shape |>
   st_make_valid() |>
   st_geometry()
 

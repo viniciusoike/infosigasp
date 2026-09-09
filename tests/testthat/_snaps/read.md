@@ -25,6 +25,14 @@
 ---
 
     Code
+      read_infosiga("sinistros", cache = NA, quiet = TRUE)
+    Condition
+      Error in `read_infosiga()`:
+      ! `cache` must be `TRUE` or `FALSE`.
+
+---
+
+    Code
       read_infosiga("sinistros", processing = "typed", standardize = "municipios",
         quiet = TRUE)
     Condition

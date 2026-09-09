@@ -25,6 +25,14 @@ test_that("read_infosiga imports each dataset with the expected structure", {
   expect_type(veh$ano_fab, "integer")
 })
 
+test_that("quiet remains the fifth positional argument", {
+  local_infosiga_fixture()
+
+  expect_silent(
+    read_infosiga("sinistros", "clean", NULL, FALSE, TRUE)
+  )
+})
+
 test_that("latin1 source text is decoded to UTF-8", {
   local_infosiga_fixture()
   sin <- read_infosiga("sinistros", processing = "raw", quiet = TRUE)
@@ -50,6 +58,10 @@ test_that("invalid arguments are rejected", {
   )
   expect_snapshot(
     read_infosiga("sinistros", refresh = NA, quiet = TRUE),
+    error = TRUE
+  )
+  expect_snapshot(
+    read_infosiga("sinistros", cache = NA, quiet = TRUE),
     error = TRUE
   )
   expect_snapshot(

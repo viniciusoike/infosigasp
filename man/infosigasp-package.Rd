@@ -40,6 +40,15 @@ official source website.}
 }
 }
 
+\section{Cache management}{
+
+\describe{
+\item{\code{\link[=infosiga_cache_info]{infosiga_cache_info()}}}{Inspect locally cached source and processed
+data.}
+\item{\code{\link[=clear_infosiga_cache]{clear_infosiga_cache()}}}{Remove locally cached data.}
+}
+}
+
 \section{Data source and licence}{
 
 DETRAN-SP publishes the data under a Creative Commons Attribution 4.0

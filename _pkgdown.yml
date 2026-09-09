@@ -25,6 +25,11 @@ reference:
   contents:
   - read_infosiga
   - dictionary_infosiga
+- title: Cache management
+  desc: Inspect and remove locally cached data.
+  contents:
+  - infosiga_cache_info
+  - clear_infosiga_cache
 - title: Package
   contents:
   - infosigasp-package

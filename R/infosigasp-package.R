@@ -31,6 +31,13 @@
 #'     official source website.}
 #' }
 #'
+#' @section Cache management:
+#' \describe{
+#'   \item{[infosiga_cache_info()]}{Inspect locally cached source and processed
+#'     data.}
+#'   \item{[clear_infosiga_cache()]}{Remove locally cached data.}
+#' }
+#'
 #' @section Data source and licence:
 #' DETRAN-SP publishes the data under a Creative Commons Attribution 4.0
 #' licence at <https://infosiga.detran.sp.gov.br/>. This package is not
