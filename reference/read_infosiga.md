@@ -13,7 +13,8 @@ read_infosiga(
   processing = c("clean", "typed", "raw"),
   standardize = NULL,
   refresh = FALSE,
-  quiet = FALSE
+  quiet = FALSE,
+  cache = TRUE
 )
 ```
 
@@ -63,6 +64,14 @@ read_infosiga(
 
   Logical. If `FALSE` (default), report progress.
 
+- cache:
+
+  Logical. If `TRUE` (default), canonical results from
+  `processing = "clean"` are stored in the package's managed user cache
+  and reused on subsequent calls. Raw, typed and standardised variants
+  are never stored as processed artifacts. Set to `FALSE` to bypass the
+  processed cache; the downloaded source archive is managed separately.
+
 ## Value
 
 A [tibble](https://tibble.tidyverse.org/reference/tibble.html) with one
@@ -99,6 +108,16 @@ import.
   `numero_logradouro`, and validates coordinate pairs against the Sao
   Paulo state boundary with a 2 km buffer. Missing `qtd_*` counts remain
   `NA`.
+
+Canonical clean results are cached separately from the source ZIP. Cache
+entries are keyed by the source archive checksum and an internal
+cleaning schema version. Obsolete entries for a dataset are removed
+after a new entry is written. Standardisation is always applied in
+memory after loading the canonical clean result. Use
+[`infosiga_cache_info()`](https://viniciusoike.github.io/infosigasp/reference/infosiga_cache_info.md)
+to inspect disk use and
+[`clear_infosiga_cache()`](https://viniciusoike.github.io/infosigasp/reference/clear_infosiga_cache.md)
+to remove processed entries.
 
 Before converting a closed-domain column, the cleaning step validates
 its observed values. If an ordinal column, crash-type flag or integer

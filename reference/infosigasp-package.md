@@ -41,6 +41,16 @@ The three datasets can be linked through the `id_sinistro` key (and
 
   Open the searchable data dictionary or the official source website.
 
+## Cache management
+
+- [`infosiga_cache_info()`](https://viniciusoike.github.io/infosigasp/reference/infosiga_cache_info.md):
+
+  Inspect locally cached source and processed data.
+
+- [`clear_infosiga_cache()`](https://viniciusoike.github.io/infosigasp/reference/clear_infosiga_cache.md):
+
+  Remove locally cached data.
+
 ## Data source and licence
 
 DETRAN-SP publishes the data under a Creative Commons Attribution 4.0

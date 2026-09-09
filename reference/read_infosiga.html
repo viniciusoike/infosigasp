@@ -55,7 +55,8 @@ as a tidy tibble. The first interactive call asks before downloading about
 <span>  processing <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"clean"</span>, <span class="st">"typed"</span>, <span class="st">"raw"</span><span class="op">)</span>,</span>
 <span>  standardize <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  refresh <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  quiet <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span>  quiet <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  cache <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -104,6 +105,14 @@ before reading. If <code>FALSE</code> (default), reuse the copy in the local
 <dt id="arg-quiet">quiet<a class="anchor" aria-label="anchor" href="#arg-quiet"></a></dt>
 <dd><p>Logical. If <code>FALSE</code> (default), report progress.</p></dd>
 
+
+<dt id="arg-cache">cache<a class="anchor" aria-label="anchor" href="#arg-cache"></a></dt>
+<dd><p>Logical. If <code>TRUE</code> (default), canonical results from
+<code>processing = "clean"</code> are stored in the package's managed user cache and
+reused on subsequent calls. Raw, typed and standardised variants are never
+stored as processed artifacts. Set to <code>FALSE</code> to bypass the processed
+cache; the downloaded source archive is managed separately.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
@@ -132,7 +141,13 @@ converts crash-type flags to logical, converts <code>tempo_sinistro_obito</code>
 integer, removes a trailing <code>".0"</code> from <code>numero_logradouro</code>, and validates
 coordinate pairs against the Sao Paulo state boundary with a 2 km buffer.
 Missing <code>qtd_*</code> counts remain <code>NA</code>.</p></li>
-</ul><p>Before converting a closed-domain column, the cleaning step validates its
+</ul><p>Canonical clean results are cached separately from the source ZIP. Cache
+entries are keyed by the source archive checksum and an internal cleaning
+schema version. Obsolete entries for a dataset are removed after a new entry
+is written. Standardisation is always applied in memory after loading the
+canonical clean result. Use <code><a href="infosiga_cache_info.html">infosiga_cache_info()</a></code> to inspect disk use and
+<code><a href="clear_infosiga_cache.html">clear_infosiga_cache()</a></code> to remove processed entries.</p>
+<p>Before converting a closed-domain column, the cleaning step validates its
 observed values. If an ordinal column, crash-type flag or integer field
 contains an unexpected representation, the entire source column is preserved
 and a warning identifies the new values. This prevents upstream changes from

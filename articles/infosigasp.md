@@ -360,7 +360,12 @@ can map crash locations directly or aggregate them by municipality
 
 ## Updating the data
 
-The package stores one local copy in the operating-system user cache.
+The package stores the source archive and canonical clean results in the
+operating-system user cache. A clean result is reused only when its
+source checksum and cleaning-schema version still match.
+Standardizations are applied after loading that result and do not create
+additional artifacts.
+
 DETRAN-SP updates the archive monthly. Use `refresh = TRUE` to replace
 your local copy with the latest available version and return the
 requested dataset.
@@ -387,6 +392,13 @@ your `.Rprofile`) with the `infosigasp.cache_dir` option.
 
 options(infosigasp.cache_dir = "~/data/infosiga")
 ```
+
+Inspect cache contents with
+[`infosiga_cache_info()`](https://viniciusoike.github.io/infosigasp/reference/infosiga_cache_info.md).
+Remove processed results while retaining the source archive with
+[`clear_infosiga_cache()`](https://viniciusoike.github.io/infosigasp/reference/clear_infosiga_cache.md),
+or pass `source = TRUE` to remove both. For a read that should neither
+use nor create a processed artifact, set `cache = FALSE`.
 
 ## The official data dictionary
 

@@ -42,7 +42,9 @@ need a shorter period.
 ## Usage
 
 The first interactive call asks before downloading about 120 MB into
-your user cache; later calls read straight from disk.
+your user cache. Canonical clean results are also cached after their
+first import, so later clean reads avoid CSV parsing and coordinate
+validation.
 
 ``` r
 
@@ -141,6 +143,28 @@ and replace the one in your user cache with:
 
 sinistros <- read_infosiga("sinistros", refresh = TRUE)
 ```
+
+### Managing the local cache
+
+Only the canonical `processing = "clean"` result is stored as a
+processed artifact. Standardizations are applied in memory after that
+artifact is loaded, so they do not create additional cache files. Raw
+and typed imports are never stored as processed artifacts.
+
+Inspect disk use or remove processed results with:
+
+``` r
+
+infosiga_cache_info()
+clear_infosiga_cache()
+```
+
+By default,
+[`clear_infosiga_cache()`](https://viniciusoike.github.io/infosigasp/reference/clear_infosiga_cache.md)
+retains the downloaded source archive. Use `source = TRUE` to remove it
+too. Set `cache = FALSE` in
+[`read_infosiga()`](https://viniciusoike.github.io/infosigasp/reference/read_infosiga.md)
+to bypass the processed cache for a particular call.
 
 ### Data dictionary
 

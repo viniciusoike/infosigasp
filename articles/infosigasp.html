@@ -508,10 +508,14 @@ municipality (<code>municipio</code> / <code>cod_ibge</code>).</p>
 <div class="section level2">
 <h2 id="updating-the-data">Updating the data<a class="anchor" aria-label="anchor" href="#updating-the-data"></a>
 </h2>
-<p>The package stores one local copy in the operating-system user cache.
-DETRAN-SP updates the archive monthly. Use <code>refresh = TRUE</code>
-to replace your local copy with the latest available version and return
-the requested dataset.</p>
+<p>The package stores the source archive and canonical clean results in
+the operating-system user cache. A clean result is reused only when its
+source checksum and cleaning-schema version still match.
+Standardizations are applied after loading that result and do not create
+additional artifacts.</p>
+<p>DETRAN-SP updates the archive monthly. Use
+<code>refresh = TRUE</code> to replace your local copy with the latest
+available version and return the requested dataset.</p>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">sinistros</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/read_infosiga.html">read_infosiga</a></span><span class="op">(</span><span class="st">"sinistros"</span>, refresh <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
 <p><code><a href="../reference/read_infosiga.html">read_infosiga()</a></code> always imports every available year.
@@ -524,6 +528,11 @@ via your <code>.Rprofile</code>) with the
 <code>infosigasp.cache_dir</code> option.</p>
 <div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">options</a></span><span class="op">(</span>infosigasp.cache_dir <span class="op">=</span> <span class="st">"~/data/infosiga"</span><span class="op">)</span></span></code></pre></div>
+<p>Inspect cache contents with <code><a href="../reference/infosiga_cache_info.html">infosiga_cache_info()</a></code>.
+Remove processed results while retaining the source archive with
+<code><a href="../reference/clear_infosiga_cache.html">clear_infosiga_cache()</a></code>, or pass <code>source = TRUE</code>
+to remove both. For a read that should neither use nor create a
+processed artifact, set <code>cache = FALSE</code>.</p>
 </div>
 <div class="section level2">
 <h2 id="the-official-data-dictionary">The official data dictionary<a class="anchor" aria-label="anchor" href="#the-official-data-dictionary"></a>

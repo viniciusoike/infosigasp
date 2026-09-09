@@ -9,17 +9,25 @@
   `sinistros` includes unconfirmed notifications.
 - Missing `qtd_*` counts now remain `NA` during cleaning because a blank
   source value does not establish a zero count.
-- Simplified the public API:
-  [`read_infosiga()`](https://viniciusoike.github.io/infosigasp/reference/read_infosiga.md)
-  and
+- Simplified the public API around
+  [`read_infosiga()`](https://viniciusoike.github.io/infosigasp/reference/read_infosiga.md),
   [`dictionary_infosiga()`](https://viniciusoike.github.io/infosigasp/reference/dictionary_infosiga.md)
-  are now the only exported functions; download, cache, update,
-  data-listing, cleaning and label-standardization helpers are internal
-  implementation details.
+  and cache management; download, update, data-listing, cleaning and
+  label-standardization helpers are internal implementation details.
   ([\#20](https://github.com/viniciusoike/infosigasp/issues/20))
+- [`clear_infosiga_cache()`](https://viniciusoike.github.io/infosigasp/reference/clear_infosiga_cache.md)
+  and
+  [`infosiga_cache_info()`](https://viniciusoike.github.io/infosigasp/reference/infosiga_cache_info.md)
+  remove processed cache entries and report their disk use while keeping
+  operations within the package-managed user cache.
 - [`dictionary_infosiga()`](https://viniciusoike.github.io/infosigasp/reference/dictionary_infosiga.md)
   now opens the searchable pkgdown data dictionary by default and can
   point to the official INFOSIGA-SP source with `source = "official"`.
+- [`read_infosiga()`](https://viniciusoike.github.io/infosigasp/reference/read_infosiga.md)
+  caches the canonical clean result by source checksum and
+  cleaning-schema version, reuses it before applying optional
+  standardizations, and removes obsolete processed artifacts. Set
+  `cache = FALSE` to bypass the processed cache.
 - [`read_infosiga()`](https://viniciusoike.github.io/infosigasp/reference/read_infosiga.md)
   now supports explicit `"raw"`, `"typed"` and `"clean"` processing
   modes, with `"clean"` remaining the default.

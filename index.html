@@ -95,7 +95,7 @@
 <div class="section level2">
 <h2 id="usage">Usage<a class="anchor" aria-label="anchor" href="#usage"></a>
 </h2>
-<p>The first interactive call asks before downloading about 120 MB into your user cache; later calls read straight from disk.</p>
+<p>The first interactive call asks before downloading about 120 MB into your user cache. Canonical clean results are also cached after their first import, so later clean reads avoid CSV parsing and coordinate validation.</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/viniciusoike/infosigasp" class="external-link">infosigasp</a></span><span class="op">)</span></span>
 <span></span>
@@ -167,10 +167,20 @@
 <code class="sourceCode R"><span><span class="va">sinistros</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/read_infosiga.html">read_infosiga</a></span><span class="op">(</span><span class="st">"sinistros"</span>, refresh <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level3">
+<h3 id="managing-the-local-cache">Managing the local cache<a class="anchor" aria-label="anchor" href="#managing-the-local-cache"></a>
+</h3>
+<p>Only the canonical <code>processing = "clean"</code> result is stored as a processed artifact. Standardizations are applied in memory after that artifact is loaded, so they do not create additional cache files. Raw and typed imports are never stored as processed artifacts.</p>
+<p>Inspect disk use or remove processed results with:</p>
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="reference/infosiga_cache_info.html">infosiga_cache_info</a></span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="fu"><a href="reference/clear_infosiga_cache.html">clear_infosiga_cache</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
+<p>By default, <code><a href="reference/clear_infosiga_cache.html">clear_infosiga_cache()</a></code> retains the downloaded source archive. Use <code>source = TRUE</code> to remove it too. Set <code>cache = FALSE</code> in <code><a href="reference/read_infosiga.html">read_infosiga()</a></code> to bypass the processed cache for a particular call.</p>
+</div>
+<div class="section level3">
 <h3 id="data-dictionary">Data dictionary<a class="anchor" aria-label="anchor" href="#data-dictionary"></a>
 </h3>
 <p><code><a href="reference/dictionary_infosiga.html">dictionary_infosiga()</a></code> opens the <a href="https://viniciusoike.github.io/infosigasp/articles/data-dictionary.html">searchable online data dictionary</a>. Supply a dataset name to open its section, or use <code>source = "official"</code> to visit the INFOSIGA-SP source website.</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="reference/dictionary_infosiga.html">dictionary_infosiga</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="fu"><a href="reference/dictionary_infosiga.html">dictionary_infosiga</a></span><span class="op">(</span><span class="st">"sinistros"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="reference/dictionary_infosiga.html">dictionary_infosiga</a></span><span class="op">(</span>source <span class="op">=</span> <span class="st">"official"</span><span class="op">)</span></span></code></pre></div>
@@ -180,7 +190,7 @@
 <h2 id="example">Example<a class="anchor" aria-label="anchor" href="#example"></a>
 </h2>
 <p>The victims dataset gives a fatality count per year.</p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://dplyr.tidyverse.org" class="external-link">dplyr</a></span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="reference/read_infosiga.html">read_infosiga</a></span><span class="op">(</span><span class="st">"pessoas"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
