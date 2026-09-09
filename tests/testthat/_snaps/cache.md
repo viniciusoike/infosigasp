@@ -5,3 +5,4 @@
     Condition
       Error in `clear_infosiga_cache()`:
       ! `processed`, `source` and `quiet` must be `TRUE` or `FALSE`.
+

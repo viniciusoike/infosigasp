@@ -21,3 +21,4 @@
     Condition
       Error in `dictionary_infosiga()`:
       ! `open` must be `TRUE` or `FALSE`.
+
