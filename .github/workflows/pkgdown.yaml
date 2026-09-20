@@ -34,6 +34,12 @@ jobs:
         with:
           extra-packages: any::pkgdown, local::.
           needs: website
+      # pkgdown renders every root-level .md into the published site, sitemap
+      # and search index (r-lib/pkgdown#2959). Agent docs are internal, not
+      # part of the package; the workflow checkout is discarded after the run.
+      - name: Drop internal agent docs before building
+        run: rm -f -- CLAUDE.md AGENTS.md
+
 
       - name: Build site
         run: pkgdown::build_site_github_pages(new_process = FALSE, install = FALSE)
